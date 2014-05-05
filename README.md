@@ -7,6 +7,9 @@ This repository contains:
   Module for evaluating and plotting trajectory data
 
 * COSMO runfiles
-  runfiles for COSMO WCB simulations
+  Runfiles for COSMO WCB simulations
+
+* sphinx-documentation
+  Documentation of traj_tools module
 
 by Stephan Rasp
