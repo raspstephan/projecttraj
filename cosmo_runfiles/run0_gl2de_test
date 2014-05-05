@@ -1,0 +1,107 @@
+#!/usr/bin/ksh
+#
+#################################################
+# settings
+#################################################
+
+#Versuch direkt von ECMWF Output auf LM Input zu interpolieren:
+# - Notes
+#
+#
+
+#Define Label for queue
+QLabel=gl2de
+
+#Define directories
+indir=/home/cosmo/tobias.selz/cosmo_data/caseWCB/d0glout
+outdir=/home/scratch/users/stephan.rasp/cosmo_test/d0dein
+extdir=/home/data/raid_linux/tobias.selz/cosmo_ext
+
+#Define time properties
+date=2012101600
+hstart=0; hstop=24; hincbound=6                    #hincboud???
+
+#Define output-grid (rotated)
+startlon=-1; startlat=-1; ie=81; je=81
+pollat=25.0; pollon=-150.0
+
+#Define input grid
+istartlon=-120; istartlat=10; iie=961; ije=321
+
+#Define parallelization
+NPX=2
+NPY=2
+NPIO=0
+
+#Define executable
+INTLMEXE=/home/opt/int2lm_131101_2.00/int2lmexe
+
+#################################################
+# script
+#################################################
+
+#Calculade Nodes
+NP1=`expr $NPX \* $NPY`
+NP=`expr $NP1 + $NPIO`
+N1=`expr $NP + 15`
+NODES=`expr $N1 \/ 16`
+
+#Copy this runscript
+cp $0 $outdir/.
+
+#Change to working and output directory
+cd $outdir
+rm -f INPUT YUDEBUG
+
+#################################################
+# INPUT-file
+#################################################
+cat > INPUT << end_input
+&CONTRL
+  ydate_ini='$date', ydate_bd='$date', hstart=$hstart, hstop=$hstop, hincbound=$hincbound, linitial=.TRUE.,  lboundaries =.TRUE.,
+  nprocx=$NPX, nprocy=$NPY, nprocio=0, lreorder=.FALSE., yinput_model='IFS', ltime_mean=.TRUE., lfilter_oro=.TRUE., eps_filter=0.1,
+  ilow_pass_oro=1, ilow_pass_xso=0, rxso_mask=0.0, lfilter_pp=.FALSE., lbalance_pp=.FALSE., norder_filter=5, luvcor=.TRUE.,
+  lmulti_layer_in=.FALSE., lmulti_layer_lm=.TRUE., l_smi=.FALSE., lprog_qi=.TRUE., lprog_rho_snow=.FALSE., lprog_qr_qs=.TRUE.,
+  lforest=.TRUE.
+/
+&GRID_IN
+  startlat_in_tot = $istartlat, startlon_in_tot = $istartlon, dlat_in = 0.25, dlon_in = 0.25,
+  ie_in_tot = $iie, je_in_tot = $ije, ke_in_tot = 91, pollat_in = 90.0, pollon_in = 180.0,
+  pcontrol_fi=20000.0,
+/
+&LMGRID
+  startlat_tot=$startlon, startlon_tot=$startlat,
+  pollat=$pollat, pollon=$pollon,
+  dlon=0.025, dlat=0.025,
+  ielm_tot=$ie, jelm_tot=$je, kelm_tot=50,
+  ivctype=2, vcflat=11357.0,
+  vcoord_d=22000.00,21000.00,20028.57,19085.36,18170.00,17282.14,
+           16421.43,15587.50,14780.00,13998.57,13242.86,12512.50,
+           11807.14,11126.43,10470.00, 9837.50, 9228.57, 8642.86,
+            8080.00, 7539.64, 7021.43, 6525.00, 6050.00, 5596.07,5162.86,
+            4750.00, 4357.14, 3983.93, 3630.00, 3295.00, 2978.57,2680.36,
+            2400.00, 2137.14, 1891.43, 1662.50, 1450.00, 1253.57,1072.86,
+             907.50,  757.14,  621.43,  500.00,  392.50,  298.57, 217.86,
+             150.00,   94.64,   51.43,   20.00,    0.00,
+/
+&DATABASE
+/
+&DATA
+  ie_ext=1601, je_ext=1601, ylmext_lfn='lm_dx_65N30E_02800_1601x1601', ylmext_cat='$extdir', yinext_lfn='ec_ext.g1',
+  yinext_form_read='apix', yinext_cat='$indir', yin_cat='$indir', ylmext_form_read='apix',
+  yin_form_read='apix', ylm_cat='$outdir', yinput_type='analysis', ylm_form_write='api1',
+  nprocess_ini = 131, nprocess_bd = 132, 
+
+/
+&PRICTR
+/
+end_input
+
+#################################################
+# jobfile-file und execution
+################################################
+
+/home/opt/openmpi-1.6.4/bin/mpirun -np $NP $INTLMEXE
+ 
+ 
+ 

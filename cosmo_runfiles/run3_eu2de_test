@@ -1,0 +1,153 @@
+
+#!/bin/ksh
+#
+#################################################
+# settings
+#################################################
+
+#Änderungen gegenüber runeu2de
+# - Gebietsgrößen
+# - Dateipfade
+# - entfernen von nl_soil_in=2, nl_soil_lm=2,
+# - lprog_qrqs=.TRUE., lprog_rho_snow=.TRUE.,
+
+#Define Label for queue
+QLabel=eu2de
+
+#Define directories
+indir=/home/scratch/users/stephan.rasp/cosmo_test/d2euout
+outdir=/home/scratch/users/stephan.rasp/cosmo_test/d3dein
+extdir=/home/data/raid_linux/tobias.selz/cosmo_ext
+
+#Define time properties
+date=2012101600
+hstart=0; hstop=12; hincbound=3
+
+#Define output-grid (rotated)
+startlon=-1; startlat=-1; ie=81; je=81
+pollon=-150.0; pollat=25.0
+
+#Define input grid
+istartlon=-2.5; istartlat=-2.5; iie=81; ije=81
+
+#Define parallelization
+NPX=2
+NPY=2
+NPIO=0
+
+#Define executable
+INTLMEXE=/home/opt/int2lm_131101_2.00/int2lmexe
+
+#################################################
+# script
+#################################################
+
+#Calculade Nodes
+NP1=`expr $NPX \* $NPY`
+NP=`expr $NP1 + $NPIO`
+N1=`expr $NP + 15`
+NODES=`expr $N1 \/ 16`
+
+#Copy this runscript
+cp $0 $outdir/.
+
+#Change to working and output directory
+cd $outdir
+rm -f INPUT
+
+#################################################
+# INPUT-file
+#################################################
+
+rm -f INPUT
+
+cat > INPUT << end_input
+ &CONTRL
+  ydate_bd='$date', ydate_ini='$date',
+  linitial=.TRUE., lboundaries=.TRUE.,
+  hstart=$hstart, hstop=$hstop, hincbound=$hincbound,
+  nprocx=$NPX, nprocy=$NPY, nprocio=$NPIO,
+  nincwait=300, nmaxwait=3600,
+  yinput_model='COSMO',
+  lfilter_oro=.true., lfilter_pp=.true., lbalance_pp=.true.,
+  eps_filter=0.1, norder_filter=5,
+  ilow_pass_oro=4, ilow_pass_xso=5,
+  lasync_io=.false., lreorder=.false., lroutine=.false., ltime_mean=.true.,
+  lmulti_layer_in=.true., lmulti_layer_lm=.true., lseaice=.FALSE.,
+  lprog_qi=.true., lprog_qr_qs=.TRUE., lprog_rho_snow=.TRUE.,
+  lforest=.true., lt_cl_corr=.false., luvcor=.true.,
+  lvertwind_ini=.true., lvertwind_bd=.true., lprog_qg=.FALSE.,
+  rxso_mask=625.0,
+  idbg_level=2,
+ /
+ &GRID_IN
+  startlat_in_tot=$istartlat,  startlon_in_tot=$istartlon,
+  pollat_in=$pollat,        pollon_in=$pollon,
+  dlat_in=0.0625,        dlon_in=0.0625,
+  ie_in_tot=$iie, je_in_tot=$ije, ke_in_tot=40,
+ /
+ &LMGRID
+  startlat_tot=$startlon, startlon_tot=$startlat,
+  pollat=$pollat, pollon=$pollon,
+  dlon=0.025, dlat=0.025,
+  ielm_tot=$ie, jelm_tot=$je, kelm_tot=50,
+  ivctype=2, vcflat=11357.0,
+  vcoord_d=22000.00,21000.00,20028.57,19085.36,18170.00,17282.14,
+           16421.43,15587.50,14780.00,13998.57,13242.86,12512.50,
+           11807.14,11126.43,10470.00, 9837.50, 9228.57, 8642.86,
+            8080.00, 7539.64, 7021.43, 6525.00, 6050.00, 5596.07,5162.86,
+            4750.00, 4357.14, 3983.93, 3630.00, 3295.00, 2978.57,2680.36,
+            2400.00, 2137.14, 1891.43, 1662.50, 1450.00, 1253.57,1072.86,
+             907.50,  757.14,  621.43,  500.00,  392.50,  298.57, 217.86,
+             150.00,   94.64,   51.43,   20.00,    0.00,
+ /
+ &DATABASE
+ /
+ &DATA
+  ie_ext=1601, je_ext=1601,
+  ylmext_lfn='lm_dx_65N30E_02800_1601x1601',
+  ylmext_cat='$extdir',
+  yinext_lfn='lfff00000000cs',
+  yinext_form_read='apix',
+  yinext_cat='$indir',
+  yin_cat='$indir',
+  yin_form_read='apix',
+  ylm_cat='$outdir',
+  yinput_type='forecast',
+  nprocess_ini = 137, nprocess_bd = 138, 
+ /
+ &PRICTR
+  igp_tot = 36, 40, 48, 44, 48, 85, 77
+  jgp_tot = 30, 94, 38, 26, 26, 96, 12
+  lchkin=.TRUE., lchkout=.TRUE.,
+  lprps=.FALSE.,
+ /
+end_input
+
+#################################################
+# jobfile-file und execution
+################################################
+rm -f batchjob YU* OUTPUT INPUT_* l* cosmo.out
+
+#batchjob-file generieren
+#echo "#$ -S /bin/ksh" >> batchjob
+#echo "#$ -cwd" >> batchjob
+#echo "#$ -N $QLabel" >> batchjob
+#echo "#$ -pe mpich $NP" >> batchjob
+#echo "#$ -V" >> batchjob
+#echo "#$ -j y" >> batchjob
+#echo "#$ -R y" >> batchjob
+#echo "#$ -q four,six,cosmo,eight">>batchjob
+#echo "#$ -M tobias.selz@lmu.de" >> batchjob
+#echo "#$ -m e" >> batchjob
+#echo "#$ -o $outdir/cosmo.out" >> batchjob
+#echo /home/opt/openmpi-1.4.1/bin/mpirun -np $NP $INTLMEXE >> batchjob
+
+#echo "rm -f INPUT_* ">> batchjob
+
+#execute
+#chmod u+x batchjob
+#qsub $outdir/batchjob
+#rm -f batchjob
+
+/home/opt/openmpi-1.6.4/bin/mpirun -np $NP $INTLMEXE 
