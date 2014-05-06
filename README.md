@@ -11,5 +11,6 @@ This repository contains:
 
 * sphinx-documentation:
   Documentation of traj_tools module
+  Further description of project in general, complete with issues, etc... READ!!!
 
 by Stephan Rasp

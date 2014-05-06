@@ -7,12 +7,10 @@ Log for traj_tools module
 
 This module is designed to do the following tasks:
 
-* Read Model Output (Trajectories), in bin format, save it as Pickle file (this step will be unnecessary once 
-new output will be in NetCDF format) --> loadbin
+* Read Model Output (Trajectories), in bin format, save it as Pickle file (this step will be unnecessary once new output will be in NetCDF format) --> loadbin
 * Filter trajectories by various criteria, e.g. ascent in certain time, or location --> filters
 * Compute statistics (not yet implemented or needed)
 * Create plots: XY plots of trajectories, histograms of ascent times, and others later --> plots
-
 * common module contains helper functions to load case specifics, etc. 
 
 
