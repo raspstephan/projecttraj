@@ -20,16 +20,10 @@ Version 1.0 - 6.5.2013
 Starting Version numbering. 
 
 
+**v1.0.1** - In progress (SR)
 
-
-
-
-
-
-
-
-
-
+Plot XY Trajectories for each starting time, seperately for convective peak and WCB ascent.
+Need a simple filter to select trajectory indices. Add linewidth as a **kwarg.
 
 
 
@@ -39,7 +33,8 @@ To Do
 
 **Major Problems**
 
-* Module Structure, Filtering trajectories for use in plots is not efficient or convenient, eg sorting by start indices
+* Module Structure, Filtering trajectories for use in plots is not efficient or convenient, eg sorting by start indices!
+* Use consistent variable names!
 * Eliminate global variables, think of good way of using case varibales!
 
 
@@ -48,3 +43,4 @@ To Do
 * Use COSMO Variable names for selecting trajectory tracers
 * Save tracers in seperate files to speed up reading process
 * Memory leak could be multiple loading of global variables in LoadCaseSpec()
+* Add simple and quick test case to verify changes to plotting routine
