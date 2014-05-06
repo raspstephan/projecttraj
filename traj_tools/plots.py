@@ -23,36 +23,43 @@ from datetime import datetime, timedelta
 #######################################
 
 
-def DrawHist(Criterion = False, Array = None, IndMatrix = None, TraceInd = None, SaveBase = False, XAxis = "Minutes"):
+def DrawHist(Criterion = 600, Array = None, IndMatrix = None, TraceInd = 7, SaveBase = False, XAxis = "Minutes"):
     """
     Draws a histogram of ascent times
     """
+    pfiles, rfiles, cfile, TrjOffset, WCBIndM, FileList, rvar, pvar, DefFile, dt = LoadCaseSpec()
     if Array == None:
-        Array = filters.MinXMatrix(FileList, TraceInd, Criterion, IndMatrix, Flat = True)
+        Array = filters.MinXMatrix(FileList, TraceInd, Criterion, IndMatrix = WCBIndM, Flat = True)
     if XAxis == "Minutes":   # Convert x axis into minutes, for dt = 5
         Array = list(np.array(Array) * 5)
     if XAxis == "Hours":   # Convert to hours
         Array = list(np.array(Array) * 5 / 60)
+        
+    # Plotting parameters
     fig = plt.figure()
     plt.hist(Array, bins = 150)
     plt.title("Total number of trajectories:" + str(len(Array)))
+    plt.xlabel(XAxis)
+    plt.ylabel("Number of trajectories")
+    plt.xlim(0,5000)
+    
+    
     if SaveBase != False:
         savename = SaveBase
         plt.savefig(savename, dpi = 400)
         
-def DrawHistStarts(Criterion, TraceInd = 7, SaveBase = False, XAxis = "Minutes"):
+def DrawHistStarts(Criterion = 600, TraceInd = 7, SaveBase = False, XAxis = "Minutes"):
     """
     Draws Histograms of all starting times
     """
     pfiles, rfiles, cfile, TrjOffset, WCBIndM, FileList, rvar, pvar, DefFile, dt = LoadCaseSpec()
     AscMatList = filters.MinXMatrix(FileList, TraceInd, Criterion, StartInd = True, IndMatrix = WCBIndM, Flat = True)
     StartList = filters.StartIndList()
-    SaveBase = 'plots/test_case_hist_'
     StartDate = datetime(2012, 10, 13, 00, 00)
     for i in range(len(AscMatList)):
         print "Plotting %i of %i" % (i+1, len(AscMatList))
-        DrawHist(Array = AscMatList[i], SaveBase = SaveBase + (StartDate + timedelta(minutes = dt * StartList[i])).isoformat("_"), XAxis = XAxis)
-        print "Plotted:", SaveBase + (StartDate + timedelta(minutes = dt * StartList[i])).isoformat("_")
+        DrawHist(Array = AscMatList[i], SaveBase = SaveBase + (StartDate + timedelta(minutes = dt * (StartList[i] + TrjOffset))).isoformat("_"), XAxis = XAxis)
+        print "Plotted:", SaveBase + (StartDate + timedelta(minutes = dt * (StartList[i] + TrjOffset))).isoformat("_")
 
 def DrawXYStarts(VarList, IndMatrix = None, RealCoord = True, SaveBase = False):
     """
