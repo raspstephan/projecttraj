@@ -1,2 +1,3 @@
 *.pyc
+/sphinx_doc/build/*
 .DS_store
