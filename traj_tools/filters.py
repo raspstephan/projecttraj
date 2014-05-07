@@ -34,7 +34,7 @@ def FilterFiles(FileList, TraceInd, Criterion, LenMax, LenMin = 0):
     for i in range(len(FileList)):
         print "Completed", i, "out of", len(FileList)
         Matrix = OpenSaveFile(FileList[i])[1]
-        IndMatrix.append(FilterMatrix(Matrix, TraceInd, LenMax, Criterion, LenMin))
+        IndMatrix.append(FilterMatrix(Matrix, TraceInd, Criterion, LenMax, LenMin))
         del Matrix    # Delete Matrix to save RAM
     return IndMatrix
 

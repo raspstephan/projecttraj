@@ -20,10 +20,17 @@ Version 1.0 - 6.5.2013
 Starting Version numbering. 
 
 
-**v1.0.1** - In progress (SR)
+**v1.0.1** - Done 7.5.
 
-Plot XY Trajectories for each starting time, seperately for convective peak and WCB ascent.
-Need a simple filter to select trajectory indices. Add linewidth as a **kwarg.
+Fixed bug in FilterFiles, wrong argument order for FilterMatrix. /
+Changed datetime naming for XYPlots, similar to Hist Plots. /
+Added linewidth as a **kwarg.
+
+**v1.0.2** - In Progress (SR)
+
+XY Plots asc time as color code.
+
+
 
 
 

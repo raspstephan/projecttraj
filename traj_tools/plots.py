@@ -61,15 +61,17 @@ def DrawHistStarts(Criterion = 600, TraceInd = 7, SaveBase = False, XAxis = "Min
         DrawHist(Array = AscMatList[i], SaveBase = SaveBase + (StartDate + timedelta(minutes = dt * (StartList[i] + TrjOffset))).isoformat("_"), XAxis = XAxis)
         print "Plotted:", SaveBase + (StartDate + timedelta(minutes = dt * (StartList[i] + TrjOffset))).isoformat("_")
 
-def DrawXYStarts(VarList, IndMatrix = None, RealCoord = True, SaveBase = False):
+def DrawXYStarts(VarList, IndMatrix = None, RealCoord = True, SaveBase = False, linewidth = 0.7):
     """
     Draws XY plots of all starting times
     """
+    pfiles, rfiles, cfile, TrjOffset, WCBIndM, FileList, rvar, pvar, DefFile, dt = LoadCaseSpec()
     StartIndList = filters.StartIndList()
     print "Total:", len(StartIndList)
+    StartDate = datetime(2012, 10, 13, 00, 00)
     for i in range(len(StartIndList)):
         print "Plotting:", i+1
-        DrawXYSingle(VarList, StartIndList[i], IndMatrix = IndMatrix, RealCoord = RealCoord, SaveBase = SaveBase)
+        DrawXYSingle(VarList, StartIndList[i], IndMatrix = IndMatrix, RealCoord = RealCoord, SaveBase = SaveBase + (StartDate + timedelta(minutes = dt * (StartIndList[i] + TrjOffset))).isoformat("_"), linewidth = linewidth)   
 
 def DrawXYInterval(VarList, StartInd, Interval, IndMatrix = None, RealCoord = True, SaveBase = False):
     """
@@ -83,7 +85,7 @@ def DrawXYInterval(VarList, StartInd, Interval, IndMatrix = None, RealCoord = Tr
         DrawXYSingle(VarList, StartInd, IndMatrix = IndMatrix, t = (i*Interval), RealCoord = RealCoord, SaveBase = SaveBase)
     
     
-def DrawXYSingle(VarList, StartInd, IndMatrix = None, t = "end", RealCoord = True, SaveBase = False):
+def DrawXYSingle(VarList, StartInd, IndMatrix = None, t = "end", RealCoord = True, SaveBase = False, linewidth = 0.7):
     """ 
     Draws single XY plots
     rvar, pvar are lists with desired variable names
@@ -91,7 +93,7 @@ def DrawXYSingle(VarList, StartInd, IndMatrix = None, t = "end", RealCoord = Tru
     Time t in hours from start of first trajectory
     """
     # Load case specifics
-    pfiles, rfiles, cfile, TrjOffset, WCBIndM, FileList, rvar, pvar, DefFile = common.LoadCaseSpec(bquiet = True)
+    pfiles, rfiles, cfile, TrjOffset, WCBIndM, FileList, rvar, pvar, DefFile, dt = common.LoadCaseSpec()
     if IndMatrix == None:
         IndMatrix = WCBIndM
     
@@ -129,9 +131,9 @@ def DrawXYSingle(VarList, StartInd, IndMatrix = None, t = "end", RealCoord = Tru
             if StartPosTmp == StartInd:
                 # Plotting
                 if t == "end":
-                    XYPlot(M[j, :, StartPosTmp:])
+                    XYPlot(M[j, :, StartPosTmp:], linewidth = linewidth)
                 else:
-                    XYPlot(M[j, :, StartPosTmp:(StartPosTmp+trjind)])
+                    XYPlot(M[j, :, StartPosTmp:(StartPosTmp+trjind)], linewidth = linewidth)
             elif StartPosTmp > StartInd:
                 break
         else: 
@@ -152,9 +154,8 @@ def DrawXYSingle(VarList, StartInd, IndMatrix = None, t = "end", RealCoord = Tru
     
     # Save Plot
     if SaveBase != False:
-        savename = SaveBase + "WCB_Test" + "_20121013_" + str(StartInd * 5 / 60 + 6).zfill(3) + "_" + "-".join(VarList) + ".png"
-        print "Saving figure as", savename
-        plt.savefig(savename, dpi = 400)
+        print "Saving figure as", SaveBase
+        plt.savefig(SaveBase, dpi = 400)
         plt.close('all')
     
     
@@ -254,7 +255,7 @@ def Contour(files, Variable, COSMOind, RealCoord = True, pollon = -165., pollat 
     del field
     
     
-def XYPlot(A):
+def XYPlot(A, linewidth = 0.7):
     """
     Plots XY Plot of one trajectory, with color as a function of p
     Helper Function for DrawXYTraj
@@ -269,7 +270,7 @@ def XYPlot(A):
         
     lc = col.LineCollection(segments, cmap=plt.get_cmap('Spectral'), norm=plt.Normalize(100, 1000), alpha = 0.8)
     lc.set_array(p)
-    lc.set_linewidth(0.7)
+    lc.set_linewidth(linewidth)
     plt.gca().add_collection(lc)
     
     

@@ -30,7 +30,7 @@ def LoadCaseSpec(CaseName="test"):
     """
     Loads Specifics for certain case
     """
-    global pfiles, rfiles, cfile, TrjOffset, WCBIndM, FileList, rvar, pvar, DefFile, dt
+    # global pfiles, rfiles, cfile, TrjOffset, WCBIndM, FileList, rvar, pvar, DefFile, dt
     if CaseName == "test":
         print "Loading Specifications for TestCase"
         SourceDir = "/home/cosmo/tobias.selz/cosmo_data/caseWCB/d4deout/"
