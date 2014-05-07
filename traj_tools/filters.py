@@ -26,6 +26,7 @@ def OpenSaveFile(FileName):
     f.close()
     return (Spec, Matrix)
 
+
 def FilterFiles(FileList, TraceInd, Criterion, LenMax, LenMin = 0):
     """
     Filter goes through all files, returns matrix
@@ -37,6 +38,7 @@ def FilterFiles(FileList, TraceInd, Criterion, LenMax, LenMin = 0):
         IndMatrix.append(FilterMatrix(Matrix, TraceInd, Criterion, LenMax, LenMin))
         del Matrix    # Delete Matrix to save RAM
     return IndMatrix
+
 
 def FilterMatrix(Matrix, TraceInd, Criterion, LenMax, LenMin = 0):
     """
@@ -98,7 +100,6 @@ def StartIndList(CaseName = "test"):
     pfiles, rfiles, cfile, TrjOffset, WCBIndM, FileList, rvar, pvar, DefFile, dt = LoadCaseSpec()
     StartIndList = list((np.unique(loadbin.LoadTrjDef(DefFile)[:,4]).astype(int)-np.unique(loadbin.LoadTrjDef(DefFile)[:,4]).astype(int)[0]) / 5)
     return StartIndList
-
 
 
 def MinXMatrix(FileList, TraceInd, Criterion, StartInd = False, IndMatrix = False, Flat = False):
