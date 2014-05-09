@@ -8,11 +8,95 @@ import cPickle
 import glob
 import struct
 import numpy as np
+import cosmo_utils
 
 
 ####################
 ### Helper Functions
 ####################
+
+
+
+
+class CaseSpecs(object):
+    """
+    Class for Case Specifics Object
+    
+    An object of this class contains all necessary information about 
+    case.
+    
+    Parameters
+    ----------
+    cosmodir : str
+      location of COSMO output files
+    trajdir : str
+      location of trajectory output files
+    
+    
+    Attributes
+    ----------
+    cosmodir : str
+      Location of COSMO output files
+    trajdir : str
+      Location of trajectory output files
+    rfiles : list
+      List of file names for regular COSMO output files
+    rvar : list
+      List of regular COSMO variable names
+    pfiles : list
+      List of file names for pressure level COSMO output files
+    pvar : list
+      List of pressure level COSMO variable names
+    cfile : str
+      Location of constants COSMO output file
+    filelist : list
+      List of saved trajectory files
+    dt : float
+      COSMO output time step
+    
+    
+    
+    """
+    
+    def __init__(self,
+                 cosmodir,
+                 trajdir):
+        
+        self.cosmodir = cosmodir
+        self.trajdir = trajdir
+        
+        self._get_attributes()
+    
+    
+    def _get_attributes(self):
+        """
+        Derive Attributes for given Case
+        """
+        
+        # This code is just for testing
+        # This has to work automatically!
+        
+        self.dt = 5.
+        rsuff = "_5m"
+        psuff = "p_5m"
+        rfiles = glob.glob(self.cosmodir + "*" + rsuff)
+        rfiles = sorted(rfiles)
+        self.rvar = ['CLCT_S', 'PMSL', 'TOT_PREC_S', 'var145_S', 'var146_S']
+        pfiles = glob.glob(self.cosmodir + "*" + psuff)
+        self.pfiles = sorted(pfiles)
+        self.pvar = ['OMEGA', 'U', 'V', 'T', 'FI']
+        self.rfiles = [x for x in rfiles if x not in pfiles]
+        self.cfile = self.cosmodir + "lfff00000000c_1h"
+        self.filelist = CreateFileArray("/home/scratch/users/stephan.rasp/traj_data/test_case_")
+        
+        
+
+
+
+
+
+
+
 
 def CreateFileArray(FileDir):
     """
