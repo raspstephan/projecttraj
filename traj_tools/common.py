@@ -8,7 +8,7 @@ import cPickle
 import glob
 import struct
 import numpy as np
-import cosmo_utils
+#import cosmo_utils
 
 
 ####################

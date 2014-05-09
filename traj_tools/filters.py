@@ -7,7 +7,7 @@ Files = all trajectories
 Matrix = one trajectory file (i.e. 1000 trajectories)
 Array = one trajectory
 """
-from common import *
+import common
 import cPickle
 import numpy as np
 import loadbin
@@ -82,6 +82,7 @@ class TrajProp(object):
         self.asct = np.array(MinXMatrix(self.filelist, 7, 600, Flat = True))
         self.vertvel = np.zeros(self.asct.shape)
         self.startt = np.array([360] * (self.asct.shape[0] / 2) + [720] * (self.asct.shape[0] / 2))
+        self.len = self.filename.shape[0]
 
         assert (self.filename.shape == self.trajid.shape == self.asct.shape == self.vertvel.shape == self.startt.shape), "Error while getting properties for class: Attribute arrays do not have same shape!"
                                
@@ -118,20 +119,26 @@ class TrajProp(object):
         
         """
         
+        mask = np.array([True] * self.len)
         
         if minasct == maxasct == minvertvel == maxvertvel == None:
             print("No filter criteria chosen, return lists for all trajectories")
-        print (self.asct >= minasct)
-        print (self.asct <= maxasct)
-        print (self.vertvel >= minvertvel)
-        print (self.vertvel <= maxvertvel)   # THIS IS THE ERROR!!!! INDIVIDUALLY USE MASKS WITH IF STATEMENTS
-        mask = (self.asct >= minasct) & (self.asct <= maxasct) & (self.vertvel >= minvertvel) & (self.vertvel <= maxvertvel)
+        
+        if not minasct == None:
+        	mask &= self.asct >= minasct
+        if not maxasct == None:
+        	mask &= self.asct <= maxasct
+        if not minvertvel == None:
+        	mask &= self.vertvel >= minvertvel
+        if not maxvertvel == None:
+        	mask &= self.vertvel <= maxvertvel
         print mask
+        
         uniqueloc = np.unique(self.filename[mask])
         idlist = []
         for i in range(len(uniqueloc)):
             locmask = self.filename == uniqueloc[i]
-            idlist.append(int(self.trajid[locmask * mask]))
+            idlist.append(int(self.trajid[locmask & mask]))
         
         
         return (uniqueloc, idlist)
