@@ -38,7 +38,7 @@ class TrajProp(object):
     ----------
     filelist : list
       List of trajectory files to be evaluated
-    filename : list
+    filename : numpy.array
       List containing the file location for each trajectory
     trajid : numpy.array
       List containing the trajectory id inside the saved file 
@@ -72,11 +72,18 @@ class TrajProp(object):
         
         # NOTE: For test purposes use Pickled files!!!
         
+        filename = []
+        trajid = []
+        for i in range(len(self.filelist)):
+            filename += [self.filelist[i]] * 1000
+            trajid += range(1000)
+        self.filename = np.array(filename)
+        self.trajid = np.array(trajid)
         self.asct = np.array(MinXMatrix(self.filelist, 7, 600, Flat = True))
         self.vertvel = np.zeros(self.asct.shape)
         self.startt = np.array([360] * (self.asct.shape[0] / 2) + [720] * (self.asct.shape[0] / 2))
 
-        assert (self.asct.shape == self.vertvel.shape == self.startt.shape), "Error while getting properties for class: Attribute arrays do not have same shape!"
+        assert (self.filename.shape == self.trajid.shape == self.asct.shape == self.vertvel.shape == self.startt.shape), "Error while getting properties for class: Attribute arrays do not have same shape!"
                                
                        
         
@@ -84,7 +91,7 @@ class TrajProp(object):
         
         
     
-    def apply_filter(self, minasct, maxasct, minvervel, maxvertvel):
+    def apply_filter(self, minasct = None, maxasct = None, minvertvel = None, maxvertvel = None):
         """
         Returns the filtered filename and trajid list.
         Minimum and maximum criteria can be applied for 
@@ -112,7 +119,23 @@ class TrajProp(object):
         """
         
         
+        if minasct == maxasct == minvertvel == maxvertvel == None:
+            print("No filter criteria chosen, return lists for all trajectories")
+        print (self.asct >= minasct)
+        print (self.asct <= maxasct)
+        print (self.vertvel >= minvertvel)
+        print (self.vertvel <= maxvertvel)   # THIS IS THE ERROR!!!! INDIVIDUALLY USE MASKS WITH IF STATEMENTS
+        mask = (self.asct >= minasct) & (self.asct <= maxasct) & (self.vertvel >= minvertvel) & (self.vertvel <= maxvertvel)
+        print mask
+        uniqueloc = np.unique(self.filename[mask])
+        idlist = []
+        for i in range(len(uniqueloc)):
+            locmask = self.filename == uniqueloc[i]
+            idlist.append(int(self.trajid[locmask * mask]))
         
+        
+        return (uniqueloc, idlist)
+            
 
 
 
