@@ -14,6 +14,12 @@ This module is designed to do the following tasks:
 * common module contains helper functions to load case specifics, etc. 
 
 
+**Important Information**
+
+Versions b (branch restruct) are aimed for usage with NetCDF files, not binary files. For binary files, use branch master!
+
+
+
 Completed Versions
 ----------------------
 
@@ -24,19 +30,23 @@ Starting Version numbering.
 
 **v1.0.1** - 7.5.
 
-| Fixed bug in FilterFiles, wrong argument order for FilterMatrix. 
-| Changed datetime naming for XYPlots, similar to Hist Plots. 
-| Added linewidth as a kwarg.
+* Fixed bug in FilterFiles, wrong argument order for FilterMatrix. 
+* Changed datetime naming for XYPlots, similar to Hist Plots. 
+* Added linewidth as a kwarg.
 
 
 
 **Created branch v1.0.b1** - 9.5.
 
-Branch "restruct".
+* Branch "restruct".
 
 **v1.0.b2** - 9.5.
 
-* Create class for case specifics. Done!
+* Created class for case specifics. Done!
+
+**v1.0.b3** - 9.5.
+
+* Created class for trajectory properties. Skeleton, not really functional yet
 
 
 Versions in Progress
@@ -45,7 +55,13 @@ Versions in Progress
 
 **v1.0.2** - In Progress (SR)
 
-XY Plots asc time as color code.
+* XY Plots asc time as color code.
+
+**v1.0.b4** - In Progress (SR)
+
+* Add filter functionality to class
+
+
 
 
 

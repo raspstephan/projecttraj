@@ -13,6 +13,110 @@ import numpy as np
 import loadbin
 
 
+class TrajProp(object):
+    """
+    Class containing relevant information for 
+    a set of trajectories.
+    
+    This class is the heart of this module. 
+    It links the raw data and the evaluation and plotting
+    functions.
+    
+    All diagnostics are also performed in a class object.
+    
+    Inside the class, arrays are numpy.arrays to make masking 
+    easier. The output type is as specified under attributes.
+    
+    
+    Parameters
+    ----------
+    filelist : list
+      List of trajectory files to be evaluated
+      
+    
+    Attributes
+    ----------
+    filelist : list
+      List of trajectory files to be evaluated
+    filename : list
+      List containing the file location for each trajectory
+    trajid : numpy.array
+      List containing the trajectory id inside the saved file 
+    startt : numpy array
+      List containing the start times in minutes
+    asct : numpy.array
+      List containing the ascent time for WCB criterium
+    vertvel : numpy.array
+      List containing the maxiumum vertical velocity 
+      
+    
+    
+    """
+    
+    def __init__(self,
+                 filelist):
+        
+        self.filelist = filelist
+        
+        self._get_prop()
+        
+    # This is for testing on GRIB files
+        
+    def _get_prop(self):
+        """
+        Obtain attributes for class.
+        This is the computationally expensive part.
+        
+        
+        """
+        
+        # NOTE: For test purposes use Pickled files!!!
+        
+        self.asct = np.array(MinXMatrix(self.filelist, 7, 600, Flat = True))
+        self.vertvel = np.zeros(self.asct.shape)
+        self.startt = np.array([360] * (self.asct.shape[0] / 2) + [720] * (self.asct.shape[0] / 2))
+
+        assert (self.asct.shape == self.vertvel.shape == self.startt.shape), "Error while getting properties for class: Attribute arrays do not have same shape!"
+                               
+                       
+        
+        
+        
+        
+    
+    def apply_filter(self, minasct, maxasct, minvervel, maxvertvel):
+        """
+        Returns the filtered filename and trajid list.
+        Minimum and maximum criteria can be applied for 
+        ascent time and vertical velocity
+        
+        Parameters
+        ----------
+        minasct : float
+          Lower end of ascent time criterion
+        maxasct : float
+          Upper end of ascent time criterion
+        minvertvel : float
+          Lower end of vertical velocity criterion
+        maxvertvel : float
+          Upper end of vertical velocity criterion
+          
+        Returns
+        -------
+        tuple
+          tuple containing one list and one list of lists:
+          1. list of unique file locations.
+          2. list of lists of trajectory IDs for each element in list 1. 
+        
+        
+        """
+        
+        
+        
+
+
+
+
 
 
 def OpenSaveFile(FileName):
