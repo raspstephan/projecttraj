@@ -96,7 +96,7 @@ class TrajProp(object):
         """
         Returns the filtered filename and trajid list.
         Minimum and maximum criteria can be applied for 
-        ascent time and vertical velocity
+        ascent time and vertical velocity.
         
         Parameters
         ----------
