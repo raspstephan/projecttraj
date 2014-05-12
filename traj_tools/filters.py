@@ -205,17 +205,94 @@ def MinXSpan(Array, Criterion):
                 b = min_tot+i
     assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
     return asc_span
+
     
+def VertVelMatrix(FileList, TraceInd, IntSpan, StartInd = False, IndMatrix = False, Flat = False):
+    """
+    Returns 2D list of fastest ascent times for given criterion
+    if Index Matrix is given, search only for indexed trajectories
+    if Flat == True, returns one long array. To be used for histograms!
+    Note: StartInd not compatible with Flat == False!!!
+    """
+    AscMatrix = []
+    if IndMatrix == False:
+        for i in range(len(FileList)):
+            if i % 10 == 0:
+                print "Going through file %i of %i" % (i,len(FileList))
+            if StartInd:
+                AscArray = [[], []]
+            else:
+                AscArray = []
+            M = OpenSaveFile(FileList[i])[1]
+            for j in range(M.shape[0]):
+                if StartInd:
+                    AscArray[1].append(StartPos(M[j])[0])
+                    AscArray[0].append(VertVel(M[j, TraceInd, :], IntSpan))
+                else:
+                    AscArray.append(VertVel(M[j, TraceInd, :], IntSpan))
+            AscMatrix.append(AscArray)
+                                
+    elif type(IndMatrix) == list:
+        for i in range(min(len(FileList), len(IndMatrix))):
+            if i % 10 == 0:
+                print "Going through file %i of %i" % (i,min(len(FileList), len(IndMatrix)))
+            if StartInd:
+                AscArray = [[], []]
+            else:
+                AscArray = []
+            M = OpenSaveFile(FileList[i])[1]
+            for j in IndMatrix[i]:
+                if StartInd:
+                    AscArray[1].append(StartPos(M[j])[0])
+                    AscArray[0].append(VertVel(M[j, TraceInd, :], IntSpan))
+                else:
+                    AscArray.append(VertVel(M[j, TraceInd, :], IntSpan))   
+            AscMatrix.append(AscArray)
+        
+    else: 
+        raise ValueError('IndMatrix type not compatible')
+    
+    if Flat == False:
+        if StartInd != False:
+            raise Exception ('Options not compatible!')
+        return AscMatrix
+    
+    elif Flat == True:
+        print "Flattening Matrix to Array"
+        if StartInd:
+            AscFlat = [[], []]
+            for i in range(len(AscMatrix)):
+                AscFlat[0] += AscMatrix[i][0]
+                AscFlat[1] += AscMatrix[i][1]
+            AscFlat[0] = np.array(AscFlat[0])
+            AscFlat[1] = np.array(AscFlat[1])
+            StartList = StartIndList()
+            nstart = len(StartList)
+            AscFlatInd = []
+            for i in range(nstart):
+                if StartList[i] in list(AscFlat[1]):
+                    AscFlatInd.append(AscFlat[0][AscFlat[1] == StartList[i]])
+            return AscFlatInd
+    
+        else:
+            AscFlat = []
+            for i in range(len(AscMatrix)):
+                AscFlat += AscMatrix[i]
+            return AscFlat
+
+
 def VertVel(Array, IntSpan):
-	"""
-	Returns the maximum vertical ascent in int span	
-	"""
-	Array = Array[Array != 0]
-	maxvel = 0
-	for i in range(Array.shape[0]):
-		#do something
-		
-	
+    """
+    Returns the maximum vertical ascent in int span	
+    """
+    Array = Array[Array != 0]
+    maxvel = 0
+    for i in range(Array.shape[0]-IntSpan):
+        tmp = (Array[i + IntSpan] - Array[i]) / IntSpan
+        maxvel = max(maxvel, tmp)
+    assert maxvel > 0, "Maximum velocity is 0 of negative"
+    return maxvel
+    
 
     
     
