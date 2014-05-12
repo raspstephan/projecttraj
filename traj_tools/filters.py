@@ -206,6 +206,17 @@ def MinXSpan(Array, Criterion):
     assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
     return asc_span
     
+def VertVel(Array, IntSpan):
+	"""
+	Returns the maximum vertical ascent in int span	
+	"""
+	Array = Array[Array != 0]
+	maxvel = 0
+	for i in range(Array.shape[0]):
+		#do something
+		
+	
+
     
     
 # End of submodule!
