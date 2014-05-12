@@ -28,8 +28,10 @@ def DrawHist(Criterion = 600, Array = None, IndMatrix = None, TraceInd = 7, Save
     Draws a histogram of ascent times
     """
     pfiles, rfiles, cfile, TrjOffset, WCBIndM, FileList, rvar, pvar, DefFile, dt = LoadCaseSpec()
+    if IndMatrix == None:
+        IndMatrix = WCBIndM
     if Array == None:
-        Array = filters.MinXMatrix(FileList, TraceInd, Criterion, IndMatrix = WCBIndM, Flat = True)
+        Array = filters.MinXMatrix(FileList, TraceInd, Criterion, IndMatrix = IndMatrix, Flat = True)
     if XAxis == "Minutes":   # Convert x axis into minutes, for dt = 5
         Array = list(np.array(Array) * 5)
     if XAxis == "Hours":   # Convert to hours
@@ -41,7 +43,7 @@ def DrawHist(Criterion = 600, Array = None, IndMatrix = None, TraceInd = 7, Save
     plt.title("Total number of trajectories:" + str(len(Array)))
     plt.xlabel(XAxis)
     plt.ylabel("Number of trajectories")
-    plt.xlim(0,5000)
+    plt.xlim(0,2880)
     
     
     if SaveBase != False:

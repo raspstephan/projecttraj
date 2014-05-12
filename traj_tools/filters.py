@@ -207,7 +207,7 @@ def MinXSpan(Array, Criterion):
     return asc_span
 
     
-def VertVelMatrix(FileList, TraceInd, IntSpan, StartInd = False, IndMatrix = False, Flat = False):
+def VertVelMatrix(FileList, TraceInd, IntSpan, StartInd = False, IndMatrix = False, Flat = False, mode = 1):
     """
     Returns 2D list of fastest ascent times for given criterion
     if Index Matrix is given, search only for indexed trajectories
@@ -227,9 +227,9 @@ def VertVelMatrix(FileList, TraceInd, IntSpan, StartInd = False, IndMatrix = Fal
             for j in range(M.shape[0]):
                 if StartInd:
                     AscArray[1].append(StartPos(M[j])[0])
-                    AscArray[0].append(VertVel(M[j, TraceInd, :], IntSpan))
+                    AscArray[0].append(VertVel(M[j, TraceInd, :], IntSpan, mode = mode))
                 else:
-                    AscArray.append(VertVel(M[j, TraceInd, :], IntSpan))
+                    AscArray.append(VertVel(M[j, TraceInd, :], IntSpan,mode =mode))
             AscMatrix.append(AscArray)
                                 
     elif type(IndMatrix) == list:
@@ -244,9 +244,9 @@ def VertVelMatrix(FileList, TraceInd, IntSpan, StartInd = False, IndMatrix = Fal
             for j in IndMatrix[i]:
                 if StartInd:
                     AscArray[1].append(StartPos(M[j])[0])
-                    AscArray[0].append(VertVel(M[j, TraceInd, :], IntSpan))
+                    AscArray[0].append(VertVel(M[j, TraceInd, :], IntSpan, mode = mode))
                 else:
-                    AscArray.append(VertVel(M[j, TraceInd, :], IntSpan))   
+                    AscArray.append(VertVel(M[j, TraceInd, :], IntSpan, mode = mode))   
             AscMatrix.append(AscArray)
         
     else: 
@@ -281,17 +281,37 @@ def VertVelMatrix(FileList, TraceInd, IntSpan, StartInd = False, IndMatrix = Fal
             return AscFlat
 
 
-def VertVel(Array, IntSpan):
+def VertVel(Array, IntSpan, mode = 1):
     """
     Returns the maximum vertical ascent in int span	
     """
     Array = Array[Array != 0]
     maxvel = 0
-    for i in range(Array.shape[0]-IntSpan):
-        tmp = (Array[i + IntSpan] - Array[i]) / IntSpan
-        maxvel = max(maxvel, tmp)
-    assert maxvel > 0, "Maximum velocity is 0 of negative"
+    if mode ==2:
+        for i in range(Array.shape[0]):
+            maxvel = max(maxvel, Array[i])
+    elif mode == 3:
+        mn = np.amin(Array)
+        mni = np.argmin(Array)
+        mx = np.amax(Array)
+        mxi = np.argmax(Array)
+        slope = (mx - mn) / Array.shape[0]
+        for i in range(Array.shape[0]):
+            maxvel += abs(Array[i] - (i * slope))
+    elif mode ==4:
+        for i in range(Array.shape[0]-IntSpan):
+            tmp = np.amax(Array[i:i+IntSpan]) - Array[i]
+            #print np.amax(Array[i:i+IntSpan]), Array[i], tmp
+            maxvel = max(maxvel, tmp)
+                          
+            
+    elif mode == 1:
+        for i in range(Array.shape[0]-IntSpan):
+            tmp = (Array[i + IntSpan] - Array[i]) / IntSpan
+            maxvel = max(maxvel, tmp)
+    #assert maxvel > 0, "Maximum velocity is 0 of negative"
     return maxvel
+
     
 
     
