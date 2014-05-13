@@ -84,7 +84,8 @@ class TrajProp(object):
         self.startt = np.array([360] * (self.asct.shape[0] / 2) + [720] * (self.asct.shape[0] / 2))
         self.len = self.filename.shape[0]
 
-        assert (self.filename.shape == self.trajid.shape == self.asct.shape == self.vertvel.shape == self.startt.shape), "Error while getting properties for class: Attribute arrays do not have same shape!"
+        assert (self.filename.shape == self.trajid.shape == self.asct.shape == self.vertvel.shape == self.startt.shape), \
+                    "Error while getting properties for class: Attribute arrays do not have same shape!"
                                
                        
         
