@@ -165,7 +165,34 @@ def DrawXYSingle(VarList, StartInd, IndMatrix = None, t = "end", RealCoord = Tru
     
     
     
-    
+def DrawTP(FileList, WCBIndM, ConvM, NConvM, SaveInd):
+    """
+    Draws t-p plots of 10 trajectories with color coding
+    """
+    nplots = int(np.floor(len(WCBIndM[SaveInd])/10))
+    print("Plotting:", nplots)
+    M = filters.OpenSaveFile(FileList[SaveInd])[1]
+    t = np.array(range(M.shape[2]))
+    linestyle = ['_', '-.', '--', ':', '_', '-.', '--', ':', '_', '-.']
+    for i in range(nplots):
+        fig, ax = plt.subplots()
+        n = 0
+        for j in WCBIndM[SaveInd][(i*10):((i+1)*10)]:
+            color = "green"
+            if j in ConvM[SaveInd]:
+                color = "red"
+            elif j in NConvM[SaveInd]:
+                color = "blue"
+            #print color
+            #ax.plot(t[M[j, 7, :] != 0], M[j,7, :][M[j, 7, :] != 0], linestyle[n],label = (str(SaveInd)+str(j)), c = color)
+            ax.plot(t[M[j, 7, :] != 0], M[j,7, :][M[j, 7, :] != 0], label = (str(SaveInd)+str(j)), c = color)
+            n += 1
+        ax.invert_yaxis()
+        ax.legend()
+        ax.grid(True)
+        plt.savefig("/usr/users/stephan.rasp/Dropbox/figures/tp_test/"+str(SaveInd)+str(j))
+        plt.close("all")
+        
     
 
 
