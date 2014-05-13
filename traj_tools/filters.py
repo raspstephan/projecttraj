@@ -87,12 +87,7 @@ class TrajProp(object):
         assert (self.filename.shape == self.trajid.shape == self.asct.shape == self.vertvel.shape == self.startt.shape), \
                     "Error while getting properties for class: Attribute arrays do not have same shape!"
                                
-                       
-        
-        
-        
-        
-    
+
     def apply_filter(self, minasct = None, maxasct = None, minvertvel = None, maxvertvel = None):
         """
         Returns the filtered filename and trajid list.
@@ -120,19 +115,19 @@ class TrajProp(object):
         
         """
         
-        mask = np.array([True] * self.len)
+        mask = np.array([True] * self.len)   # Initialize mask 
         
         if minasct == maxasct == minvertvel == maxvertvel == None:
             print("No filter criteria chosen, return lists for all trajectories")
         
         if not minasct == None:
-        	mask &= self.asct >= minasct
+            mask &= self.asct >= minasct
         if not maxasct == None:
-        	mask &= self.asct <= maxasct
+            mask &= self.asct <= maxasct
         if not minvertvel == None:
-        	mask &= self.vertvel >= minvertvel
+            mask &= self.vertvel >= minvertvel
         if not maxvertvel == None:
-        	mask &= self.vertvel <= maxvertvel
+            mask &= self.vertvel <= maxvertvel
         print mask
         
         uniqueloc = np.unique(self.filename[mask])
