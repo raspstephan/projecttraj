@@ -54,6 +54,41 @@ def FilterMatrix(Matrix, TraceInd, Criterion, LenMax, LenMin = 0):
             IndList.append(i)
     return IndList
 
+def FilterStartEnd(FileList, TraceInd, Criterion, LenMax):
+    """
+    Filter plus start and end for ascent
+    """
+    IndMatrix = []
+    StartMatrix = []
+    EndMatrix = []
+    for i in range(len(FileList)):
+        print "Completed", i, "out of", len(FileList)
+        Matrix = OpenSaveFile(FileList[i])[1]
+        IndMatrix.append(StartEndM(Matrix, TraceInd, Criterion, LenMax)[0])
+        StartMatrix.append(StartEndM(Matrix, TraceInd, Criterion, LenMax)[1])
+        EndMatrix.append(StartEndM(Matrix, TraceInd, Criterion, LenMax)[2])
+        del Matrix
+    return (IndMatrix, StartMatrix, EndMatrix)
+
+
+def StartEndM(Matrix, TraceInd, Criterion, LenMax):
+    """
+    for function above
+    """
+    IndList = []
+    StartList = []
+    EndList = []
+    for i in range(len(Matrix[:, 0, 0])):
+        if np.average(Matrix[i, TraceInd, :]) == 0:    # Checks for all Zero arrays"
+            print "Given array is all zeros, break!"
+            break
+        else:
+            Span, Start, End = MinXSpan(Matrix[i, TraceInd, :], Criterion, mode = 2)
+            if Span <= LenMax:
+                IndList.append(i)
+                StartList.append(Start)
+                EndList.append(End)
+    return (IndList, StartList, EndList)
 
 def IndData(FileList, IndList, MaxFile="default"):
     """
@@ -176,14 +211,18 @@ def MinXMatrix(FileList, TraceInd, Criterion, StartInd = False, IndMatrix = Fals
             return AscFlat
     
     
-def MinXSpan(Array, Criterion):
+def MinXSpan(Array, Criterion, mode = 1):
     """
     Returns the min x span for required criterion
     Automatically converts min to max
     """
+    a = np.nan
+    b = np.nan
     Array = Array[Array != 0]   # Removes Zero values
     if np.amax(Array) - np.amin(Array) < Criterion:
         asc_span = np.nan
+        a = np.nan
+        b = np.nan
     else:
         #import pdb; pdb.set_trace()
         min_tot = Array.argmin()
@@ -197,6 +236,7 @@ def MinXSpan(Array, Criterion):
             where = np.where(Array > (Array[min_tot+i] + Criterion))[0]
             where = where[where > min_tot]
             if where.shape[0] == 0:
+                
                 break
             asc_ind = where[0]   
             if (asc_ind - (min_tot+i)) < asc_span:
@@ -204,7 +244,10 @@ def MinXSpan(Array, Criterion):
                 a = asc_ind
                 b = min_tot+i
     assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
-    return asc_span
+    if mode == 1:
+        return asc_span
+    elif mode == 2:
+        return (asc_span, a, b)
 
     
 def VertVelMatrix(FileList, TraceInd, IntSpan, StartInd = False, IndMatrix = False, Flat = False, mode = 1):

@@ -99,7 +99,7 @@ def DrawXYInterval(VarList, StartInd, Interval, IndMatrix = None, RealCoord = Tr
         DrawXYSingle(VarList, StartInd, IndMatrix = IndMatrix, t = (i*Interval), RealCoord = RealCoord, SaveBase = SaveBase)
     
     
-def DrawXYSingle(VarList, StartInd, IndMatrix = None, t = "end", RealCoord = True, SaveBase = False, linewidth = 0.7):
+def DrawXYSingle(VarList, StartInd, IndMatrix = None, t = "end", RealCoord = True, SaveBase = False, linewidth = 0.7, only = False, StartM = None, EndM = None):
     """ 
     Draws single XY plots
     rvar, pvar are lists with desired variable names
@@ -139,13 +139,17 @@ def DrawXYSingle(VarList, StartInd, IndMatrix = None, t = "end", RealCoord = Tru
         if RealCoord:
             M[:, 0, :] += (180 - 165)
             M[:, 1, :] += (90 - 35)
-            
+        n = 0
         for j in IndMatrix[i]:
             StartPosTmp = filters.StartPos(M[j])[0]
             if StartPosTmp == StartInd:
                 # Plotting
                 if t == "end":
-                    XYPlot(M[j, :, StartPosTmp:], linewidth = linewidth)
+                    if only:
+                        XYPlot(M[j, :, StartM[i][n]:EndM[i][n]], linewidth = linewidth)
+                        n += 1
+                    else:
+                        XYPlot(M[j, :, StartPosTmp:], linewidth = linewidth)
                 else:
                     XYPlot(M[j, :, StartPosTmp:(StartPosTmp+trjind)], linewidth = linewidth)
             elif StartPosTmp > StartInd:
