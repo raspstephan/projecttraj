@@ -8,7 +8,15 @@ import common
 import filters
 import numpy as np
 import matplotlib
-matplotlib.use('Qt4Agg')
+import os
+
+try:
+  os.environ["DISPLAY"]
+  print "cosmo_utils.plot: X-Server detected, using tkagg backend for plotting"
+except KeyError:
+  if matplotlib.get_backend() in matplotlib.rcsetup.interactive_bk:
+    matplotlib.use("Agg") # interface "Agg" can plot without x-server connection
+  print "cosmo_utils.plot: no X-Server detected, using agg backend for plotting"
 import matplotlib.pyplot as plt
 import matplotlib.colors as clr
 import matplotlib.collections as col
@@ -35,20 +43,21 @@ def DrawHist(Criterion = 600, Array = None, IndMatrix = None, TraceInd = 7, Save
     if XAxis == "Minutes":   # Convert x axis into minutes, for dt = 5
         Array = list(np.array(Array) * 5)
     if XAxis == "Hours":   # Convert to hours
-        Array = list(np.array(Array) * 5 / 60)
+        Array = list(np.array(Array) * 5. / 60.)
         
     # Plotting parameters
     fig = plt.figure()
     plt.hist(Array, bins = 150)
     plt.title("Total number of trajectories:" + str(len(Array)))
-    plt.xlabel(XAxis)
+    plt.xlabel("Ascent time [" + XAxis + "]")
     plt.ylabel("Number of trajectories")
-    plt.xlim(0,2880)
+    plt.xlim(0,48)
     
     
     if SaveBase != False:
         savename = SaveBase
         plt.savefig(savename, dpi = 400)
+        plt.close('all')
 
         
 def DrawHistStarts(Criterion = 600, TraceInd = 7, SaveBase = False, XAxis = "Minutes"):
@@ -165,7 +174,7 @@ def DrawXYSingle(VarList, StartInd, IndMatrix = None, t = "end", RealCoord = Tru
     
     
     
-def DrawTP(FileList, WCBIndM, ConvM, NConvM, SaveInd):
+def DrawTP(FileList, WCBIndM, ConvM, NConvM, SaveInd, XAxis = "Minutes"):
     """
     Draws t-p plots of 10 trajectories with color coding
     """
@@ -173,22 +182,29 @@ def DrawTP(FileList, WCBIndM, ConvM, NConvM, SaveInd):
     print("Plotting:", nplots)
     M = filters.OpenSaveFile(FileList[SaveInd])[1]
     t = np.array(range(M.shape[2]))
+    if XAxis == "Minutes":
+        t = t * 5.
+    if XAxis == "Hours":
+        t = t * 5. / 60.
     linestyle = ['_', '-.', '--', ':', '_', '-.', '--', ':', '_', '-.']
     for i in range(nplots):
         fig, ax = plt.subplots()
         n = 0
+        print i
         for j in WCBIndM[SaveInd][(i*10):((i+1)*10)]:
-            color = "green"
+            color = "blue"
             if j in ConvM[SaveInd]:
                 color = "red"
-            elif j in NConvM[SaveInd]:
-                color = "blue"
+            #elif j in NConvM[SaveInd]:
+                #color = "blue"
             #print color
             #ax.plot(t[M[j, 7, :] != 0], M[j,7, :][M[j, 7, :] != 0], linestyle[n],label = (str(SaveInd)+str(j)), c = color)
             ax.plot(t[M[j, 7, :] != 0], M[j,7, :][M[j, 7, :] != 0], label = (str(SaveInd)+str(j)), c = color)
             n += 1
         ax.invert_yaxis()
-        ax.legend()
+        #ax.legend()
+        plt.xlabel("Time from trajectory start [h]")
+        plt.ylabel("[p]")
         ax.grid(True)
         plt.savefig("/usr/users/stephan.rasp/Dropbox/figures/tp_test/"+str(SaveInd)+str(j))
         plt.close("all")
