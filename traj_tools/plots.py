@@ -146,7 +146,10 @@ def DrawXYSingle(VarList, StartInd, IndMatrix = None, t = "end", RealCoord = Tru
                 # Plotting
                 if t == "end":
                     if only:
-                        XYPlot(M[j, :, StartM[i][n]:EndM[i][n]], linewidth = linewidth)
+                        #print StartM[i][n], EndM[i][n], j
+                        if type(StartM[i][n]) != float:
+                            #print StartM[i][n], EndM[i][n], j, n
+                            XYPlot(M[j, :, StartM[i][n]:EndM[i][n]], linewidth = linewidth)
                         n += 1
                     else:
                         XYPlot(M[j, :, StartPosTmp:], linewidth = linewidth)
@@ -178,7 +181,7 @@ def DrawXYSingle(VarList, StartInd, IndMatrix = None, t = "end", RealCoord = Tru
     
     
     
-def DrawTP(FileList, WCBIndM, ConvM, NConvM, SaveInd, XAxis = "Minutes"):
+def DrawTP(FileList, WCBIndM, ConvM, NConvM, SaveInd, XAxis = "Minutes", only = False, StartM = None, EndM = None):
     """
     Draws t-p plots of 10 trajectories with color coding
     """
@@ -203,14 +206,17 @@ def DrawTP(FileList, WCBIndM, ConvM, NConvM, SaveInd, XAxis = "Minutes"):
                 #color = "blue"
             #print color
             #ax.plot(t[M[j, 7, :] != 0], M[j,7, :][M[j, 7, :] != 0], linestyle[n],label = (str(SaveInd)+str(j)), c = color)
-            ax.plot(t[M[j, 7, :] != 0], M[j,7, :][M[j, 7, :] != 0], label = (str(SaveInd)+str(j)), c = color)
+            if only:
+                ax.plot(t[M[j, 7, StartM[SaveInd][n]:EndM[SaveInd][n]] != 0], M[j,7, StartM[SaveInd][n]:EndM[SaveInd][n]][M[j, 7, StartM[SaveInd][n]:EndM[SaveInd][n]] != 0], label = (str(SaveInd)+str(j)), c = color)
+            else:
+                ax.plot(t[M[j, 7, :] != 0], M[j,7, :][M[j, 7, :] != 0], label = (str(SaveInd)+str(j)), c = color)
             n += 1
         ax.invert_yaxis()
         #ax.legend()
         plt.xlabel("Time from trajectory start [h]")
         plt.ylabel("[p]")
         ax.grid(True)
-        plt.savefig("/usr/users/stephan.rasp/Dropbox/figures/tp_test/"+str(SaveInd)+str(j))
+        plt.savefig("/usr/users/stephan.rasp/Dropbox/figures/tp_test/slice"+str(SaveInd)+str(j))
         plt.close("all")
         
     

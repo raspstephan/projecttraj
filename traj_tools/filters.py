@@ -54,7 +54,7 @@ def FilterMatrix(Matrix, TraceInd, Criterion, LenMax, LenMin = 0):
             IndList.append(i)
     return IndList
 
-def FilterStartEnd(FileList, TraceInd, Criterion, LenMax):
+def FilterStartEnd(FileList, TraceInd, Criterion, LenMax, LenMin = 0):
     """
     Filter plus start and end for ascent
     """
@@ -64,14 +64,14 @@ def FilterStartEnd(FileList, TraceInd, Criterion, LenMax):
     for i in range(len(FileList)):
         print "Completed", i, "out of", len(FileList)
         Matrix = OpenSaveFile(FileList[i])[1]
-        IndMatrix.append(StartEndM(Matrix, TraceInd, Criterion, LenMax)[0])
-        StartMatrix.append(StartEndM(Matrix, TraceInd, Criterion, LenMax)[1])
-        EndMatrix.append(StartEndM(Matrix, TraceInd, Criterion, LenMax)[2])
+        IndMatrix.append(StartEndM(Matrix, TraceInd, Criterion, LenMax, LenMin = 0)[0])
+        StartMatrix.append(StartEndM(Matrix, TraceInd, Criterion, LenMax, LenMin = 0)[1])
+        EndMatrix.append(StartEndM(Matrix, TraceInd, Criterion, LenMax, LenMin = 0)[2])
         del Matrix
     return (IndMatrix, StartMatrix, EndMatrix)
 
 
-def StartEndM(Matrix, TraceInd, Criterion, LenMax):
+def StartEndM(Matrix, TraceInd, Criterion, LenMax, LenMin = 0):
     """
     for function above
     """
@@ -84,7 +84,7 @@ def StartEndM(Matrix, TraceInd, Criterion, LenMax):
             break
         else:
             Span, Start, End = MinXSpan(Matrix[i, TraceInd, :], Criterion, mode = 2)
-            if Span <= LenMax:
+            if Span <= LenMax and Span >= LenMin:
                 IndList.append(i)
                 StartList.append(Start)
                 EndList.append(End)
@@ -247,7 +247,8 @@ def MinXSpan(Array, Criterion, mode = 1):
     if mode == 1:
         return asc_span
     elif mode == 2:
-        return (asc_span, a, b)
+        #print a, Array.shape[0] ,Array.shape[0] - a
+        return (asc_span, Array.shape[0] - a, Array.shape[0] - b)
 
     
 def VertVelMatrix(FileList, TraceInd, IntSpan, StartInd = False, IndMatrix = False, Flat = False, mode = 1):
