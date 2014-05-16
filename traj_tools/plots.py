@@ -74,7 +74,7 @@ def DrawHistStarts(Criterion = 600, TraceInd = 7, SaveBase = False, XAxis = "Min
         print "Plotted:", SaveBase + (StartDate + timedelta(minutes = dt * (StartList[i] + TrjOffset))).isoformat("_")
 
 
-def DrawXYStarts(VarList, IndMatrix = None, RealCoord = True, SaveBase = False, linewidth = 0.7):
+def DrawXYStarts(VarList, IndMatrix = None, RealCoord = True, SaveBase = False, linewidth = 0.7, only = False, StartM = None, EndM = None):
     """
     Draws XY plots of all starting times
     """
@@ -84,7 +84,8 @@ def DrawXYStarts(VarList, IndMatrix = None, RealCoord = True, SaveBase = False, 
     StartDate = datetime(2012, 10, 13, 00, 00)
     for i in range(len(StartIndList)):
         print "Plotting:", i+1
-        DrawXYSingle(VarList, StartIndList[i], IndMatrix = IndMatrix, RealCoord = RealCoord, SaveBase = SaveBase + (StartDate + timedelta(minutes = dt * (StartIndList[i] + TrjOffset))).isoformat("_"), linewidth = linewidth)   
+        DrawXYSingle(VarList, StartIndList[i], IndMatrix = IndMatrix, RealCoord = RealCoord, SaveBase = SaveBase + (StartDate + timedelta(minutes = dt * (StartIndList[i] + TrjOffset))).isoformat("_"), 
+                     linewidth = linewidth, only = only, StartM = StartM, EndM = EndM)   
 
 
 def DrawXYInterval(VarList, StartInd, Interval, IndMatrix = None, RealCoord = True, SaveBase = False):

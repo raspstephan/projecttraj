@@ -218,6 +218,7 @@ def MinXSpan(Array, Criterion, mode = 1):
     """
     a = np.nan
     b = np.nan
+    off = np.where(Array != 0)[0][0]
     Array = Array[Array != 0]   # Removes Zero values
     if np.amax(Array) - np.amin(Array) < Criterion:
         asc_span = np.nan
@@ -248,7 +249,7 @@ def MinXSpan(Array, Criterion, mode = 1):
         return asc_span
     elif mode == 2:
         #print a, Array.shape[0] ,Array.shape[0] - a
-        return (asc_span, Array.shape[0] - a, Array.shape[0] - b)
+        return (asc_span, Array.shape[0] - a + off, Array.shape[0] - b + off)
 
     
 def VertVelMatrix(FileList, TraceInd, IntSpan, StartInd = False, IndMatrix = False, Flat = False, mode = 1):
