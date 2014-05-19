@@ -90,9 +90,9 @@ class TrajProp(object):
                 self.data[2].shape[0] == nrtot), \
                     "Error while initializing properties for class: Attribute arrays do not have same shape!"
                                
-    def new_filter(name, function, *args):
+    def new_filter_function(name, function, *args):
         """
-        Add a new filter to data list. 
+        Add a new filter to data list from custom function. 
         
         
         Parameters
@@ -115,10 +115,12 @@ class TrajProp(object):
         
         if name == str:
             self.inddict[name] = len(self.data)
-        elif name == tuple:
+        elif name == tuple or name == list:
             self.inddict.update(dict(zip(name), 
                                      range(len(self.data), 
                                            len(self.data) + len(name))))
+        else:
+            raise TypeError('Invalid input type for name')
         
         # Evaluate variables to be extracted from NetCDF files
         
@@ -136,13 +138,26 @@ class TrajProp(object):
                 datam.append(rootgrp.variables[filevars[n]][:, :])
             
             for j in range(len(rootgrp.dimensions['id'])):
-                pass
-                
+                # function call, return output
+                if name == str:
+                    pass
+    
+    
+    def new_filter_array(name, array):
+        pass 
+    
+    
+    def new_filter_asc(pspan, tracer = 'P'):
+        """
+        Adds a new filter to class instance. 
+        """
+        
+        # Add to dic and data * 3
+       
     
     
     
-    def apply_filter(self, minasct = None, maxasct = None, minvertvel = None, 
-                     maxvertvel = None):
+    def apply_filter(self, FilterTUPLE):
         """
         Returns the filtered filename and trajid list.
         Minimum and maximum criteria can be applied for 
