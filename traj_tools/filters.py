@@ -144,13 +144,41 @@ class TrajProp(object):
     
     
     def new_filter_array(name, array):
-        pass 
+        """
+        Add one or more arrays to data. 
+        If more than one array is added, names and data arrays must
+        be in tuples in the right order.
+        
+        Parameters
+        ----------
+        name : string or tuple
+          name(s) of the array(s) to be added
+        array : np.array of tuple
+          data array(s) to be added         
+        
+        """
+        
+        if type(name) == str:
+            self.inddict[name] = len(self.data)
+            self.data.append(array)
+            
+        elif type(name) == tuple or type(name) == list:
+            self.inddict.update(dict(zip(name), 
+                                     range(len(self.data), 
+                                           len(self.data) + len(name))))
+            self.data.extend(array)
+        
     
     
     def new_filter_asc(pspan, tracer = 'P'):
         """
         Adds a new filter to class instance. 
         """
+        
+        mint = np.zeros(self.data[0].shape[0])
+        ascstart = np.zeros(self.data[0].shape[0])
+        ascend = np.zeros(self.data[0].shape[0])
+        
         
         # Add to dic and data * 3
        
