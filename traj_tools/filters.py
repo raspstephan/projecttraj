@@ -11,6 +11,7 @@ import common
 import cPickle
 import numpy as np
 import loadbin
+import netCDF4 as nc
 
 
 class TrajProp(object):
@@ -30,65 +31,118 @@ class TrajProp(object):
     
     Parameters
     ----------
-    filelist : list
-      List of trajectory files to be evaluated
+    CaseSpecs : Class object
+      Class object containing constant specifications of case
       
     
     Attributes
     ----------
-    filelist : list
-      List of trajectory files to be evaluated
-    filename : numpy.array
-      List containing the file location for each trajectory
-    trajid : numpy.array
-      List containing the trajectory id inside the saved file 
-    startt : numpy array
-      List containing the start times in minutes
-    asct : numpy.array
-      List containing the ascent time for WCB criterium
-    vertvel : numpy.array
-      List containing the maxiumum vertical velocity 
-      
-    
-    
+    CaseSpecs : Class object
+      Class object containing constant specifications of case
+    inddict : dictionary
+      Dictionary connecting variable name to index in data list
+    data : list
+      List of numpy.arrays with information about each trajectory
+
     """
     
     def __init__(self,
-                 filelist):
+                 CaseSpecs):
         
-        self.filelist = filelist
+        self.CaseSpecs = CaseSpecs
         
-        self._get_prop()
+        self._init_prop()
         
-    # This is for testing on GRIB files
         
-    def _get_prop(self):
+    def _init_prop(self):
         """
-        Obtain attributes for class.
-        This is the computationally expensive part.
+        Initialize dictionary and list of numpy arrays with fixed properties:
         
+        * filename: location of file containing respective trajectory
+        * trjind: index of trajectory in file
+        * startt: starting time of trajectory after model start
         
         """
         
-        # NOTE: For test purposes use Pickled files!!!
+        self.inddict = dict(filename = 0, trjind = 1, startt = 2)
+        self.data = [[], [], []]
         
-        filename = []
-        trajid = []
-        for i in range(len(self.filelist)):
-            filename += [self.filelist[i]] * 1000
-            trajid += range(1000)
-        self.filename = np.array(filename)
-        self.trajid = np.array(trajid)
-        self.asct = np.array(MinXMatrix(self.filelist, 7, 600, Flat = True))
-        self.vertvel = np.zeros(self.asct.shape)
-        self.startt = np.array([360] * (self.asct.shape[0] / 2) + [720] * (self.asct.shape[0] / 2))
-        self.len = self.filename.shape[0]
+        # Looping over all files, initializing lists instead of np.arrays
+        # in order to dynamically add files
+        
+        nrtot = 0
+        
+        for i in range(len(CaseSpecs.filelist)):
+            rootgrp = nc.Dataset(CaseSpecs.filelist[i], 'r')
+            nrtrj = len(rootgrp.dimensions['id'])
+            tmpt = int(CaseSpecs.filelist[i].split('-')[1].lstrip('t'))
+            self.data[0].extend([CaseSpecs.filelist[i]] * nrtrj)
+            self.data[1].extend(range(nr.trj))
+            self.data[2].extend([tmpt] * nrtrj)
+            nrtot += nrtrj
+            
+        # Convert lists to np.array
+        
+        for i in range(len(self.data)):
+            self.data[i] = np.array(self.data[i])
 
-        assert (self.filename.shape == self.trajid.shape == self.asct.shape == self.vertvel.shape == self.startt.shape), \
-                    "Error while getting properties for class: Attribute arrays do not have same shape!"
+        assert (self.data[0].shape[0] == self.data[1].shape[0] == 
+                self.data[2].shape[0] == nrtot), \
+                    "Error while initializing properties for class: Attribute arrays do not have same shape!"
                                
-
-    def apply_filter(self, minasct = None, maxasct = None, minvertvel = None, maxvertvel = None):
+    def new_filter(name, function, *args):
+        """
+        Add a new filter to data list. 
+        
+        
+        Parameters
+        ----------
+        name : string or tuple
+          Name of the filter. To be used in inddict.
+          If more than one return value in function, use tuple of names
+          in correct order.
+        function : function
+          The Python function to be applied as a filter.
+          Has to return a single value for one trajectory array.
+          If function returns more than one single value, suffixes have to 
+          be specified. The arguments for the function have to be given 
+          in *args
+          
+        ADD EXAMPLE!!!
+        """
+        
+        # Add entries to dictionary
+        
+        if name == str:
+            self.inddict[name] = len(self.data)
+        elif name == tuple:
+            self.inddict.update(dict(zip(name), 
+                                     range(len(self.data), 
+                                           len(self.data) + len(name))))
+        
+        # Evaluate variables to be extracted from NetCDF files
+        
+        filevars = []
+        for item in args:
+            if item in nc.Dataset(CaseSpecs.filelist[i], 'r').variables:
+                filevars.append(item)
+        print('Following variables are used:', filevars)
+        assert len(filevars) > 0, "No correct variables chosen"
+        
+        datam = []
+        for i in range(len(CaseSpecs.filelist)):
+            rootgrp = nc.Dataset(CaseSpecs.filelist[i], 'r')
+            for n in range(len(filevars)):
+                datam.append(rootgrp.variables[filevars[n]][:, :])
+            
+            for j in range(len(rootgrp.dimensions['id'])):
+                pass
+                
+    
+    
+    
+    def apply_filter(self, minasct = None, maxasct = None, minvertvel = None, 
+                     maxvertvel = None):
         """
         Returns the filtered filename and trajid list.
         Minimum and maximum criteria can be applied for 
@@ -118,7 +172,8 @@ class TrajProp(object):
         mask = np.array([True] * self.len)   # Initialize mask 
         
         if minasct == maxasct == minvertvel == maxvertvel == None:
-            print("No filter criteria chosen, return lists for all trajectories")
+            print("No filter criteria chosen," 
+                  "return lists for all trajectories")
         
         if not minasct == None:
             mask &= self.asct >= minasct
