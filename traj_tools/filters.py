@@ -95,7 +95,7 @@ class TrajProp(object):
                 self.trajid.shape[0] == nrtot), \
                 "Error while initializing properties for class: Attribute arrays do not have same shape!"
                                
-
+    
     
     def new_prop_array(self, name, array):
         """
@@ -159,8 +159,7 @@ class TrajProp(object):
                 'Array shapes do not match. Look for error in source code.'
         self.data.extend(ascdata)
     
-    
-    
+       
     def create_filter(self, name, filttup):
         """
         Adds a filter to filtlist. Adds name to filtdict.
@@ -204,18 +203,34 @@ class TrajProp(object):
         self.filtlist.append(mask)
         
         
+    def _mask_conv(self, mask):
+        """
+        Converts mask to iterable lists. To be used in plotting functions, etc.
+        
+        Paremeters
+        ----------
+        mask : np.array
+          Mask to be converted
+        
+        Returns
+        -------
+        uniqueloc : list
+          List of all unique save locations.
+          Use as first iterator.
+        idlist : list
+          List of list. Trajectory IDs for every element in 
+          uniquelist.
+          Use as second iterator.
+          
+        """
         
         uniqueloc = np.unique(self.filename[mask])
         idlist = []
         for i in range(len(uniqueloc)):
             locmask = self.filename == uniqueloc[i]
             idlist.append(int(self.trajid[locmask & mask]))
-        
-        
-        return (uniqueloc, idlist)
-            
 
-
+        return uniqueloc, idlist
 
 
 def minasct(filelist, yspan, tracer):
