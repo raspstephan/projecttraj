@@ -64,86 +64,40 @@ class TrajProp(object):
         
         """
         
-        self.inddict = dict(filename = 0, trjind = 1, startt = 2)
-        self.data = [[], [], []]
+        self.inddict = dict(startt = 0)
+        self.filename = []
+        self.trajid = []
+        self.data = [[]]
+        self.filtdict = dict()
+        self.filtlist = []
         
         # Looping over all files, initializing lists instead of np.arrays
         # in order to dynamically add files
         
-        nrtot = 0
+        nrtot = 0   # Counter for assert check below
         
         for i in range(len(CaseSpecs.filelist)):
             rootgrp = nc.Dataset(CaseSpecs.filelist[i], 'r')
             nrtrj = len(rootgrp.dimensions['id'])
             tmpt = int(CaseSpecs.filelist[i].split('-')[1].lstrip('t'))
-            self.data[0].extend([CaseSpecs.filelist[i]] * nrtrj)
-            self.data[1].extend(range(nr.trj))
-            self.data[2].extend([tmpt] * nrtrj)
+            self.filename.extend([CaseSpecs.filelist[i]] * nrtrj)
+            self.trajid.extend(range(nrtrj))
+            self.data[0].extend([tmpt] * nrtrj)
             nrtot += nrtrj
             
         # Convert lists to np.array
         
-        for i in range(len(self.data)):
-            self.data[i] = np.array(self.data[i])
+        self.filename = np.array(self.filename)
+        self.trajid = np.array(self.trajid)
+        self.data[0] = np.array(self.data[0])
 
-        assert (self.data[0].shape[0] == self.data[1].shape[0] == 
-                self.data[2].shape[0] == nrtot), \
-                    "Error while initializing properties for class: Attribute arrays do not have same shape!"
+        assert (self.data[0].shape[0] == self.filename.shape[0] == 
+                self.trajid.shape[0] == nrtot), \
+                "Error while initializing properties for class: Attribute arrays do not have same shape!"
                                
-    def new_filter_function(name, function, *args):
-        """
-        Add a new filter to data list from custom function. 
-        
-        
-        Parameters
-        ----------
-        name : string or tuple
-          Name of the filter. To be used in inddict.
-          If more than one return value in function, use tuple of names
-          in correct order.
-        function : function
-          The Python function to be applied as a filter.
-          Has to return a single value for one trajectory array.
-          If function returns more than one single value, suffixes have to 
-          be specified. The arguments for the function have to be given 
-          in *args
-          
-        ADD EXAMPLE!!!
-        """
-        
-        # Add entries to dictionary
-        
-        if name == str:
-            self.inddict[name] = len(self.data)
-        elif name == tuple or name == list:
-            self.inddict.update(dict(zip(name), 
-                                     range(len(self.data), 
-                                           len(self.data) + len(name))))
-        else:
-            raise TypeError('Invalid input type for name')
-        
-        # Evaluate variables to be extracted from NetCDF files
-        
-        filevars = []
-        for item in args:
-            if item in nc.Dataset(CaseSpecs.filelist[i], 'r').variables:
-                filevars.append(item)
-        print('Following variables are used:', filevars)
-        assert len(filevars) > 0, "No correct variables chosen"
-        
-        datam = []
-        for i in range(len(CaseSpecs.filelist)):
-            rootgrp = nc.Dataset(CaseSpecs.filelist[i], 'r')
-            for n in range(len(filevars)):
-                datam.append(rootgrp.variables[filevars[n]][:, :])
-            
-            for j in range(len(rootgrp.dimensions['id'])):
-                # function call, return output
-                if name == str:
-                    pass
+
     
-    
-    def new_filter_array(name, array):
+    def new_prop_array(self, name, array):
         """
         Add one or more arrays to data. 
         If more than one array is added, names and data arrays must
@@ -159,74 +113,97 @@ class TrajProp(object):
         """
         
         if type(name) == str:
+            assert (array.shape[0] == self.data[0].shape[0]), \
+                    'Array shaped do not match.'
+            assert (name not in self.inddict), 'Name already exists.' 
             self.inddict[name] = len(self.data)
             self.data.append(array)
+            print(name, 'has been added.')
+            
             
         elif type(name) == tuple or type(name) == list:
+            for i in range(len(name)):
+                assert (name[i] not in self.inddict), \
+                        'One of the names already exists.'
+                assert (array[i].shape[0] == self.data[0].shape[0]), \
+                        'One or all of the array shapes do not match.'
             self.inddict.update(dict(zip(name), 
                                      range(len(self.data), 
                                            len(self.data) + len(name))))
             self.data.extend(array)
+            print(name, 'have been added.')
         
     
     
-    def new_filter_asc(pspan, tracer = 'P'):
+    def new_prop_asc(self, yspan, tracer = 'P'):
         """
-        Adds a new filter to class instance. 
-        """
-        
-        mint = np.zeros(self.data[0].shape[0])
-        ascstart = np.zeros(self.data[0].shape[0])
-        ascend = np.zeros(self.data[0].shape[0])
-        
-        
-        # Add to dic and data * 3
-       
-    
-    
-    
-    def apply_filter(self, FilterTUPLE):
-        """
-        Returns the filtered filename and trajid list.
-        Minimum and maximum criteria can be applied for 
-        ascent time and vertical velocity.
+        Adds a new ascent filter to data.
         
         Parameters
         ----------
-        minasct : float
-          Lower end of ascent time criterion
-        maxasct : float
-          Upper end of ascent time criterion
-        minvertvel : float
-          Lower end of vertical velocity criterion
-        maxvertvel : float
-          Upper end of vertical velocity criterion
-          
-        Returns
-        -------
-        tuple
-          tuple containing one list and one list of lists:
-          1. list of unique file locations.
-          2. list of lists of trajectory IDs for each element in list 1. 
-        
+        yspan : float
+          Ascent criterion in y-direction
+        tracer : str (default = 'P')
+          COSMO name of y-axis variable
         
         """
         
-        mask = np.array([True] * self.len)   # Initialize mask 
+        # Update dictionary
+        code = tracer + str(yspan)
+        self.inddict[code] = len(self.data)
+        self.inddict[code + '_start'] = len(self.data) + 1
+        self.inddict[code + '_stop'] = len(self.data) + 2
         
-        if minasct == maxasct == minvertvel == maxvertvel == None:
-            print("No filter criteria chosen," 
-                  "return lists for all trajectories")
+        ascdata = minasct(CaseSpecs.filelist, yspan, tracer)
+        assert (ascdata[0].shape[0] == self.data[0].shape[0]), \
+                'Array shapes do not match. Look for error in source code.'
+        self.data.extend(ascdata)
+    
+    
+    
+    def create_filter(self, name, filttup):
+        """
+        Adds a filter to filtlist. Adds name to filtdict.
         
-        if not minasct == None:
-            mask &= self.asct >= minasct
-        if not maxasct == None:
-            mask &= self.asct <= maxasct
-        if not minvertvel == None:
-            mask &= self.vertvel >= minvertvel
-        if not maxvertvel == None:
-            mask &= self.vertvel <= maxvertvel
-        print mask
+        Parameters
+        ----------
+        name : string
+          Name of given filter
+        filttup : tuple
+          Tuple of filter tuples, see example.
+        
+        Examples
+        --------
+        >>> filttup = (('P600', 2880, 0), ('P300', 1000, 200))
+        
+        """
+        
+        assert (name not in filtdict), 'Filter name already exists.'
+        self.filtdict[name] = len(self.filtlist)
+        
+        mask = np.array([True] * self.data[0].shape[0])   # Initialize mask 
+        
+        for i in range(len(filttup)):
+            ind = self.inddict[filttup[i][0]]   # Get index in self.data
+            
+            if len(filttup[i]) == 3:
+                mx = filttup[i][1]
+                mn = filttup[i][2]
+                
+                mask &= self.data[ind] <= mx
+                mask &= self.data[ind] >= mn
+                
+            elif len(filttup[i]) == 2:
+                crit = filttup[i][1]
+                
+                mask &= self.data[ind] == crit
+                
+            else:
+                raise Exception('Wrong input for filter tuple.')
+        
+        self.filtlist.append(mask)
+        
+        
         
         uniqueloc = np.unique(self.filename[mask])
         idlist = []
@@ -241,7 +218,145 @@ class TrajProp(object):
 
 
 
+def minasct(filelist, yspan, tracer):
+    """
+    Calculate minimum ascent time for all trajectories from NetCDF files.
+    
+    Parameters
+    ----------
+    filelist : list
+      List of saved NetDCF file locations
+    yspan : float
+      Ascent criterion in y-direction
+    tracer : str 
+      COSMO name of y-axis variable
+     
+    Returns
+    -------
+    ascdata : tuple
+      Tuple containing three np.arrays:
+      * Minimum ascent time
+      * Index of ascent start
+      * Index of ascent stop
+    
+    """
+    
+    # Initialize lists, convert to np.array later
+    asct = []
+    ascstart = []
+    ascstop = []
+     
+    for i in range(len(filelist)):
+        mat = nc.Dataset(filelist[i], 'r').variables[tracer][:, :]
+        for j in range(mat.shape[1]):
+            asctup = minxspan(mat[:, j], yspan)
+            asct.append(asctup[0])
+            ascstart.append(asctup[1])
+            ascstop.append(asctup[2])
+    assert (len(asct) == len(ascstart) == len(ascstop)), \
+            'Array lengths do not match'
+    ascdata = (np.array(asct), np.array(ascstart), np.array(ascstop))
+    return ascdata
+            
 
+def minxspan(Array, Criterion, mode = 2):
+    """
+    Returns the min x span for required criterion
+    Automatically converts min to max
+    
+    ALGORITHM HAS TO BE CHECKED, IMPROVED!!!
+    """
+    a = np.nan
+    b = np.nan
+    off = np.where(Array != 0)[0][0]
+    Array = Array[Array != 0] # Removes Zero values
+    if np.amax(Array) - np.amin(Array) < Criterion:
+        asc_span = np.nan
+        a = np.nan
+        b = np.nan
+    else:
+        #import pdb; pdb.set_trace()
+        min_tot = Array.argmin()
+        max_tot = Array.argmax()
+        if min_tot > max_tot:
+            Array = Array[::-1]
+            min_tot = Array.argmin()
+            max_tot = Array.argmax()
+        asc_span = max_tot - min_tot
+        for i in range(max_tot - min_tot):
+            where = np.where(Array > (Array[min_tot+i] + Criterion))[0]
+            where = where[where > min_tot]
+            if where.shape[0] == 0:
+                
+                break
+            asc_ind = where[0]
+            if (asc_ind - (min_tot+i)) < asc_span:
+                asc_span = asc_ind - (min_tot+i)
+                a = asc_ind
+                b = min_tot+i
+    assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
+    if mode == 1:
+        return asc_span
+    elif mode == 2:
+        #print a, Array.shape[0] ,Array.shape[0] - a
+        return (asc_span, Array.shape[0] - a + off, Array.shape[0] - b + off)
+
+
+
+# Old code ######################################
+
+    #def new_filter_function(name, function, *args):
+        #"""
+        #Add a new filter to data list from custom function. 
+        
+        
+        #Parameters
+        #----------
+        #name : string or tuple
+          #Name of the filter. To be used in inddict.
+          #If more than one return value in function, use tuple of names
+          #in correct order.
+        #function : function
+          #The Python function to be applied as a filter.
+          #Has to return a single value for one trajectory array.
+          #If function returns more than one single value, suffixes have to 
+          #be specified. The arguments for the function have to be given 
+          #in *args
+          
+        #ADD EXAMPLE!!!
+        #"""
+        
+        ## Add entries to dictionary
+        
+        #if name == str:
+            #self.inddict[name] = len(self.data)
+        #elif name == tuple or name == list:
+            #self.inddict.update(dict(zip(name), 
+                                #range(len(self.data), 
+                                      #len(self.data) + len(name))))
+        #else:
+            #raise TypeError('Invalid input type for name')
+        
+        ## Evaluate variables to be extracted from NetCDF files
+        
+        #filevars = []
+        #for item in args:
+            #if item in nc.Dataset(CaseSpecs.filelist[i], 'r').variables:
+                #filevars.append(item)
+        #print('Following variables are used:', filevars)
+        #assert len(filevars) > 0, "No correct variables chosen"
+        
+        #datam = []
+        #for i in range(len(CaseSpecs.filelist)):
+            #rootgrp = nc.Dataset(CaseSpecs.filelist[i], 'r')
+            #for n in range(len(filevars)):
+                #datam.append(rootgrp.variables[filevars[n]][:, :])
+            
+            #for j in range(len(rootgrp.dimensions['id'])):
+                ## function call, return output
+                #if name == str:
+                    #pass
+    
 
 def OpenSaveFile(FileName):
     """
@@ -283,27 +398,65 @@ def FilterMatrix(Matrix, TraceInd, Criterion, LenMax, LenMin = 0):
     return IndList
 
 
-def IndData(FileList, IndList, MaxFile="default"):
-    """
-    Gives Matrix of data for all indexed trajectories
-    """
-    f = open(FileList[0], "r")
-    Spec = cPickle.load(f)
-    f.close()
-    NrTrj = 0
-    if MaxFile == "default":
-        MaxFile = min(len(FileList), len(IndList))
-    for i in range(MaxFile):
-        NrTrj += len(IndList[i])
-    FilterM = np.zeros((NrTrj, Spec[1]+3, Spec[5])) 
-    ind = 0
-    for i in range(MaxFile):
-        print "Opening file", i
-        RawM = OpenSaveFile(FileList[i])[1]
-        for j in IndList[i]:
-            FilterM[ind, :, :] = RawM[j, :, :]
-            ind += 1    
-    return FilterM
+#def IndData(FileList, IndList, MaxFile="default"):
+    #"""
+    #Gives Matrix of data for all indexed trajectories
+    #"""
+    #f = open(FileList[0], "r")
+    #Spec = cPickle.load(f)
+    #f.close()
+    #NrTrj = 0
+    #if MaxFile == "default":
+        #MaxFile = min(len(FileList), len(IndList))
+    #for i in range(MaxFile):
+        #NrTrj += len(IndList[i])
+    #FilterM = np.zeros((NrTrj, Spec[1]+3, Spec[5])) 
+    #ind = 0
+    #for i in range(MaxFile):
+        #print "Opening file", i
+        #RawM = OpenSaveFile(Fdef minxspan(Array, Criterion, mode = 2):
+    #"""
+    #Returns the min x span for required criterion
+    #Automatically converts min to max
+    #"""
+    #a = np.nan
+    #b = np.nan
+    #off = np.where(Array != 0)[0][0]
+    #Array = Array[Array != 0] # Removes Zero values
+    #if np.amax(Array) - np.amin(Array) < Criterion:
+        #asc_span = np.nan
+        #a = np.nan
+        #b = np.nan
+    #else:
+        ##import pdb; pdb.set_trace()
+        #min_tot = Array.argmin()
+        #max_tot = Array.argmax()
+        #if min_tot > max_tot:
+            #Array = Array[::-1]
+            #min_tot = Array.argmin()
+            #max_tot = Array.argmax()
+        #asc_span = max_tot - min_tot
+        #for i in range(max_tot - min_tot):
+            #where = np.where(Array > (Array[min_tot+i] + Criterion))[0]
+            #where = where[where > min_tot]
+            #if where.shape[0] == 0:
+                
+                #break
+            #asc_ind = where[0]
+            #if (asc_ind - (min_tot+i)) < asc_span:
+                #asc_span = asc_ind - (min_tot+i)
+                #a = asc_ind
+                #b = min_tot+i
+    #assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
+    #if mode == 1:
+        #return asc_span
+    #elif mode == 2:
+        ##print a, Array.shape[0] ,Array.shape[0] - a
+        #return (asc_span, Array.shape[0] - a + off, Array.shape[0] - b + off)ileList[i])[1]
+        #for j in IndList[i]:
+            #FilterM[ind, :, :] = RawM[j, :, :]
+            #ind += 1    
+    #return FilterM
 
 
 def StartPos(Matrix2D):
@@ -330,81 +483,157 @@ def StartIndList(CaseName = "test"):
     return StartIndList
 
 
-def MinXMatrix(FileList, TraceInd, Criterion, StartInd = False, IndMatrix = False, Flat = False):
-    """
-    Returns 2D list of fastest ascent times for given criterion
-    if Index Matrix is given, search only for indexed trajectories
-    if Flat == True, returns one long array. To be used for histograms!
-    Note: StartInd not compatible with Flat == False!!!
-    """
-    AscMatrix = []
-    if IndMatrix == False:
-        for i in range(len(FileList)):
-            if i % 10 == 0:
-                print "Going through file %i of %i" % (i,len(FileList))
-            if StartInd:
-                AscArray = [[], []]
-            else:
-                AscArray = []
-            M = OpenSaveFile(FileList[i])[1]
-            for j in range(M.shape[0]):
-                if StartInd:
-                    AscArray[1].append(StartPos(M[j])[0])
-                    AscArray[0].append(MinXSpan(M[j, TraceInd, :], Criterion))
-                else:
-                    AscArray.append(MinXSpan(M[j, TraceInd, :], Criterion))
-            AscMatrix.append(AscArray)
+#def MinXMatrix(FileList, TraceInd, Criterion, StartInd = False, IndMatrix = False, Flat = False):
+    #"""
+    #Returns 2D list of fastest ascent times for given criterion
+    #if Index Matrix is given, search only for indexed trajectories
+    #if Flat == True, returns one long array. To be used for histograms!
+    #Note: StartInd not compatible with Flat == False!!!
+    #"""
+    #AscMatrix = []
+    #if IndMatrix == False:
+        #for i in range(len(FileList)):
+            #if i % 10 == 0:
+                #print "Going through file %i of %i" % (i,len(FileList))
+            #if StartInd:
+                #AscArray = [[], []]
+            #else:
+                #AscArray = []
+            #M = OpenSaveFile(FileList[i])[1]
+            #for j in range(M.shape[0]):
+                #if StartInd:
+                    #AscArray[1].append(StartPos(M[j])[0])
+                    #AscArray[0].append(MinXSpan(M[j, TraceInd, :], Criterion))
+                #else:
+                    #AscArray.append(MinXSpan(M[j, TraceInd, :], Criterion))
+            #AscMatrix.append(AscArray)
                                 
-    elif type(IndMatrix) == list:
-        for i in range(min(len(FileList), len(IndMatrix))):
-            if i % 10 == 0:
-                print "Going through file %i of %i" % (i,min(len(FileList), len(IndMatrix)))
-            if StartInd:
-                AscArray = [[], []]
-            else:
-                AscArray = []
-            M = OpenSaveFile(FileList[i])[1]
-            for j in IndMatrix[i]:
-                if StartInd:
-                    AscArray[1].append(StartPos(M[j])[0])
-                    AscArray[0].append(MinXSpan(M[j, TraceInd, :], Criterion))
-                else:
-                    AscArray.append(MinXSpan(M[j, TraceInd, :], Criterion))   
-            AscMatrix.append(AscArray)
+    #elif type(IndMatrix) == list:
+        #for i in range(min(len(FileList), len(IndMatrix))):
+            #if i % 10 == 0:
+                #print "Going through file %i of %i" % (i,min(len(FileList), len(IndMatrix)))
+            #if StartInd:
+                #AscArray = [[], []]
+            #else:
+                #AscArray = def minxspan(Array, Criterion, mode = 2):
+    #"""
+    #Returns the min x span for required criterion
+    #Automatically converts min to max
+    #"""
+    #a = np.nan
+    #b = np.nan
+    #off = np.where(Array != 0)[0][0]
+    #Array = Array[Array != 0] # Removes Zero values
+    #if np.amax(Array) - np.amin(Array) < Criterion:
+        #asc_span = np.nan
+        #a = np.nan
+        #b = np.nan
+    #else:
+        ##import pdb; pdb.set_trace()
+        #min_tot = Array.argmin()
+        #max_tot = Array.argmax()
+        #if min_tot > max_tot:
+            #Array = Array[::-1]
+            #min_tot = Array.argmin()
+            #max_tot = Array.argmax()
+        #asc_span = max_tot - min_tot
+        #for i in range(max_tot - min_tot):
+            #where = np.where(Array > (Array[min_tot+i] + Criterion))[0]
+            #where = where[where > min_tot]
+            #if where.shape[0] == 0:
+                
+                #break
+            #asc_ind = where[0]
+            #if (asc_ind - (min_tot+i)) < asc_span:
+                #asc_span = asc_ind - (min_tot+i)
+                #a = asc_ind
+                #b = min_tot+i
+    #assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
+    #if mode == 1:
+        #return asc_span
+    #elif mode == 2:
+        ##print a, Array.shape[0] ,Array.shape[0] - a
+        #return (asc_span, Array.shape[0] - a + off, Array.shape[0] - b + off)[]
+            #M = OpenSaveFile(FileList[i])[1]
+            #for j in IndMatrix[i]:
+                #if StartInddef minxspan(Array, Criterion, mode = 2):
+    #"""
+    #Returns the min x span for required criterion
+    #Automatically converts min to max
+    #"""
+    #a = np.nan
+    #b = np.nan
+    #off = np.where(Array != 0)[0][0]
+    #Array = Array[Array != 0] # Removes Zero values
+    #if np.amax(Array) - np.amin(Array) < Criterion:
+        #asc_span = np.nan
+        #a = np.nan
+        #b = np.nan
+    #else:
+        ##import pdb; pdb.set_trace()
+        #min_tot = Array.argmin()
+        #max_tot = Array.argmax()
+        #if min_tot > max_tot:
+            #Array = Array[::-1]
+            #min_tot = Array.argmin()
+            #max_tot = Array.argmax()
+        #asc_span = max_tot - min_tot
+        #for i in range(max_tot - min_tot):
+            #where = np.where(Array > (Array[min_tot+i] + Criterion))[0]
+            #where = where[where > min_tot]
+            #if where.shape[0] == 0:
+                
+                #break
+            #asc_ind = where[0]
+            #if (asc_ind - (min_tot+i)) < asc_span:
+                #asc_span = asc_ind - (min_tot+i)
+                #a = asc_ind
+                #b = min_tot+i
+    #assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
+    #if mode == 1:
+        #return asc_span
+    #elif mode == 2:
+        ##print a, Array.shape[0] ,Array.shape[0] - a
+        #return (asc_span, Array.shape[0] - a + off, Array.shape[0] - b + off):
+                    #AscArray[1].append(StartPos(M[j])[0])
+                    #AscArray[0].append(MinXSpan(M[j, TraceInd, :], Criterion))
+                #else:
+                    #AscArray.append(MinXSpan(M[j, TraceInd, :], Criterion))   
+            #AscMatrix.append(AscArray)
         
-    else: 
-        raise ValueError('IndMatrix type not compatible')
+    #else: 
+        #raise ValueError('IndMatrix type not compatible')
     
-    if Flat == False:
-        if StartInd != False:
-            raise Exception ('Options not compatible!')
-        return AscMatrix
+    #if Flat == False:
+        #if StartInd != False:
+            #raise Exception ('Options not compatible!')
+        #return AscMatrix
     
-    elif Flat == True:
-        print "Flattening Matrix to Array"
-        if StartInd:
-            AscFlat = [[], []]
-            for i in range(len(AscMatrix)):
-                AscFlat[0] += AscMatrix[i][0]
-                AscFlat[1] += AscMatrix[i][1]
-            AscFlat[0] = np.array(AscFlat[0])
-            AscFlat[1] = np.array(AscFlat[1])
-            StartList = StartIndList()
-            nstart = len(StartList)
-            AscFlatInd = []
-            for i in range(nstart):
-                if StartList[i] in list(AscFlat[1]):
-                    AscFlatInd.append(AscFlat[0][AscFlat[1] == StartList[i]])
-            return AscFlatInd
+    #elif Flat == True:
+        #print "Flattening Matrix to Array"
+        #if StartInd:
+            #AscFlat = [[], []]
+            #for i in range(len(AscMatrix)):
+                #AscFlat[0] += AscMatrix[i][0]
+                #AscFlat[1] += AscMatrix[i][1]
+            #AscFlat[0] = np.array(AscFlat[0])
+            #AscFlat[1] = np.array(AscFlat[1])
+            #StartList = StartIndList()
+            #nstart = len(StartList)
+            #AscFlatInd = []
+            #for i in range(nstart):
+                #if StartList[i] in list(AscFlat[1]):
+                    #AscFlatInd.append(AscFlat[0][AscFlat[1] == StartList[i]])
+            #return AscFlatInd
     
-        else:
-            AscFlat = []
-            for i in range(len(AscMatrix)):
-                AscFlat += AscMatrix[i]
-            return AscFlat
+        #else:
+            #AscFlat = []
+            #for i in range(len(AscMatrix)):
+                #AscFlat += AscMatrix[i]
+            #return AscFlat
     
     
-def MinXSpan(Array, Criterion):
+def MinXSpanOLD(Array, Criterion):
     """
     Returns the min x span for required criterion
     Automatically converts min to max
@@ -434,6 +663,8 @@ def MinXSpan(Array, Criterion):
     assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
     return asc_span
     
+
+
     
     
 # End of submodule!
