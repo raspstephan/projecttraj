@@ -318,6 +318,8 @@ def minxspan(Array, Criterion, mode = 2):
 
 
 
+
+
 # Old code ######################################
 
     #def new_filter_function(name, function, *args):
