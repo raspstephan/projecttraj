@@ -18,6 +18,36 @@ import scipy.ndimage as ndi
 from datetime import datetime, timedelta
 
 
+def draw_hist(array, savename = None):
+    """
+    Plots a histogram of given array.
+    
+    Parameters
+    ----------
+    array : np.array
+      Array to be used for histogram
+    savename : string
+      Full path of wanted save names
+      
+    """
+    
+    fig = plt.figure()
+    # Remove nan values, they cause an error in histogram!
+    plt.hist(array[np.isfinite(array)], bins = 150)  
+    
+    if savename != None:
+        plt.savefig(savename)
+        plt.xlabel('hmmm???')
+        plt.ylabel("Number of trajectories")
+        plt.clf()
+
+
+
+
+
+
+
+
 #######################################
 ### Front End Plotting Functions
 #######################################
