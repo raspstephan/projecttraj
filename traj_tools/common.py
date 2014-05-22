@@ -87,7 +87,7 @@ class CaseSpecs(object):
         self.pvar = ['OMEGA', 'U', 'V', 'T', 'FI']
         self.rfiles = [x for x in rfiles if x not in pfiles]
         self.cfile = self.cosmodir + "lfff00000000c_1h"
-        self.filelist = CreateFileArray("/home/scratch/users/stephan.rasp/traj_data/test_case_")
+        self.filelist = CreateFileArray("/home/scratch/users/stephan.rasp/cosmo_test/d4deout_traj/traj")
         
 
 def CreateFileArray(FileDir):

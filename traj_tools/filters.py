@@ -76,11 +76,12 @@ class TrajProp(object):
         
         nrtot = 0   # Counter for assert check below
         
-        for i in range(len(CaseSpecs.filelist)):
-            rootgrp = nc.Dataset(CaseSpecs.filelist[i], 'r')
+        for i in range(len(self.CaseSpecs.filelist)):
+            rootgrp = nc.Dataset(self.CaseSpecs.filelist[i], 'r')
             nrtrj = len(rootgrp.dimensions['id'])
-            tmpt = int(CaseSpecs.filelist[i].split('-')[1].lstrip('t'))
-            self.filename.extend([CaseSpecs.filelist[i]] * nrtrj)
+            tmpt = self.CaseSpecs.filelist[i].split('/')[-1]
+            tmpt = int(tmpt.split('_')[1].lstrip('t'))
+            self.filename.extend([self.CaseSpecs.filelist[i]] * nrtrj)
             self.trajid.extend(range(nrtrj))
             self.data[0].extend([tmpt] * nrtrj)
             nrtot += nrtrj
@@ -154,13 +155,13 @@ class TrajProp(object):
         self.inddict[code + '_start'] = len(self.data) + 1
         self.inddict[code + '_stop'] = len(self.data) + 2
         
-        ascdata = minasct(CaseSpecs.filelist, yspan, tracer)
+        ascdata = minasct(self.CaseSpecs.filelist, yspan, tracer)
         assert (ascdata[0].shape[0] == self.data[0].shape[0]), \
                 'Array shapes do not match. Look for error in source code.'
         self.data.extend(ascdata)
     
        
-    def create_filter(self, name, filttup):
+    def create_filter(self, name, filters):
         """
         Adds a filter to filtlist. Adds name to filtdict.
         
@@ -168,38 +169,39 @@ class TrajProp(object):
         ----------
         name : string
           Name of given filter
-        filttup : tuple
-          Tuple of filter tuples, see example.
+        filters : tuple
+          List of filter tuples, see example.
         
         Examples
         --------
-        >>> filttup = (('P600', 2880, 0), ('P300', 1000, 200))
+        >>> filters = (('P600', 2880, 0), ('P300', 1000, 200))
         
         """
         
-        assert (name not in filtdict), 'Filter name already exists.'
-        self.filtdict[name] = len(self.filtlist)
+        assert (name not in self.filtdict), 'Filter name already exists.'
         
         mask = np.array([True] * self.data[0].shape[0])   # Initialize mask 
         
-        for i in range(len(filttup)):
-            ind = self.inddict[filttup[i][0]]   # Get index in self.data
+        for i in range(len(filters)):
+
+            ind = self.inddict[filters[i][0]]   # Get index in self.data
             
-            if len(filttup[i]) == 3:
-                mx = filttup[i][1]
-                mn = filttup[i][2]
+            if len(filters[i]) == 3:
+                mx = filters[i][1]
+                mn = filters[i][2]
                 
                 mask &= self.data[ind] <= mx
                 mask &= self.data[ind] >= mn
                 
-            elif len(filttup[i]) == 2:
-                crit = filttup[i][1]
+            elif len(filters[i]) == 2:
+                crit = filters[i][1]
                 
                 mask &= self.data[ind] == crit
                 
             else:
                 raise Exception('Wrong input for filter tuple.')
-        
+       
+        self.filtdict[name] = len(self.filtlist)
         self.filtlist.append(mask)
         
         
@@ -219,7 +221,7 @@ class TrajProp(object):
           Use as first iterator.
         idlist : list
           List of list. Trajectory IDs for every element in 
-          uniquelist.
+          uniquelist.yspan
           Use as second iterator.
           
         """
@@ -228,7 +230,8 @@ class TrajProp(object):
         idlist = []
         for i in range(len(uniqueloc)):
             locmask = self.filename == uniqueloc[i]
-            idlist.append(int(self.trajid[locmask & mask]))
+            print self.trajid[locmask & mask]
+            idlist.append((self.trajid[locmask & mask]))
 
         return uniqueloc, idlist
 
@@ -309,7 +312,7 @@ def minxspan(Array, Criterion, mode = 2):
                 asc_span = asc_ind - (min_tot+i)
                 a = asc_ind
                 b = min_tot+i
-    assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
+    #assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
     if mode == 1:
         return asc_span
     elif mode == 2:
