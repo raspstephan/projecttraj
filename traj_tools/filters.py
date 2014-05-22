@@ -9,6 +9,7 @@ Array = one trajectory
 """
 import common
 import cPickle
+import pickle
 import numpy as np
 import loadbin
 import netCDF4 as nc
@@ -229,11 +230,49 @@ class TrajProp(object):
         uniqueloc = np.unique(self.filename[mask])
         idlist = []
         for i in range(len(uniqueloc)):
-            locmask = self.filename == uniqueloc[i]
-            print self.trajid[locmask & mask]
-            idlist.append((self.trajid[locmask & mask]))
+            locmask = (self.filename == uniqueloc[i])
+            idlist.append(list((self.trajid[locmask & mask])))
 
-        return uniqueloc, idlist
+        return list(uniqueloc), idlist
+    
+    def saveme(self, savename):
+        """
+        Saves class object under savename.
+        As pickled file.
+        
+        Parameters
+        ----------
+        savename : string
+          Save path
+          
+        """
+        
+        f = open(savename, 'w+')
+        pickle.dump(self, f, 2)   # Using Protocol 2
+        f.close()
+        
+
+def loadme(savename):
+    """
+    Unpickles file saved under savename.
+    
+    Parameters
+    ----------
+    savename : string
+      Save path
+          
+    Returns
+    -------
+    obj : object
+      Saved object
+      
+    """
+    
+    f = open(savename, 'r')
+    obj = pickle.load(f)
+    f.close()
+    return obj 
+
 
 
 def minasct(filelist, yspan, tracer):
