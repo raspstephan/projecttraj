@@ -127,17 +127,15 @@ def LoadTrjDef(Deffile):
     f.close()
     return DefM
 
-def create_startfile(CaseSpecs, tlist, lonmin, lonmax, dlon, 
-                   latmin, latmax, dlat, zmin, zmax, dz, outdir):
+def create_startfile(lonmin, lonmax, dlon, 
+                     latmin, latmax, dlat, 
+                     zmin, zmax, dz, outdir):
     """
     Creates a trajectory start file in output directory
     
     Parameters
     ----------
-    CaseSpecs : class object
-      Case specifics for given case
-    tlist : list  
-      List of trajectory start times in h
+
     lonmin : float
       Lower boundary of longitude
     lonmax : float
@@ -166,7 +164,7 @@ def create_startfile(CaseSpecs, tlist, lonmin, lonmax, dlon,
     f = open(outdir + suff, 'w+')
     
     f.write('Reference Date somedate\n')  # Write first line, slo use CaseSpecs
-    f.write('time lon lat z\n')
+    f.write('lon lat z\n')
     f.write('-----------------\n')
     
     # Create lon and lat arrays
@@ -176,26 +174,23 @@ def create_startfile(CaseSpecs, tlist, lonmin, lonmax, dlon,
     zlist = list(np.arange(zmin, zmax, dz))
     
     print('Total number of trajectories:', 
-          len(tlist) * len(lonlist) * len(latlist) * len(zlist))
+          len(lonlist) * len(latlist) * len(zlist))
     
     
-    for i in range(len(tlist)):
-        for j in range(len(lonlist)):
-            for n in range(len(latlist)):
-                for m in range(len(zlist)):
-                    ttmp = '%2.2f' % (tlist[i])
-                    ttmp = (4 - len(ttmp)) * ' ' + ttmp
-                    lontmp = '%3.3f' % (lonlist[j])
-                    lontmp = (8 - len(lontmp)) * ' ' + lontmp
-                    lattmp = '%2.3f' % (latlist[n])
-                    lattmp = (7 - len(lattmp)) * ' ' + lattmp
-                    ztmp = '%4.3f' % (zlist[m])
-                    ztmp = (8 - len(ztmp)) * ' ' + ztmp
-                    line = (' ' + ttmp + ' ' + lontmp + ' ' 
-                            + lattmp + ' ' + ztmp)
-                    assert (len(line) == 31), \
-                            'Start file line does not have correct length'
-                    f.write(line + '\n')
+    
+    for j in range(len(lonlist)):
+        for n in range(len(latlist)):
+            for m in range(len(zlist)):
+                lontmp = '%3.3f' % (lonlist[j])
+                lontmp = (8 - len(lontmp)) * ' ' + lontmp
+                lattmp = '%2.3f' % (latlist[n])
+                lattmp = (7 - len(lattmp)) * ' ' + lattmp
+                ztmp = '%4.3f' % (zlist[m])
+                ztmp = (8 - len(ztmp)) * ' ' + ztmp
+                line = (' ' + lontmp + ' ' + lattmp + ' ' + ztmp)
+                assert (len(line) == 26), \
+                        'Start file line does not have correct length'
+                f.write(line + '\n')
     
     f.close() 
                     
