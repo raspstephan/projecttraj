@@ -1,17 +1,17 @@
 #!/bin/ksh
 #
-# Runtime test 1
+# Runtime test 2
 #
 #################################################
 # settings
 #################################################
 
 #Define Label for queue
-QLabel=COSMO_runtime1
+QLabel=COSMO_runtime2
 
 #Define directories
 indir=/home/cosmo/tobias.selz/cosmo_data/caseWCB/d3dein_small
-outdir=/home/scratch/users/stephan.rasp/runtime/r1
+outdir=/home/scratch/users/stephan.rasp/runtime/r2
 
 #Define time properties
 date=2012101300
@@ -158,7 +158,7 @@ cat > INPUT_TRAJ << end_input_traj
      hstop_traj=3.0,
      nstart_traj= 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340
      ydir_traj='$outdir',
-     startfile_traj='/usr/users/stephan.rasp/repositories/traj_project/cosmo_runfiles/tests/runtime/sf_r1.txt',
+     startfile_traj='/usr/users/stephan.rasp/repositories/traj_project/cosmo_runfiles/tests/runtime/sf_r2.txt',
      ninc_out_traj = 1,
      tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM',
   /

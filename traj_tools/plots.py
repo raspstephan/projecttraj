@@ -16,6 +16,7 @@ from mpl_toolkits.basemap import Basemap
 import cosmo_utils.pywgrib as pwg
 import scipy.ndimage as ndi
 from datetime import datetime, timedelta
+import netCDF4 as nc
 
 
 def draw_hist(array, savename = None):
@@ -42,11 +43,86 @@ def draw_hist(array, savename = None):
         plt.clf()
 
 
+def draw_xy(varlist, filelist, idlist, cfile, rfiles, pfiles, savename = False, realcoord = True):
+    """
+    Plots one xy plot.
+    
+    Parameters
+    ----------
+    filelist : list
+      List of unique file locations
+    idlist : list
+      List of list of trajectory IDs 
+    cfile : string
+      Constants COSMO file
+    rfiles : list
+      List of regular COSMO output files
+    pfiles : list
+      List of pressure lvl COSMO output files
+    savename : string
+      Name of save location
+    
+    """
+         
+    # Getting index for COSMO files
+    outint = 5   # COSMO output interval
+    tmpt = filelist[i].split('/')[-1]
+    tmpt = int(tmpt.split('_')[1].lstrip('t'))
+    cosmoind = int(tmpt/outint)
+    
+    # Set up figure
+    fig = plt.figure(figsize = (12,8))
+    ax = plt.gca()   
+    ax.set_aspect('equal')
+    basemap(cfile)
 
+    # Plotting all contour fields
+    for i in range(len(VarList)):   # Plotting all contour fields
+        try:
+            Contour(pfiles, varlist[i], cosmoind)
+        except:
+            pass
+        else:
+            Contour(rfiles, varlist[i], cosmoind)
+    
+    # Plot trajectories
+    for i in range(len(filelist)):
+        rootgrp = nc.Dataset(filelist[i], 'r')
+        lonmat = rootgrp.variable['longitude'][:, :]
+        latmat = rootgrp.variable['latitude'][:, :]
+        pmat = rootgrp.variable['P'][:, :]
+    
+        if realcoord:
+            lonmat[:, :] += (180 - 165)
+            latmat[:, :] += (90 - 35)
 
-
-
-
+        for j in idlist[i]:
+            single_traj(lonmat[:, j], latmat[:, j], pmat[:, j])
+    
+    # Set plot properties
+    if realcoord:
+        plt.xlim(-14, 44)
+        plt.ylim(33, 76)
+    else:
+        plt.xlim(-29, 29)
+        plt.ylim(-22, 21)
+    cb = fig.colorbar(lc, shrink = 0.7)
+    cb.set_label('p')
+    cb.ax.invert_yaxis()
+    plt.tight_layout()
+    
+    # Save Plot
+    if savebase != False:
+        print "Saving figure as", savebase
+        plt.savefig(savebase, dpi = 400)
+        plt.close('all')
+    
+            
+            
+            
+            
+            
+            
 
 #######################################
 ### Front End Plotting Functions
@@ -204,7 +280,7 @@ def DrawXYSingle(VarList, StartInd, IndMatrix = None, t = "end", RealCoord = Tru
 #########################################
 
 
-def BaseMap(cfile, RealCoord = True, pollon = -165., pollat = 35.):
+def basemap(cfile, RealCoord = True, pollon = -165., pollat = 35.):
     """
     Draws Land-Sea Map
     """
@@ -231,7 +307,7 @@ def BaseMap(cfile, RealCoord = True, pollon = -165., pollat = 35.):
     del field
     
     
-def Contour(files, Variable, COSMOind, RealCoord = True, pollon = -165., pollat = 35.):
+def contour(files, Variable, COSMOind, RealCoord = True, pollon = -165., pollat = 35.):
     """
     Draws contour plot of Variable
     """
@@ -288,7 +364,7 @@ def Contour(files, Variable, COSMOind, RealCoord = True, pollon = -165., pollat 
     del field
     
     
-def XYPlot(A, linewidth = 0.7):
+def single_traj(lonarray, latarray, parray, linewidth = 0.7):
     """
     Plots XY Plot of one trajectory, with color as a function of p
     Helper Function for DrawXYTraj

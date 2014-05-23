@@ -224,14 +224,14 @@ class TrajProp(object):
         self.filtlist.append(mask)
         
         
-    def _mask_iter(self, mask):
+    def _mask_iter(self, filtername):
         """
         Converts mask to iterable lists. To be used in plotting functions, etc.
         
         Paremeters
         ----------
-        mask : np.array
-          Mask to be converted
+        filtername : np.array
+          Mask 
         
         Returns
         -------
@@ -244,7 +244,8 @@ class TrajProp(object):
           Use as second iterator.
           
         """
-        
+        maskid = self.filtdict[filtername]
+        mask = self.filtlist[maskid]
         uniqueloc = np.unique(self.filename[mask])
         idlist = []
         for i in range(len(uniqueloc)):
@@ -301,10 +302,12 @@ class TrajProp(object):
     # Plotting functions
     ######################
     
-    def draw_hist(self, dataname, filtername = None, savebase = None):
+    def draw_hist(self, dataname, filtername = None, savebase = None, 
+                  starts = False):
         """
         Draws a Histogram of data specified by dataname.
-        If filtername is given, plots only filtered files
+        If filtername is given, plots only filtered trajectories.
+        If starts is True, plots one histogram seperately for each start time.
         
         Parameters
         ----------
@@ -314,6 +317,9 @@ class TrajProp(object):
           Identifier of wanted filter
         savebase : string
           Path to output directory
+        starts : bool
+          If False, plots histogram for entire array given by filter.
+          If True, plots histograms for each start time.
         
         """
         if filtername != None:
@@ -326,6 +332,37 @@ class TrajProp(object):
             savename = savebase
         plots.draw_hist(array, savename = savename)
         
+     
+    def draw_xy(self, varlist, filtername = None, savebase = None, 
+                starts = False):
+        """
+        Draws XY Plot of trajectories with color as a function of 'P'.
+        If filtername is given, plots only filetered trajectories.
+        If starts is True, plots one xy plot seperately for each start time. 
+        
+        Parameters
+        ----------
+        varlist : list
+          List of variables to be plotted. E.g. ["PMSL", "TOT_PREC_S"]
+        filtername : string
+          Identiefier of wanted filter
+        savebase : string
+          Path to output directory
+        starts : bool
+          If False, plots xy plot for entire filtered array (NOT recommended,
+          if start time is not used in filter!)
+          If True, plots xy plot seperately for each start time.
+        
+        """
+        if savebase != None:    
+            savename = savebase + 'xy_' + filtername + '.png'
+        else:
+            savename = savebase
+        
+        plots.draw_xy(varlist, self._mask_iter(filtername), self.cfile,
+                      self.rfiles, self.pfiles, savename)
+         
+
 
 def loadme(savename):
     """
@@ -349,6 +386,7 @@ def loadme(savename):
     return obj 
 
 
+kate-swp
 
 def minasct(filelist, yspan, tracer):
     """
