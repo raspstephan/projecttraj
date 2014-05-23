@@ -3,8 +3,8 @@ Plotting submodule
 Submodule of traj_tools
 """
 
-from common import *
-import common
+
+from . import common
 import filters
 import numpy as np
 import matplotlib
@@ -43,7 +43,9 @@ def draw_hist(array, savename = None):
         plt.clf()
 
 
-def draw_xy(varlist, filelist, idlist, cfile, rfiles, pfiles, savename = False, realcoord = True):
+def draw_xy(varlist, filelist, idlist, cfile, rfiles, pfiles, savename = False, 
+            realcoord = True, pollon = None, pollat = None, xlim = None, 
+            ylim = None):
     """
     Plots one xy plot.
     
@@ -61,7 +63,17 @@ def draw_xy(varlist, filelist, idlist, cfile, rfiles, pfiles, savename = False, 
       List of pressure lvl COSMO output files
     savename : string
       Name of save location
-    
+    realcoord : bool
+      If True, real coordinates are used. pollon and pollat must be given.
+    pollon : float
+      Rotated pole longitude
+    pollat : float
+      Rotated pole latitude
+    xlim : tuple
+      Tuple with x axis bounds
+    ylim : tuple
+      Tuple with y axis bounds
+      
     """
          
     # Getting index for COSMO files
@@ -93,19 +105,18 @@ def draw_xy(varlist, filelist, idlist, cfile, rfiles, pfiles, savename = False, 
         pmat = rootgrp.variable['P'][:, :]
     
         if realcoord:
-            lonmat[:, :] += (180 - 165)
-            latmat[:, :] += (90 - 35)
+            lonmat[:, :] += (180 - pollon)
+            latmat[:, :] += (90 - pollat)
 
         for j in idlist[i]:
             single_traj(lonmat[:, j], latmat[:, j], pmat[:, j])
     
     # Set plot properties
-    if realcoord:
-        plt.xlim(-14, 44)
-        plt.ylim(33, 76)
-    else:
-        plt.xlim(-29, 29)
-        plt.ylim(-22, 21)
+    if xlim != None:
+        plt.xlim(xlim)
+    if ylim != None:
+        plt.ylim(ylim)
+
     cb = fig.colorbar(lc, shrink = 0.7)
     cb.set_label('p')
     cb.ax.invert_yaxis()
@@ -116,6 +127,7 @@ def draw_xy(varlist, filelist, idlist, cfile, rfiles, pfiles, savename = False, 
         print "Saving figure as", savebase
         plt.savefig(savebase, dpi = 400)
         plt.close('all')
+        plt.clf()
     
             
             
@@ -335,11 +347,11 @@ def contour(files, Variable, COSMOind, RealCoord = True, pollon = -165., pollat 
     X, Y = np.meshgrid(x, y)
     
     if Variable == "FI":
-        field = SmoothField(field, 8)
+        field = smoothfield(field, 8)
         levels = list(np.arange(400,600,8))   # Needs smoothing?
         plt.contour(X, Y, field/100, levels = levels, colors = "k", linewidths = 2)
     elif Variable == "T":
-        field = SmoothField(field, 8)
+        field = smoothfield(field, 8)
         plt.contourf(X, Y, field, alpha = 0.5)
         plt.colorbar()
         #plt.contour(X, Y, field, levels = list(np.arange(150, 350, 4)), colors = "grey", linewidths = 2)
@@ -354,7 +366,7 @@ def contour(files, Variable, COSMOind, RealCoord = True, pollon = -165., pollat 
         plt.contourf(X, Y, field, levels, colors=cmPrec, extend='max', alpha = 0.8, zorder = 10)
         plt.colorbar(shrink = 0.7)
     elif Variable == "PMSL":
-        field = SmoothField(field, 8)/100
+        field = smoothfield(field, 8)/100
         levels = list(np.arange(900, 1100, 5))
         CS = plt.contour(X, Y, field, levels = levels, colors = 'k', linewidths = 1, zorder = 9, alpha = 0.5)
         plt.clabel(CS, fontsize = 7, inline = 1, fmt = "%.0f")
@@ -383,7 +395,7 @@ def single_traj(lonarray, latarray, parray, linewidth = 0.7):
     plt.gca().add_collection(lc)
     
     
-def SmoothField(field, sigma = 8):
+def smoothfield(field, sigma = 8):
     """
     Smoothes given field
     """

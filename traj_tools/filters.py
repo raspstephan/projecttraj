@@ -51,10 +51,12 @@ class TrajProp(object):
     """
     
     def __init__(self,
-                 datadir):
+                 datadir, pollon, pollat):
 
         self.datadir = datadir
         self._init_prop()
+        self.pollon = pollon
+        self.pollat = pollat
         
         
     def _init_prop(self):
