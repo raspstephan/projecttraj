@@ -176,8 +176,6 @@ def create_startfile(lonmin, lonmax, dlon,
     print('Total number of trajectories:', 
           len(lonlist) * len(latlist) * len(zlist))
     
-    
-    
     for j in range(len(lonlist)):
         for n in range(len(latlist)):
             for m in range(len(zlist)):
