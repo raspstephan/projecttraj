@@ -4,8 +4,8 @@ Submodule of traj_tools
 """
 
 
-from . import common
-import filters
+from . import utils
+from . import core
 import numpy as np
 import matplotlib
 matplotlib.use('Qt4Agg')

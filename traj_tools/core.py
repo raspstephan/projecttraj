@@ -7,7 +7,7 @@ Files = all trajectories
 Matrix = one trajectory file (i.e. 1000 trajectories)
 Array = one trajectory
 """
-import common
+
 import cPickle
 import pickle
 import numpy as np
@@ -15,6 +15,7 @@ import loadbin
 import netCDF4 as nc
 import glob
 from . import plots
+from . import utils
 
 
 class TrajPack(object):
