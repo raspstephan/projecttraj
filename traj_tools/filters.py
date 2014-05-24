@@ -17,10 +17,10 @@ import glob
 from . import plots
 
 
-class TrajProp(object):
+class TrajPack(object):
     """
     Class containing relevant information for 
-    a set of trajectories.
+    a set (or pack) of trajectories.
     
     This class is the heart of this module. 
     It links the raw data and the evaluation and plotting
@@ -37,6 +37,16 @@ class TrajProp(object):
     datadir : string
       Path to directory containing output of both, COSMO and trajectory files.
       For now, all files have to be in the same directory.
+    xlim : tuple
+      Domain dimensions in x-direction in rotated coordinates. 
+      Has to be specified for xy-plotting!
+    ylim : tuple
+      Domain dimensions in y-direction in rotated coordinates. 
+      Has to be specified for xy-plotting!
+    pollon : float
+      Rotated pole longitude. Default value does not change input coordinates.
+    pollat : float
+      Rotated pole latitude. Default value does not change input coordinates.
       
     
     Attributes
@@ -50,13 +60,15 @@ class TrajProp(object):
 
     """
     
-    def __init__(self,
-                 datadir, pollon, pollat):
+    def __init__(self, datadir, xlim = None, ylim = None, 
+                 pollon = 180., pollat = 90.):
 
         self.datadir = datadir
         self._init_prop()
-        self.pollon = pollon
-        self.pollat = pollat
+        self.xlim = xlim
+        self.ylim = ylim
+        self.pollon = pollon   # Default: 180
+        self.pollat = pollat   # Default: 90
         
         
     def _init_prop(self):
@@ -356,13 +368,18 @@ class TrajProp(object):
           If True, plots xy plot seperately for each start time.
         
         """
+        assert (self.xlim != None and self.ylim != None), \
+                'xlim and/or ylim are not specified!'
+        
         if savebase != None:    
             savename = savebase + 'xy_' + filtername + '.png'
         else:
             savename = savebase
         
         plots.draw_xy(varlist, self._mask_iter(filtername), self.cfile,
-                      self.rfiles, self.pfiles, savename)
+                      self.rfiles, self.pfiles, savename = savename, 
+                      pollon = self.pollon, pollat = self.pollat, 
+                      xlim = self.xlim, ylim = self.ylim)
          
 
 
@@ -387,8 +404,6 @@ def loadme(savename):
     f.close()
     return obj 
 
-
-kate-swp
 
 def minasct(filelist, yspan, tracer):
     """
