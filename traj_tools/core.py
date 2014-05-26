@@ -11,11 +11,10 @@ Array = one trajectory
 import cPickle
 import pickle
 import numpy as np
-import loadbin
 import netCDF4 as nc
 import glob
-from . import plots
-from . import utils
+import plots
+import utils
 
 
 class TrajPack(object):
@@ -39,10 +38,10 @@ class TrajPack(object):
       Path to directory containing output of both, COSMO and trajectory files.
       For now, all files have to be in the same directory.
     xlim : tuple
-      Domain dimensions in x-direction in rotated coordinates. 
+      Domain dimensions in x-direction in non-rotated coordinates 
       Has to be specified for xy-plotting!
     ylim : tuple
-      Domain dimensions in y-direction in rotated coordinates. 
+      Domain dimensions in y-direction in non-rotated coordinates. 
       Has to be specified for xy-plotting!
     pollon : float
       Rotated pole longitude. Default value does not change input coordinates.
@@ -61,15 +60,16 @@ class TrajPack(object):
 
     """
     
-    def __init__(self, datadir, xlim = None, ylim = None, 
+    def __init__(self, datadir, xlim, ylim, 
                  pollon = 180., pollat = 90.):
 
         self.datadir = datadir
         self._init_prop()
-        self.xlim = xlim
-        self.ylim = ylim
         self.pollon = pollon   # Default: 180
         self.pollat = pollat   # Default: 90
+        self.xlim = self._nrot2rot(xlim, 'lon')
+        self.ylim = self._nrot2rot(ylim, 'lat')
+        
         
         
     def _init_prop(self):
@@ -237,13 +237,56 @@ class TrajPack(object):
        
         self.filtdict[name] = len(self.filtlist)
         self.filtlist.append(mask)
+
+
+    def _nrot2rot(self, nrcoord, mode):
+        """
+        Converts non-rotated coordinates to rotated coordinates.
+        pollon and pollat have to be specified before.
+        mode is either 'lon' or 'lat'!
         
+        Parameters
+        ----------
+        nrcoord : float or tuple
+          Non-rotated coordinates.
+          Either a single value or two values in a tuple
+        mode : string
+          Must be either 'lat' or 'lon'
+        
+        Returns
+        -------
+        rcoord : float or tuple
+          Rotated coordinates. In same format as imput.
+        
+        """
+        if mode not in ['lon', 'lat']:
+            raise Exception('Invalid input for mode.')
+        
+        if type(nrcoord) in [float, int]:
+            if mode == 'lon':
+                rcoord = nrcoord + 180 - self.pollon
+            if mode == 'lat':
+                rcoord = nrcoord + 90 - self.pollat
+                
+        elif type(nrcoord) in [tuple, list]:
+            if mode == 'lon':
+                tmp1 = nrcoord[0] + 180 - self.pollon
+                tmp2 = nrcoord[1] + 180 - self.pollon
+            if mode == 'lat':
+                tmp1 = nrcoord[0] + 90 - self.pollat
+                tmp2 = nrcoord[1] + 90 - self.pollat
+            rcoord = (tmp1, tmp2)
+        else:
+            raise Exception('Wrong type for nrcoord.')
+        return rcoord
+    
+    
         
     def _mask_iter(self, filtername):
         """
         Converts mask to iterable lists. To be used in plotting functions, etc.
         
-        Paremeters
+        Parameters
         ----------
         filtername : np.array
           Mask 
@@ -376,13 +419,14 @@ class TrajPack(object):
             savename = savebase + 'xy_' + filtername + '.png'
         else:
             savename = savebase
+            
+        loclist, idlist = self._mask_iter(filtername)
         
-        plots.draw_xy(varlist, self._mask_iter(filtername), self.cfile,
+        plots.draw_xy(varlist, loclist, idlist, self.cfile,
                       self.rfiles, self.pfiles, savename = savename, 
                       pollon = self.pollon, pollat = self.pollat, 
                       xlim = self.xlim, ylim = self.ylim)
          
-
 
 def loadme(savename):
     """

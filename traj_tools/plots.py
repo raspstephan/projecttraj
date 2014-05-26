@@ -4,8 +4,6 @@ Submodule of traj_tools
 """
 
 
-from . import utils
-from . import core
 import numpy as np
 import matplotlib
 matplotlib.use('Qt4Agg')
@@ -75,7 +73,7 @@ def draw_xy(varlist, filelist, idlist, cfile, rfiles, pfiles, savename = False,
          
     # Getting index for COSMO files
     outint = 5   # COSMO output interval
-    tmpt = filelist[i].split('/')[-1]
+    tmpt = filelist[0].split('/')[-1]
     tmpt = int(tmpt.split('_')[1].lstrip('t'))
     cosmoind = int(tmpt/outint)
     
@@ -83,23 +81,23 @@ def draw_xy(varlist, filelist, idlist, cfile, rfiles, pfiles, savename = False,
     fig = plt.figure(figsize = (12,8))
     ax = plt.gca()   
     ax.set_aspect('equal')
-    basemap(cfile, xlim, ylim, pollon, pollat)
+    basemap(cfile, xlim, ylim)
 
     # Plotting all contour fields
-    for i in range(len(VarList)):   # Plotting all contour fields
+    for i in range(len(varlist)):   # Plotting all contour fields
         try:
-            contour(pfiles, varlist[i], cosmoind, xlim, ylim, pollon, pollat)
+            contour(pfiles, varlist[i], cosmoind, xlim, ylim)
         except:
             pass
         else:
-            contour(rfiles, varlist[i], cosmoind, xlim, ylim, pollon, pollat)
+            contour(rfiles, varlist[i], cosmoind, xlim, ylim)
     
     # Plot trajectories
     for i in range(len(filelist)):
         rootgrp = nc.Dataset(filelist[i], 'r')
-        lonmat = rootgrp.variable['longitude'][:, :]
-        latmat = rootgrp.variable['latitude'][:, :]
-        pmat = rootgrp.variable['P'][:, :]
+        lonmat = rootgrp.variables['longitude'][:, :]
+        latmat = rootgrp.variables['latitude'][:, :]
+        pmat = rootgrp.variables['P'][:, :]
     
         lonmat[:, :] += (180 - pollon)   # Convert to real coordinates
         latmat[:, :] += (90 - pollat)
@@ -119,9 +117,9 @@ def draw_xy(varlist, filelist, idlist, cfile, rfiles, pfiles, savename = False,
     plt.tight_layout()
     
     # Save Plot
-    if savebase != False:
-        print "Saving figure as", savebase
-        plt.savefig(savebase, dpi = 400)
+    if savename != False:
+        print "Saving figure as", savename
+        plt.savefig(savename, dpi = 400)
         plt.close('all')
         plt.clf()
    
@@ -242,9 +240,9 @@ def single_traj(lonarray, latarray, parray, linewidth = 0.7):
     Helper Function for DrawXYTraj
     """
     global lc
-    x = A[0][A[7] != 0]
-    y = A[1][A[7] != 0]
-    p = A[7][A[7] != 0]
+    x = lonarray
+    y = latarray
+    p = parray
 
     points = np.array([x,y]).T.reshape(-1,1,2)
     segments = np.concatenate([points[:-1], points[1:]], axis=1)
