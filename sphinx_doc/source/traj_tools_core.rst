@@ -1,9 +1,9 @@
 
-.. _traj_tools_loadbin
+.. _traj_tools_filters
 
 ===========================================
-Documentation for traj_tools.loadbin
+Documentation for traj_tools.core
 ===========================================
 
-.. automodule:: loadbin
+.. automodule:: core
     :members:

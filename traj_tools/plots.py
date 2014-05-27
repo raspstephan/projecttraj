@@ -1,6 +1,9 @@
 """
-Plotting submodule
-Submodule of traj_tools
+plots module
+------------
+
+This module contains all plotting functions.
+
 """
 
 

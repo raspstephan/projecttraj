@@ -2,8 +2,8 @@
 .. _traj_tools_common
 
 ===========================================
-Documentation for traj_tools.common
+Documentation for traj_tools.utils
 ===========================================
 
-.. automodule:: common
+.. automodule:: utils
     :members:

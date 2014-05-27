@@ -1,11 +1,9 @@
 """
-filters module!!
-Submodule of traj_tools
-Opening and Filtering saved trajectory files
-Naming conventions:
-Files = all trajectories
-Matrix = one trajectory file (i.e. 1000 trajectories)
-Array = one trajectory
+core module
+-----------
+
+This module contains the heart of the package: the TrajPack class.
+
 """
 
 import cPickle

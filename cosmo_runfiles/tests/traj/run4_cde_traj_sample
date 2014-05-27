@@ -110,7 +110,7 @@ cat > INPUT_IO  << end_input_io
 	   'W_SO      ','W_SO_ICE  ','FRESHSNW  ',
 	   'SNOWLMT   ','RHO_SNOW  ','H_SNOW    ',
 	   'RELHUM_2M ','ZHD       ','ZTD       ','ZWD       ',
-	   'CAPE_ML   ','CIN_ML    ',
+	   'CAPE_ML   ','CIN_ML    ','POT_VORTIC',
 	   'T_MNW_LK  ','T_WML_LK  ','T_BOT_LK  ','C_T_LK    ',
 	   'H_ML_LK   ','T_ICE     ','H_ICE     ',
   /
@@ -160,7 +160,7 @@ cat > INPUT_TRAJ << end_input_traj
      ydir_traj='$outdir',
      startfile_traj='/usr/users/stephan.rasp/repositories/traj_project/cosmo_runfiles/tests/traj/startfiletest.txt',
      ninc_out_traj = 1,
-     tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM',
+     tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM','POT_VORTIC'
   /
 end_input_traj
 

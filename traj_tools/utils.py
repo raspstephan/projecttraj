@@ -1,6 +1,9 @@
 """
-Submodule utils.
+utils module
+------------
+
 Contains helpful functions outside of core functionality.
+
 """
 
 import glob

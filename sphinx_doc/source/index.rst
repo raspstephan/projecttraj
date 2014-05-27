@@ -12,10 +12,9 @@ Contents:
    :maxdepth: 2
    
    traj_tools_docu
-   traj_tools_common
-   traj_tools_filters
-   traj_tools_loadbin
+   traj_tools_core
    traj_tools_plots
+   traj_tools_utils
 
 
 
