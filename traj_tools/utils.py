@@ -3,8 +3,9 @@ Submodule utils.
 Contains helpful functions outside of core functionality.
 """
 
-
+import glob
 import numpy as np
+import netCDF4 as nc
 
 
 
@@ -79,8 +80,45 @@ def create_startfile(lonmin, lonmax, dlon,
     f.close() 
                     
                 
+
+def calc_totlh(files):
+    """
+    Adds Total Latent Heat as a Variable to given netCDF files.
     
+    Parameters
+    ----------
     
+    files : List or string
+      Either a list of all netCDF files to be considered, 
+      or the path to the directory containing .nc files. 
+    
+    """
+    
+    # Checking if filelist needs to be created
+    if type(files) == list:
+        filelist = files
+    elif type(files) == str:
+        filelist = sorted(glob.glob(files + '*.nc'))
+    else:
+        raise Exception('Wrong type for files.')
+    
+    # Iterate over files in filelist
+    for f in filelist:
+        rootgrp = nc.Dataset(f, 'r')
+        
+        # Read file arrays needed for calculation: QV, QI, etc. eg:
+        m1 = rootgrp.variables['QV'][:, :]
+        # ...
+        
+        # Do the calculation
+        # Should return [:, :] array
+        
+        # Add new array to netCDF file
+        totlh = rootgrp.createVariable('TOT_LH', 'f4', ('time', 'id'))
+        totlh = outarray
+        
+        rootgrp.close()
+        
     
     
     

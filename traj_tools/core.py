@@ -356,6 +356,14 @@ class TrajPack(object):
         pickle.dump(self, f, 2)   # Using Protocol 2
         f.close()
         
+    def calc_totlh(self):
+        """
+        Class method to add Total Latent Heat as a Variable to the netCDF files.
+        
+        """
+        utils.calc_totlh(self.trjfiles)
+        
+        
     ######################
     # Plotting functions
     ######################
