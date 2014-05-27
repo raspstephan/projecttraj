@@ -1,17 +1,17 @@
 #!/bin/ksh
 #
-# Runtime test 4
+# Runtime test 0
 #
 #################################################
 # settings
 #################################################
 
 #Define Label for queue
-QLabel=COSMO_runtime4
+QLabel=COSMO_runtime0
 
 #Define directories
 indir=/home/cosmo/tobias.selz/cosmo_data/caseWCB/d3dein_small
-outdir=/home/scratch/users/stephan.rasp/runtime/r4
+outdir=/home/scratch/users/stephan.rasp/runtime/r0
 
 #Define time properties
 date=2012101300
@@ -63,7 +63,7 @@ cat > INPUT_ORG << end_input_org
  &RUNCTL
   hstart=$hstart, hstop=$hstop, dt=30.0, ydate_ini=$date, nprocx=$NPX, nprocy=$NPY, nprocio=0,
   lphys=.TRUE., luse_rttov=.FALSE., luseobs=.FALSE., leps=.FALSE., lreorder= .FALSE., lreproduce=.TRUE., itype_timing = 4, ldiagnos=.FALSE.,
-  ldatatypes=.FALSE., ltime_barrier=.TRUE., ncomm_type=3, nboundlines= 3, idbg_level=99, ldump_ascii=.FALSE., lartif_data=.FALSE., ltraj=.TRUE.,
+  ldatatypes=.FALSE., ltime_barrier=.TRUE., ncomm_type=3, nboundlines= 3, idbg_level=99, ldump_ascii=.FALSE., lartif_data=.FALSE., ltraj=.FALSE.,
  /
  &TUNING
   clc_diag=0.5, pat_len=500.0, tur_len=150.0, rlam_heat=1.0, rlam_mom=0.0, rat_lam=1.0, rat_can=1.0, rat_sea=20.0, c_lnd=2.0, c_soil=1.0,
@@ -158,7 +158,7 @@ cat > INPUT_TRAJ << end_input_traj
      hstop_traj=3.0,
      nstart_traj= 0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340
      ydir_traj='$outdir',
-     startfile_traj='/usr/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/tests/runtime/sf_r4.txt',
+     startfile_traj='/usr/users/stephan.rasp/repositories/traj_project/cosmo_runfiles/tests/runtime/sf_r1.txt',
      ninc_out_traj = 1,
      tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM',
   /

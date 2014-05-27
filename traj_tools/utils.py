@@ -49,7 +49,7 @@ def create_startfile(lonmin, lonmax, dlon,
       
     """
 
-    suff = 'test.txt'  # Later: get name from CaseSpecs
+    suff = ''
     
     f = open(outdir + suff, 'w+')
     
