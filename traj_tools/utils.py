@@ -84,9 +84,9 @@ def create_startfile(lonmin, lonmax, dlon,
                     
                 
 
-def calc_totlh(files):
+def calc_theta(files):
     """
-    Adds Total Latent Heat as a Variable to given netCDF files.
+    Adds Potential Temperature as a Variable to given netCDF files.
     
     Parameters
     ----------
@@ -96,6 +96,12 @@ def calc_totlh(files):
       or the path to the directory containing .nc files. 
     
     """
+    
+    # Define constants
+    P0 = 1.e5   # reference pressure [Pa]
+    R = 287.    # specific gas constant dry air [J K-1 kg-1]
+    CP = 1004.  # specific heat at constant pressure [J K-1 kg-1]
+    
     
     # Checking if filelist needs to be created
     if type(files) == list:
@@ -109,17 +115,13 @@ def calc_totlh(files):
     for f in filelist:
         rootgrp = nc.Dataset(f, 'r')
         
-        # Read file arrays needed for calculation: QV, QI, etc. eg:
-        m1 = rootgrp.variables['QV'][:, :]
-        # ...
-        
-        # Do the calculation
-        # Should return [:, :] array
-        
+        # Read file arrays needed for calculation
+        pmat = rootgrp.variables['P'][:, :] * 100.   # Convert to SI Units
+        tmat = rootgrp.variables['T'][:, :]
+
         # Add new array to netCDF file
-        totlh = rootgrp.createVariable('TOT_LH', 'f4', ('time', 'id'))
-        totlh = outarray
-        
+        theta = rootgrp.createVariable('THETA', 'f4', ('time', 'id'))
+        theta = tmat * ((P0 / pmat) ** (R / CP))
         rootgrp.close()
         
     
