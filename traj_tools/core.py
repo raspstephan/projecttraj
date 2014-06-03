@@ -533,7 +533,7 @@ def minxspan(Array, Criterion, mode = 2):
                 asc_span = asc_ind - (min_tot+i)
                 a = asc_ind
                 b = min_tot+i
-    #assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
+    assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
     if mode == 1:
         return asc_span
     elif mode == 2:
@@ -542,5 +542,62 @@ def minxspan(Array, Criterion, mode = 2):
 
 
 
-
+if __name__ == '__main__':
+    """
+    Test routine for minxspan algorithm.
+    
+    """
+    
+    print('************************************')
+    print('Running algorithm check')
+    
+    alen = 1000
+    crit = 200
+    import timeit
+    import matplotlib.pyplot as plt
+    
+    def _wrapper(func, *args, **kwargs):
+        """
+        Function wrapper for use in timeit module
+        """
+        def _wrapped():
+            return func(*args, **kwargs)
+        return _wrapped
+    
+    print('********* Test array 1 *************')
+    a1 = np.array([x for x in range(alen)])
+    wrap1 = _wrapper(minxspan, a1, crit)
+    print('Time taken for array 1:', timeit.timeit(wrap1, number = 100))
+    print('Results for array 1:', minxspan(a1, crit))
+    plt.plot(a1)
+    span, a, b = minxspan(a1, crit)
+    plt.scatter([a, b-1], [a1[a], a1[b-1]])
+    
+    print('********* Test array 2 *************')
+    a2 = np.array([(x**2 / 1000) for x in range(alen)])
+    wrap2 = _wrapper(minxspan, a2, crit)
+    print('Time taken for array 2:', timeit.timeit(wrap2, number = 100))
+    print('Results for array 2:', minxspan(a2, crit))
+    plt.plot(a2)
+    span, a, b = minxspan(a2, crit)
+    plt.scatter([a, b], [a2[a], a2[b]])
+    
+    print('********* Test array 3 *************')
+    a3 = np.array([(500 *(np.sin(0.1 * (x - 500.1))) / 
+                    (0.1 * (x - 500.1)) + 300) for x in range(alen)])
+    wrap1 = _wrapper(minxspan, a3, crit)
+    print('Time taken for array 3:', timeit.timeit(wrap1, number = 100))
+    print('Results for array 3:', minxspan(a3, crit))
+    plt.plot(a3)
+    span, a, b = minxspan(a3, crit)
+    plt.scatter([a, b], [a3[a], a3[b]])
+   
+    plt.show()
+    
+    
+    
+    
+    
+    
+    
 

@@ -158,7 +158,9 @@ cat > INPUT_TRAJ << end_input_traj
      hstop_traj=3.0,
      nstart_traj= 5, 120, 240
      ydir_traj='$outdir',
-     startfile_traj='/usr/users/stephan.rasp/repositories/traj_project/cosmo_runfiles/tests/traj/startfiletest.txt',
+     
+startfile_traj=
+'/usr/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/tests/traj/startfiletest.txt',
      ninc_out_traj = 1,
      tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM','POT_VORTIC'
   /
