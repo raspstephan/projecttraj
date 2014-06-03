@@ -505,40 +505,79 @@ def minxspan(Array, Criterion, mode = 2):
     
     ALGORITHM HAS TO BE CHECKED, IMPROVED!!!
     """
-    a = np.nan
-    b = np.nan
-    off = np.where(Array != 0)[0][0]
-    Array = Array[Array != 0] # Removes Zero values
-    if np.amax(Array) - np.amin(Array) < Criterion:
-        asc_span = np.nan
+    
+    if mode in [1, 2]:
         a = np.nan
         b = np.nan
-    else:
-        #import pdb; pdb.set_trace()
-        min_tot = Array.argmin()
-        max_tot = Array.argmax()
-        if min_tot > max_tot:
-            Array = Array[::-1]
+        off = np.where(Array != 0)[0][0]
+        Array = Array[Array != 0] # Removes Zero values
+        if np.amax(Array) - np.amin(Array) < Criterion:
+            asc_span = np.nan
+            a = np.nan
+            b = np.nan
+            print('no asc')
+        else:
+            #import pdb; pdb.set_trace()
             min_tot = Array.argmin()
             max_tot = Array.argmax()
-        asc_span = max_tot - min_tot
-        for i in range(max_tot - min_tot):
-            where = np.where(Array > (Array[min_tot+i] + Criterion))[0]
-            where = where[where > min_tot]
-            if where.shape[0] == 0:
+            #if min_tot > max_tot:
+                #Array = Array[::-1]
+                #min_tot = Array.argmin()
+                #max_tot = Array.argmax()
+            asc_span = max_tot - min_tot
+            for i in range(max_tot - min_tot):
+                where = np.where(Array > (Array[min_tot+i] + Criterion))[0]
+                where = where[where > min_tot]
+                if where.shape[0] == 0:
+                    
+                    break
+                asc_ind = where[0]
+                if (asc_ind - (min_tot+i)) < asc_span:
+                    asc_span = asc_ind - (min_tot+i)
+                    a = asc_ind
+                    b = min_tot+i
+        assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
+        if mode == 1:
+            return asc_span
+        elif mode == 2:
+            #print a, Array.shape[0] ,Array.shape[0] - a
+            return (asc_span, Array.shape[0] - a + off, 
+                    Array.shape[0] - b +off)
+        
+    elif mode == 3:
+        if np.amax(Array) - np.amin(Array) < Criterion:
+            DT = np.nan
+            A = np.nan
+            B = np.nan
+        else:
+            a = 1
+            b = 0
+            A = np.nan
+            B = np.nan
+            DT = len(Array)
+            while (a < len(Array)):
+                asc_span = a - b
+                dx = Array[a] - Array[b]
                 
-                break
-            asc_ind = where[0]
-            if (asc_ind - (min_tot+i)) < asc_span:
-                asc_span = asc_ind - (min_tot+i)
-                a = asc_ind
-                b = min_tot+i
-    assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
-    if mode == 1:
-        return asc_span
-    elif mode == 2:
-        #print a, Array.shape[0] ,Array.shape[0] - a
-        return (asc_span, Array.shape[0] - a + off, Array.shape[0] - b + off)
+                print(a, b, asc_span, dx, DT, Criterion, A, B) 
+                if (dx >=  Criterion) and (asc_span < DT):
+                    A = a
+                    B = b
+                    DT = a - b
+                    b += 1
+                    print '1'
+                elif (b == a-1):
+                    a += 1
+                    print '2'
+                elif (dx < 0):
+                    b += 1
+                    print '4'
+                else:
+                    a += 1
+                    print '3'
+            assert DT > 0, 'ascent time is zero'
+        return (DT, A, B)
+                
 
 
 
@@ -564,33 +603,43 @@ if __name__ == '__main__':
             return func(*args, **kwargs)
         return _wrapped
     
+
     print('********* Test array 1 *************')
     a1 = np.array([x for x in range(alen)])
-    wrap1 = _wrapper(minxspan, a1, crit)
+    wrap1 = _wrapper(minxspan, a1, crit, 3)
     print('Time taken for array 1:', timeit.timeit(wrap1, number = 100))
-    print('Results for array 1:', minxspan(a1, crit))
+    print('Results for array 1:', minxspan(a1, crit, 3))
     plt.plot(a1)
-    span, a, b = minxspan(a1, crit)
-    plt.scatter([a, b-1], [a1[a], a1[b-1]])
+    span, a, b = minxspan(a1, crit, 3)
+    plt.scatter([a, b], [a1[a], a1[b]])
     
     print('********* Test array 2 *************')
     a2 = np.array([(x**2 / 1000) for x in range(alen)])
-    wrap2 = _wrapper(minxspan, a2, crit)
+    wrap2 = _wrapper(minxspan, a2, crit, 3)
     print('Time taken for array 2:', timeit.timeit(wrap2, number = 100))
-    print('Results for array 2:', minxspan(a2, crit))
+    print('Results for array 2:', minxspan(a2, crit, 3))
     plt.plot(a2)
-    span, a, b = minxspan(a2, crit)
+    span, a, b = minxspan(a2, crit, 3)
     plt.scatter([a, b], [a2[a], a2[b]])
     
     print('********* Test array 3 *************')
     a3 = np.array([(500 *(np.sin(0.1 * (x - 500.1))) / 
                     (0.1 * (x - 500.1)) + 300) for x in range(alen)])
-    wrap1 = _wrapper(minxspan, a3, crit)
+    wrap1 = _wrapper(minxspan, a3, crit, 3)
     print('Time taken for array 3:', timeit.timeit(wrap1, number = 100))
-    print('Results for array 3:', minxspan(a3, crit))
+    print('Results for array 3:', minxspan(a3, crit, 3))
     plt.plot(a3)
-    span, a, b = minxspan(a3, crit)
+    span, a, b = minxspan(a3, crit, 3)
     plt.scatter([a, b], [a3[a], a3[b]])
+    
+    #print('********* Test array 4 *************')
+    #a4 = np.array([500 for x in range(alen)])
+    #wrap1 = _wrapper(minxspan, a4, crit, 3)
+    #print('Time taken for array 4:', timeit.timeit(wrap1, number = 100))
+    #print('Results for array 4:', minxspan(a4, crit, 3))
+    #plt.plot(a1)
+    #span, a, b = minxspan(a1, crit, 3)
+    #plt.scatter([a, b-1], [a1[a], a1[b-1]])
    
     plt.show()
     
