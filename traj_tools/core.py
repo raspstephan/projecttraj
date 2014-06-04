@@ -13,6 +13,9 @@ import netCDF4 as nc
 import glob
 import plots
 import utils
+import sys
+sys.path.append('./fortran')
+import futils
 
 
 class TrajPack(object):
@@ -498,12 +501,12 @@ def minasct(filelist, yspan, tracer):
     return ascdata
             
 
-def minxspan(Array, Criterion, mode = 2):
+def minxspan(Array, Criterion, mode = 4):
     """
     Returns the min x span for required criterion
     Automatically converts min to max
     
-    ALGORITHM HAS TO BE CHECKED, IMPROVED!!!
+    Mode 4 uses Fortran algorithm!
     """
     
     if mode in [1, 2]:
@@ -550,35 +553,38 @@ def minxspan(Array, Criterion, mode = 2):
             A = np.nan
             B = np.nan
         else:
-            a = 1
-            b = 0
-            A = np.nan
-            B = np.nan
-            DT = len(Array)
-            while (a < len(Array)):
-                asc_span = a - b
-                dx = Array[a] - Array[b]
-                
-                print(a, b, asc_span, dx, DT, Criterion, A, B) 
-                if (dx >=  Criterion) and (asc_span < DT):
-                    A = a
-                    B = b
-                    DT = a - b
-                    b += 1
-                    print '1'
-                elif (b == a-1):
-                    a += 1
-                    print '2'
-                elif (dx < 0):
-                    b += 1
-                    print '4'
-                else:
-                    a += 1
-                    print '3'
-            assert DT > 0, 'ascent time is zero'
-        return (DT, A, B)
-                
-
+            span = len(Array + 1)
+            i = 0
+            while (i < len(Array) and 
+                   np.amax(Array[i:]) - Array[i] >= Criterion):
+                if Array[i] < Array[i + 1]:
+                    j = 0
+                    found = False
+                    while i + j < len(Array) and found == False:
+                        # print 'here'
+                        dx = Array[i + j] - Array [i]
+                        tmpspan = j
+                        if ((dx >= Criterion) and (tmpspan < span)): 
+                            a = i
+                            b = i + j
+                            span = tmpspan
+                            found = True
+                        j += 1
+                        # print (i + j < len(Array)), (found == False)
+                i +=1
+            return  (span, a, b) 
+    elif mode == 4:
+        if np.amax(Array) - np.amin(Array) < Criterion:
+            span = np.nan
+            istart = np.nan
+            istop = np.nan
+        else:
+            span = len(Array) + 1
+            istart = 0
+            istop = 0
+            span, istart, istop,  = futils.futils.minxspan(Array, Criterion, 
+                                                           span, istart, istop)
+        return (span, istart, istop)
 
 
 if __name__ == '__main__':
@@ -606,40 +612,37 @@ if __name__ == '__main__':
 
     print('********* Test array 1 *************')
     a1 = np.array([x for x in range(alen)])
-    wrap1 = _wrapper(minxspan, a1, crit, 3)
-    print('Time taken for array 1:', timeit.timeit(wrap1, number = 100))
-    print('Results for array 1:', minxspan(a1, crit, 3))
+    wrap1 = _wrapper(minxspan, a1, crit, 4)
+    print('Time taken for array 1:', timeit.timeit(wrap1, number = 1000))
+    print('Results for array 1:', minxspan(a1, crit, 4))
     plt.plot(a1)
-    span, a, b = minxspan(a1, crit, 3)
+    span, a, b = minxspan(a1, crit, 4)
     plt.scatter([a, b], [a1[a], a1[b]])
     
     print('********* Test array 2 *************')
     a2 = np.array([(x**2 / 1000) for x in range(alen)])
-    wrap2 = _wrapper(minxspan, a2, crit, 3)
-    print('Time taken for array 2:', timeit.timeit(wrap2, number = 100))
-    print('Results for array 2:', minxspan(a2, crit, 3))
+    wrap2 = _wrapper(minxspan, a2, crit, 4)
+    print('Time taken for array 2:', timeit.timeit(wrap2, number = 1000))
+    print('Results for array 2:', minxspan(a2, crit, 4))
     plt.plot(a2)
-    span, a, b = minxspan(a2, crit, 3)
+    span, a, b = minxspan(a2, crit, 4)
     plt.scatter([a, b], [a2[a], a2[b]])
     
     print('********* Test array 3 *************')
     a3 = np.array([(500 *(np.sin(0.1 * (x - 500.1))) / 
                     (0.1 * (x - 500.1)) + 300) for x in range(alen)])
-    wrap1 = _wrapper(minxspan, a3, crit, 3)
-    print('Time taken for array 3:', timeit.timeit(wrap1, number = 100))
-    print('Results for array 3:', minxspan(a3, crit, 3))
+    wrap1 = _wrapper(minxspan, a3, crit, 4)
+    print('Time taken for array 3:', timeit.timeit(wrap1, number = 1000))
+    print('Results for array 3:', minxspan(a3, crit, 4))
     plt.plot(a3)
-    span, a, b = minxspan(a3, crit, 3)
+    span, a, b = minxspan(a3, crit, 4)
     plt.scatter([a, b], [a3[a], a3[b]])
     
-    #print('********* Test array 4 *************')
-    #a4 = np.array([500 for x in range(alen)])
-    #wrap1 = _wrapper(minxspan, a4, crit, 3)
-    #print('Time taken for array 4:', timeit.timeit(wrap1, number = 100))
-    #print('Results for array 4:', minxspan(a4, crit, 3))
-    #plt.plot(a1)
-    #span, a, b = minxspan(a1, crit, 3)
-    #plt.scatter([a, b-1], [a1[a], a1[b-1]])
+    print('********* Test array 4 *************')
+    a4 = np.array([500 for x in range(alen)])
+    wrap1 = _wrapper(minxspan, a4, crit, 4)
+    print('Time taken for array 4:', timeit.timeit(wrap1, number = 1000))
+    print('Results for array 4:', minxspan(a4, crit, 4))
    
     plt.show()
     
