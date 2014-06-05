@@ -543,9 +543,9 @@ def minxspan(array, yspan, flip = False):
         xspan, istart, istop  = futils.futils.minxspan(array, crit, 
                                                         len(array) + 1, 0, 0)
 
-        #assert ((xspan > 0) and (xspan <= len(array)) and (istart >= 0) 
-                #and (istop >= 0)), \
-                #'One of the minxspan outputs is zero or negative.'
+        assert ((xspan > 0) and (xspan <= len(array)) and (istart >= 0) 
+                and (istop >= 0)), \
+                'One of the minxspan outputs is zero or negative.'
             
     return (xspan, istart + offset, istop + offset)
 

@@ -7,6 +7,7 @@ Contains helpful functions outside of core functionality.
 """
 
 import glob
+import os.path
 import numpy as np
 import netCDF4 as nc
 
@@ -107,13 +108,17 @@ def calc_theta(files):
     if type(files) == list:
         filelist = files
     elif type(files) == str:
+        files = os.path.normpath(files) + '/'
         filelist = sorted(glob.glob(files + '*.nc'))
     else:
         raise Exception('Wrong type for files.')
     
+    assert (len(filelist) > 0), 'No files selected.'
+    
     # Iterate over files in filelist
     for f in filelist:
-        rootgrp = nc.Dataset(f, 'r')
+        print('Open file:', f)
+        rootgrp = nc.Dataset(f, 'a')
         
         # Read file arrays needed for calculation
         pmat = rootgrp.variables['P'][:, :] * 100.   # Convert to SI Units
@@ -121,7 +126,7 @@ def calc_theta(files):
 
         # Add new array to netCDF file
         theta = rootgrp.createVariable('THETA', 'f4', ('time', 'id'))
-        theta = tmat * ((P0 / pmat) ** (R / CP))
+        theta[:, :] = tmat * ((P0 / pmat) ** (R / CP))
         rootgrp.close()
         
     
