@@ -1,4 +1,5 @@
 ! Fortran subroutines for use in traj_tools python module
+! Built using f2py -c futils.f90 -m futils
 
 module futils
 
@@ -22,9 +23,9 @@ module futils
         
         !span = datalen + 1
         i = 1
-
-        do while ((i <= datalen) .and. ((maxval(data(i:)) - data(i)) > crit))
-            !print *, 'here'
+        ! print *, maxval(data(i:)), data(i), maxval(data(i:)) - minval(data(i:)), crit
+        do while ((i <= datalen) .and. ((maxval(data(i:)) - minval(data(i:))) > crit))
+            ! print *, 'here'
             if (data(i) < data(i + 1)) then 
                 j = 1
                 found = 0

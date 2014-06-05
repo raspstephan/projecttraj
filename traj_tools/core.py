@@ -13,9 +13,7 @@ import netCDF4 as nc
 import glob
 import plots
 import utils
-import sys
-sys.path.append('./fortran')
-import futils
+import fortran.futils as futils
 
 
 class TrajPack(object):
@@ -501,90 +499,55 @@ def minasct(filelist, yspan, tracer):
     return ascdata
             
 
-def minxspan(Array, Criterion, mode = 4):
+def minxspan(array, yspan, flip = False):
     """
-    Returns the min x span for required criterion
-    Automatically converts min to max
+    Returns the minimum time steps needed to conver given criterion.
+    Automatically filters out zero values. If yspan is not fulfilled, returns
+    np.nan. 
     
-    Mode 4 uses Fortran algorithm!
+    Parameters
+    ----------
+    array : np.array
+      Input array
+    yspan : float
+      Ascent criterion in y-direction
+    flip : bool
+      If True array will be flipped (e.g. use for 'P')
+    
+    Returns
+    -------
+    xspan : int
+      Time steps for criterion
+    istart : int
+      Start index of ascent
+    istop : int
+      End index of ascent
+    
     """
     
-    if mode in [1, 2]:
-        a = np.nan
-        b = np.nan
-        off = np.where(Array != 0)[0][0]
-        Array = Array[Array != 0] # Removes Zero values
-        if np.amax(Array) - np.amin(Array) < Criterion:
-            asc_span = np.nan
-            a = np.nan
-            b = np.nan
-            print('no asc')
-        else:
-            #import pdb; pdb.set_trace()
-            min_tot = Array.argmin()
-            max_tot = Array.argmax()
-            #if min_tot > max_tot:
-                #Array = Array[::-1]
-                #min_tot = Array.argmin()
-                #max_tot = Array.argmax()
-            asc_span = max_tot - min_tot
-            for i in range(max_tot - min_tot):
-                where = np.where(Array > (Array[min_tot+i] + Criterion))[0]
-                where = where[where > min_tot]
-                if where.shape[0] == 0:
-                    
-                    break
-                asc_ind = where[0]
-                if (asc_ind - (min_tot+i)) < asc_span:
-                    asc_span = asc_ind - (min_tot+i)
-                    a = asc_ind
-                    b = min_tot+i
-        assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
-        if mode == 1:
-            return asc_span
-        elif mode == 2:
-            #print a, Array.shape[0] ,Array.shape[0] - a
-            return (asc_span, Array.shape[0] - a + off, 
-                    Array.shape[0] - b +off)
-        
-    elif mode == 3:
-        if np.amax(Array) - np.amin(Array) < Criterion:
-            DT = np.nan
-            A = np.nan
-            B = np.nan
-        else:
-            span = len(Array + 1)
-            i = 0
-            while (i < len(Array) and 
-                   np.amax(Array[i:]) - Array[i] >= Criterion):
-                if Array[i] < Array[i + 1]:
-                    j = 0
-                    found = False
-                    while i + j < len(Array) and found == False:
-                        # print 'here'
-                        dx = Array[i + j] - Array [i]
-                        tmpspan = j
-                        if ((dx >= Criterion) and (tmpspan < span)): 
-                            a = i
-                            b = i + j
-                            span = tmpspan
-                            found = True
-                        j += 1
-                        # print (i + j < len(Array)), (found == False)
-                i +=1
-            return  (span, a, b) 
-    elif mode == 4:
-        if np.amax(Array) - np.amin(Array) < Criterion:
-            span = np.nan
-            istart = np.nan
-            istop = np.nan
-        else:
-            span = len(Array) + 1
-            istart = 0
-            istop = 0
-            span, istart, istop,  = futils.futils.minxspan(Array, Criterion, 
-                                                           span, istart, istop)
-        return (span, istart, istop)
+    # Filter out zeros, adjust for offset
+    offset = np.where(array != 0)[0][0]
+    array = array[array != 0]
+    
+    # Flip array if needed
+    if flip:
+        array = -array
+    
+    # Check if criterion is met
+    if np.amax(array) - np.amin(array) < crit:
+        xspan = np.nan
+        istart = np.nan
+        istop = np.nan
+    else:
+        # Use Fortran implementation, use 0 as error values
+        xspan, istart, istop  = futils.futils.minxspan(array, crit, 
+                                                        len(array) + 1, 0, 0)
+
+        #assert ((xspan > 0) and (xspan <= len(array)) and (istart >= 0) 
+                #and (istop >= 0)), \
+                #'One of the minxspan outputs is zero or negative.'
+            
+    return (xspan, istart + offset, istop + offset)
 
 
 if __name__ == '__main__':
@@ -612,38 +575,59 @@ if __name__ == '__main__':
 
     print('********* Test array 1 *************')
     a1 = np.array([x for x in range(alen)])
-    wrap1 = _wrapper(minxspan, a1, crit, 4)
-    print('Time taken for array 1:', timeit.timeit(wrap1, number = 1000))
-    print('Results for array 1:', minxspan(a1, crit, 4))
+    wrap = _wrapper(minxspan, a1, crit)
+    print('Time taken for array 1:', timeit.timeit(wrap, number = 1000))
+    print('Results for array 1:', minxspan(a1, crit))
     plt.plot(a1)
-    span, a, b = minxspan(a1, crit, 4)
+    span, a, b = minxspan(a1, crit)
     plt.scatter([a, b], [a1[a], a1[b]])
     
     print('********* Test array 2 *************')
     a2 = np.array([(x**2 / 1000) for x in range(alen)])
-    wrap2 = _wrapper(minxspan, a2, crit, 4)
-    print('Time taken for array 2:', timeit.timeit(wrap2, number = 1000))
-    print('Results for array 2:', minxspan(a2, crit, 4))
+    wrap = _wrapper(minxspan, a2, crit)
+    print('Time taken for array 2:', timeit.timeit(wrap, number = 1000))
+    print('Results for array 2:', minxspan(a2, crit))
     plt.plot(a2)
-    span, a, b = minxspan(a2, crit, 4)
+    span, a, b = minxspan(a2, crit)
     plt.scatter([a, b], [a2[a], a2[b]])
     
     print('********* Test array 3 *************')
     a3 = np.array([(500 *(np.sin(0.1 * (x - 500.1))) / 
                     (0.1 * (x - 500.1)) + 300) for x in range(alen)])
-    wrap1 = _wrapper(minxspan, a3, crit, 4)
-    print('Time taken for array 3:', timeit.timeit(wrap1, number = 1000))
-    print('Results for array 3:', minxspan(a3, crit, 4))
+    wrap = _wrapper(minxspan, a3, crit)
+    print('Time taken for array 3:', timeit.timeit(wrap, number = 1000))
+    print('Results for array 3:', minxspan(a3, crit))
     plt.plot(a3)
-    span, a, b = minxspan(a3, crit, 4)
+    span, a, b = minxspan(a3, crit)
     plt.scatter([a, b], [a3[a], a3[b]])
     
     print('********* Test array 4 *************')
     a4 = np.array([500 for x in range(alen)])
-    wrap1 = _wrapper(minxspan, a4, crit, 4)
-    print('Time taken for array 4:', timeit.timeit(wrap1, number = 1000))
-    print('Results for array 4:', minxspan(a4, crit, 4))
-   
+    wrap = _wrapper(minxspan, a4, crit)
+    print('Time taken for array 4:', timeit.timeit(wrap, number = 1000))
+    print('Results for array 4:', minxspan(a4, crit))
+       
+    print('********* Test array 5 *************')
+    a5 = np.array([(500 *(np.sin(0.1 * (x - 500.1))) / 
+                    (0.1 * (x - 500.1)) - 100) for x in range(alen)])
+    wrap = _wrapper(minxspan, a5, crit, flip = True)
+    print('Time taken for array 5:', timeit.timeit(wrap, number = 1000))
+    print('Results for array 5:', minxspan(a5, crit, flip = True))
+    plt.plot(a5)
+    span, a, b = minxspan(a5, crit, flip = True)
+    plt.scatter([a, b], [a5[a], a5[b]])
+    
+    print('********* Test array 6 *************')
+    a6 = np.array([(500 *(np.sin(0.05 * x)) - 500) for x in range(alen)])
+    a6[:300] = 0
+    a6[700:] = 0
+    wrap = _wrapper(minxspan, a6, crit)
+    print('Time taken for array 6:', timeit.timeit(wrap, number = 1000))
+    print('Results for array 6:', minxspan(a6, crit))
+    plt.plot(a6)
+    span, a, b = minxspan(a6, crit)
+    plt.scatter([a, b], [a6[a], a6[b]])
+    
     plt.show()
     
     
