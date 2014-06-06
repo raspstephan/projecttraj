@@ -50,12 +50,29 @@ class TrajPack(object):
     
     Attributes
     ----------
-    CaseSpecs : Class object
-      Class object containing constant specifications of case
-    inddict : dictionary
-      Dictionary connecting variable name to index in data list
+    rfiles : list
+      List of regular (meaning non-pressure levels) COSMO output files
+    pfiles : list
+      List of pressure-level COSMO output files
+    cfile : string
+      Location of COSMO constants file
+    trjfiles : list
+      List of trajectory netCDF files
+    ntrj : int
+      Total number of trajectories
+    filename : np.array
+      Sorted array containing the file location for each trajectory
+    trjid : np.array
+      Sorted array containing the unique ID for each trajectory
     data : list
-      List of numpy.arrays with information about each trajectory
+      List containing data in np.arrays
+    datadict : dictionary
+      Dictionary containing data names and matching IDs in data
+    filtlist : list
+      List containing filters/masks in np.arrays
+    filtdict : dictionary
+      Dictionary containing filter names and matching filter IDs in filtlist
+    
 
     """
     
@@ -97,9 +114,9 @@ class TrajPack(object):
         
 
         # Setting up lists and dictionaries
-        self.inddict = dict(startt = 0)
+        self.datadict = dict(startt = 0)
         self.filename = []
-        self.trajid = []
+        self.trjid = []
         self.data = [[]]
         self.filtdict = dict()
         self.filtlist = []
@@ -116,18 +133,18 @@ class TrajPack(object):
             tmpt = self.trjfiles[i].split('/')[-1]
             tmpt = int(tmpt.split('_')[1].lstrip('t'))
             self.filename.extend([self.trjfiles[i]] * ntmp)
-            self.trajid.extend(range(ntmp))
+            self.trjid.extend(range(ntmp))
             self.data[0].extend([tmpt] * ntmp)
             ntot += ntmp
             
         # Convert lists to np.array
         self.ntrj = ntot
         self.filename = np.array(self.filename)
-        self.trajid = np.array(self.trajid)
+        self.trjid = np.array(self.trjid)
         self.data[0] = np.array(self.data[0])
 
         assert (self.data[0].shape[0] == self.filename.shape[0] == 
-                self.trajid.shape[0] == ntot), \
+                self.trjid.shape[0] == ntot), \
                 "Error while initializing properties for class: Attribute arrays do not have same shape!"
                                
   
@@ -149,19 +166,19 @@ class TrajPack(object):
         if type(name) == str:
             assert (array.shape[0] == self.ntrj), \
                     'Array shaped do not match.'
-            assert (name not in self.inddict), 'Name already exists.' 
-            self.inddict[name] = len(self.data)
+            assert (name not in self.datadict), 'Name already exists.' 
+            self.datadict[name] = len(self.data)
             self.data.append(array)
             print(name, 'has been added.')
             
             
         elif type(name) == tuple or type(name) == list:
             for i in range(len(name)):
-                assert (name[i] not in self.inddict), \
+                assert (name[i] not in self.datadict), \
                         'One of the names already exists.'
                 assert (array[i].shape[0] == ntrj), \
                         'One or all of the array shapes do not match.'
-            self.inddict.update(dict(zip(name), 
+            self.datadict.update(dict(zip(name), 
                                      range(len(self.data), 
                                            len(self.data) + len(name))))
             self.data.extend(array)
@@ -184,9 +201,9 @@ class TrajPack(object):
         
         # Update dictionary
         code = tracer + str(yspan)
-        self.inddict[code] = len(self.data)
-        self.inddict[code + '_start'] = len(self.data) + 1
-        self.inddict[code + '_stop'] = len(self.data) + 2
+        self.datadict[code] = len(self.data)
+        self.datadict[code + '_start'] = len(self.data) + 1
+        self.datadict[code + '_stop'] = len(self.data) + 2
         
         ascdata = minasct(self.trjfiles, yspan, tracer)
         assert (ascdata[0].shape[0] == self.ntrj), \
@@ -217,7 +234,7 @@ class TrajPack(object):
         
         for i in range(len(filters)):
 
-            ind = self.inddict[filters[i][0]]   # Get index in self.data
+            ind = self.datadict[filters[i][0]]   # Get index in self.data
             
             if len(filters[i]) == 3:
                 mx = filters[i][1]
@@ -307,7 +324,7 @@ class TrajPack(object):
         idlist = []
         for i in range(len(uniqueloc)):
             locmask = (self.filename == uniqueloc[i])
-            idlist.append(list((self.trajid[locmask & mask])))
+            idlist.append(list((self.trjid[locmask & mask])))
 
         return list(uniqueloc), idlist
     
@@ -333,7 +350,7 @@ class TrajPack(object):
         maskid = self.filtdict[filtername]
         mask = self.filtlist[maskid]
         
-        dataid = self.inddict[dataname]
+        dataid = self.datadict[dataname]
         data = self.data[dataid]
         
         return data[mask]
@@ -391,7 +408,7 @@ class TrajPack(object):
         if filtername != None:
             array = self._mask_array(filtername, dataname)
         else:
-            array = self.data[self.inddict[dataname]]
+            array = self.data[self.datadict[dataname]]
         if savebase != None:    
             savename = savebase + 'hist_' + dataname + '_' + filtername + '.png'
         else:

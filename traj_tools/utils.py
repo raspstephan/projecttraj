@@ -87,7 +87,8 @@ def create_startfile(lonmin, lonmax, dlon,
 
 def calc_theta(files):
     """
-    Adds Potential Temperature as a Variable to given netCDF files.
+    Adds Potential Temperature as a Variable to given netCDF files. 
+    The new variable is called 'THETA'.
     
     Parameters
     ----------
