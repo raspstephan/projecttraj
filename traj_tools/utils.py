@@ -10,6 +10,7 @@ import glob
 import os.path
 import numpy as np
 import netCDF4 as nc
+import cosmo_utils.pywgrib as pwg
 
 
 
@@ -20,7 +21,8 @@ import netCDF4 as nc
 
 def create_startfile(lonmin, lonmax, dlon, 
                      latmin, latmax, dlat, 
-                     zmin, zmax, dz, outdir):
+                     zmin, zmax, dz, outdir,
+                     zfilter = False, cfile = None):
     """
     Creates a trajectory start file in output directory
     
@@ -47,9 +49,14 @@ def create_startfile(lonmin, lonmax, dlon,
       Height increment [m]
     outdir : str
       Path to output directory
-      
+    zfilter : bool
+      If True, trajectories which are "under ground" are filtered out. 
+      cfile has to be specified! 
+    cfile : str
+      Location of COSMO EU constants file
+    
     """
-
+    
     suff = ''
     
     f = open(outdir + suff, 'w+')
@@ -64,17 +71,34 @@ def create_startfile(lonmin, lonmax, dlon,
     latlist = list(np.arange(latmin, latmax, dlat))
     zlist = list(np.arange(zmin, zmax, dz))
     
+    if zfilter:
+        hh = pwg.getfieldobj(cfile, 'HH')
+    
     print('Total number of trajectories:', 
           len(lonlist) * len(latlist) * len(zlist))
     
-    for j in range(len(lonlist)):
-        for n in range(len(latlist)):
-            for m in range(len(zlist)):
-                lontmp = '%3.3f' % (lonlist[j])
+    for lon in lonlist:
+        for lat in latlist:
+            if zfilter:
+                # Interpolate to closest x and y indices
+                xind = (np.abs(hh.lons - lon)).argmin()
+                yind = (np.abs(hh.lats - lat)).argmin()
+                
+                # Get nearest z value
+                hhint = hh.data[-1, yind, xind]
+                
+                # Filter out values in zlist which are below hhint
+                zlisttmp = list(np.array(zlist)[np.array(zlist) > hhint])
+                
+            else:
+                zlisttmp = zlist
+               
+            for z in zlisttmp:
+                lontmp = '%3.3f' % (lon)
                 lontmp = (8 - len(lontmp)) * ' ' + lontmp
-                lattmp = '%2.3f' % (latlist[n])
+                lattmp = '%2.3f' % (lat)
                 lattmp = (7 - len(lattmp)) * ' ' + lattmp
-                ztmp = '%4.3f' % (zlist[m])
+                ztmp = '%4.3f' % (z)
                 ztmp = (8 - len(ztmp)) * ' ' + ztmp
                 line = (' ' + lontmp + ' ' + lattmp + ' ' + ztmp)
                 assert (len(line) == 26), \
