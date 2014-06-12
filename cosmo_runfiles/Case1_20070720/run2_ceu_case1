@@ -8,26 +8,26 @@
 QLabel=ceu
 
 #Define directories
-indir=/home/scratch/users/stephan.rasp/cosmo_test/d1euin
-outdir=/home/scratch/users/stephan.rasp/cosmo_test/d2euout
+indir=/home/scratch/users/stephan.rasp/Case1_20070720/d1euin
+outdir=/home/scratch/users/stephan.rasp/Case1_20070720/d2euout
 
 #Define time properties
-date=2012101600
+date=2007071900
 hstart=0
-hstop=12
+hstop=120
 hincbound=6
 
 #Define grid
-startlon=-2.5; startlat=-2.5; ie=81; je=81
-pollon=-150.0; pollat=25.0
+startlon=-19.0; startlat=-17.0; ie=609; je=545
+pollon=-170.0; pollat=40.0
 
 #Define parallelization
-NPX=2
-NPY=2
+NPX=8
+NPY=4
 NPIO=0
 
 #Define executable
-COSMOEXE=/home/opt/cosmo_131108_5.00/cosmoexe_pur
+COSMOEXE=/usr/users/stephan.rasp/cosmo_131108_5.00_traj/cosmoexe_pur
 
 #Folgende Änderungen zu DWD-Einstellungen wurden gemacht:
 # - Gebiet wurde verkleinert
@@ -113,7 +113,7 @@ end_input_sat
 
 cat > INPUT_IO  << end_input_io
  &IOCTL
-  lasync_io=.FALSE., l_ke_in_gds=.TRUE., ngribout=2, yform_read='apix',
+  lasync_io=.FALSE., l_ke_in_gds=.TRUE., ngribout=1, yform_read='apix',
   nhour_restart=1,1,1, ydir_restart='$outdir',
  /
  &DATABASE
@@ -125,7 +125,7 @@ cat > INPUT_IO  << end_input_io
   hincbound=$hincbound, lan_w_so=.TRUE.,
   lchkini=.TRUE.,    lchkbd =.TRUE., lbdana=.FALSE.,
   lana_qi=.TRUE.,    llb_qi=.TRUE.,  lana_rho_snow=.FALSE., 
-  lana_qr_qs=.TRUE., llb_qr_qs=.TRUE.,
+  lana_qr_qs=.FALSE., llb_qr_qs=.FALSE.,
   ydirini='$indir',
   ydirbd='$indir',
  /
@@ -157,14 +157,6 @@ cat > INPUT_IO  << end_input_io
 	   'CAPE_ML   ','CIN_ML    ',
 	   'T_MNW_LK  ','T_WML_LK  ','T_BOT_LK  ','C_T_LK    ',
 	   'H_ML_LK   ','T_ICE     ','H_ICE     ',
-/
-  &GRIBOUT
-    ncomb=0,21600,21600,lcheck=.FALSE., lwrite_const=.FALSE., l_p_filter=.TRUE., nunit_of_time=1,
-    ysuffix='_5m', ydir='$outdir', yform_write='api1',
-    yvarml='TOT_PREC  ','CAPE_ML   ','PMSL      ',
-    yvarpl='U         ','V         ','OMEGA     ','FI        ',
-           'T         ',
-    plev=500.0,  
 /
 end_input_io
 
@@ -283,24 +275,24 @@ rm -f batchjob
 rm -f YU* M_* l* cosmo.out 
 
 #batchjob-file generieren
-#echo "#$ -S /bin/ksh" >> batchjob
-#echo "#$ -cwd" >> batchjob
-#echo "#$ -N $QLabel" >> batchjob
-#echo "#$ -pe mpich $NP" >> batchjob
-#echo "#$ -V" >> batchjob
-#echo "#$ -j y" >> batchjob
-#echo "#$ -R y" >> batchjob
-#echo "#$ -q eight">>batchjob
-#echo "#$ -M tobias.selz@lmu.de" >> batchjob
-#echo "#$ -m n" >> batchjob
-#echo "#$ -o $outdir/cosmo.out" >> batchjob
-#echo /home/opt/openmpi-1.4.1/bin/mpirun -np $NP $COSMOEXE >> batchjob
+echo "#$ -S /bin/ksh" >> batchjob
+echo "#$ -cwd" >> batchjob
+echo "#$ -N $QLabel" >> batchjob
+echo "#$ -pe mpich $NP" >> batchjob
+echo "#$ -V" >> batchjob
+echo "#$ -j y" >> batchjob
+echo "#$ -R y" >> batchjob
+echo "#$ -q eight">>batchjob
+echo "#$ -M s.rasp@physik.uni-muenchen.de" >> batchjob
+echo "#$ -m n" >> batchjob
+echo "#$ -o $outdir/cosmo.out" >> batchjob
+echo /home/opt/openmpi-1.6.4/bin/mpirun -np $NP $COSMOEXE >> batchjob
 
-#execute
-#chmod u+x batchjob
-#qsub batchjob
-#rm -f batchjob
+execute
+chmod u+x batchjob
+qsub batchjob
+rm -f batchjob
 
-/home/opt/openmpi-1.6.4/bin/mpirun -np $NP $COSMOEXE
+# /home/opt/openmpi-1.6.4/bin/mpirun -np $NP $COSMOEXE
 
 
