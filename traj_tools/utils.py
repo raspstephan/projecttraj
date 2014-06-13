@@ -22,7 +22,7 @@ import cosmo_utils.pywgrib as pwg
 def create_startfile(lonmin, lonmax, dlon, 
                      latmin, latmax, dlat, 
                      zmin, zmax, dz, outdir,
-                     zfilter = False, cfile = None):
+                     zfilter = True, cfile = None):
     """
     Creates a trajectory start file in output directory
     
@@ -66,16 +66,20 @@ def create_startfile(lonmin, lonmax, dlon,
     f.write('-----------------\n')
     
     # Create lon and lat arrays
-    
     lonlist = list(np.arange(lonmin, lonmax, dlon))
     latlist = list(np.arange(latmin, latmax, dlat))
     zlist = list(np.arange(zmin, zmax, dz))
     
     if zfilter:
+        if cfile == None:
+            raise Exception('No cfile give for filter')
         hh = pwg.getfieldobj(cfile, 'HH')
+        
+    print 'Output file is:', outdir + suff
+    print 'Unfiltered number of trajectories:', \
+          len(lonlist) * len(latlist) * len(zlist)
     
-    print('Total number of trajectories:', 
-          len(lonlist) * len(latlist) * len(zlist))
+    trjcount = 0
     
     for lon in lonlist:
         for lat in latlist:
@@ -104,6 +108,10 @@ def create_startfile(lonmin, lonmax, dlon,
                 assert (len(line) == 26), \
                         'Start file line does not have correct length'
                 f.write(line + '\n')
+                trjcount += 1
+    
+    print 'Total number of trajectories:', trjcount
+    print 'Filtered out:', len(lonlist) * len(latlist) * len(zlist) - trjcount
     
     f.close() 
                     
