@@ -21,8 +21,9 @@ import cosmo_utils.pywgrib as pwg
 
 def create_startfile(lonmin, lonmax, dlon, 
                      latmin, latmax, dlat, 
-                     zmin, zmax, dz, outdir,
-                     zfilter = True, cfile = None):
+                     zmin, zmax, dz, outname,
+                     zfilter = True, cfile = None,
+                     refdate = None):
     """
     Creates a trajectory start file in output directory
     
@@ -47,35 +48,39 @@ def create_startfile(lonmin, lonmax, dlon,
       Upper height boundary [m]
     dz : float
       Height increment [m]
-    outdir : str
-      Path to output directory
+    outname : str
+      Path to output directory, plus prefix
     zfilter : bool
       If True, trajectories which are "under ground" are filtered out. 
       cfile has to be specified! 
     cfile : str
       Location of COSMO EU constants file
+    refdate : str
+      Reference date to be written as a header
     
     """
     
-    suff = ''
+    suff = '.sf'
     
-    f = open(outdir + suff, 'w+')
-    
-    f.write('Reference Date somedate\n')  # Write first line, slo use CaseSpecs
+    f = open(outname + suff, 'w+')
+    if refdate == None:
+        f.write('Reference Date N/A\n')
+    else:
+        f.write('Reference Date ' + refdate + '\n')
     f.write('lon lat z\n')
     f.write('-----------------\n')
     
     # Create lon and lat arrays
-    lonlist = list(np.arange(lonmin, lonmax, dlon))
-    latlist = list(np.arange(latmin, latmax, dlat))
-    zlist = list(np.arange(zmin, zmax, dz))
+    lonlist = list(np.arange(lonmin, lonmax + dlon, dlon))
+    latlist = list(np.arange(latmin, latmax + dlat, dlat))
+    zlist = list(np.arange(zmin, zmax + dz, dz))
     
     if zfilter:
         if cfile == None:
             raise Exception('No cfile give for filter')
         hh = pwg.getfieldobj(cfile, 'HH')
         
-    print 'Output file is:', outdir + suff
+    print 'Output file is:', outname + suff
     print 'Unfiltered number of trajectories:', \
           len(lonlist) * len(latlist) * len(zlist)
     
