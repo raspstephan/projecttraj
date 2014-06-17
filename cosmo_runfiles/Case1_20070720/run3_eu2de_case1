@@ -32,7 +32,7 @@ pollon=-170.0; pollat=40.0
 istartlon=-19.0; istartlat=-17.0; iie=609; ije=545
 
 #Define parallelization
-NPX=2
+NPX=4
 NPY=2
 NPIO=0
 
@@ -88,7 +88,7 @@ cat > INPUT << end_input
   ie_in_tot=$iie, je_in_tot=$ije, ke_in_tot=40,
  /
  &LMGRID
-  startlat_tot=$startlon, startlon_tot=$startlat,
+  startlat_tot=$startlat, startlon_tot=$startlon,
   pollat=$pollat, pollon=$pollon,
   dlon=0.025, dlat=0.025,
   ielm_tot=$ie, jelm_tot=$je, kelm_tot=50,

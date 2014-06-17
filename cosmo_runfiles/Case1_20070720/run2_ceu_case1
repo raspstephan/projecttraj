@@ -288,7 +288,7 @@ echo "#$ -m n" >> batchjob
 echo "#$ -o $outdir/cosmo.out" >> batchjob
 echo /home/opt/openmpi-1.6.4/bin/mpirun -np $NP $COSMOEXE >> batchjob
 
-execute
+#execute
 chmod u+x batchjob
 qsub batchjob
 rm -f batchjob

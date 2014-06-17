@@ -19,7 +19,7 @@ outdir=/home/scratch/users/stephan.rasp/Case1_20070720_test/d4deout
 #Define time properties
 date=2007071909
 hstart=0
-hstop=30
+hstop=21
 hincbound=3
 
 #Define grid
