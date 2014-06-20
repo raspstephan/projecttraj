@@ -104,9 +104,14 @@ def draw_xy(varlist, filelist, idlist, cfile, rfiles, pfiles, savename = False,
     
         lonmat[:, :] += (180 - pollon)   # Convert to real coordinates
         latmat[:, :] += (90 - pollat)
-
+        
         for j in idlist[i]:
-            single_traj(lonmat[:, j], latmat[:, j], pmat[:, j])
+            # Filter out zero values!
+            parray = pmat[:, j][pmat[:, j] != 0]
+            lonarray = lonmat[:, j][pmat[:, j] != 0]
+            latarray = latmat[:, j][pmat[:, j] != 0]
+            
+            single_traj(lonarray, latarray, parray)
     
     # Set plot properties
     if xlim != None:

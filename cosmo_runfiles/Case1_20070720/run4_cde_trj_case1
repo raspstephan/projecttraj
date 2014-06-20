@@ -25,7 +25,7 @@ pollon=-170.0; pollat=40.0
 
 #Define parallelization
 NPX=8
-NPY=4
+NPY=6
 NPIO=0
 
 #Define executable
@@ -198,7 +198,7 @@ echo "#$ -pe mpich $NP" >> batchjob
 echo "#$ -V" >> batchjob
 echo "#$ -j y" >> batchjob
 echo "#$ -R y" >> batchjob
-echo "#$ -q eight">>batchjob
+echo "#$ -q cosmo">>batchjob
 echo "#$ -M s.rasp@physik.uni-muenchen.de" >> batchjob
 echo "#$ -m b" >> batchjob
 echo "#$ -o $outdir/cosmo.out" >> batchjob
