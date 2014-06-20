@@ -79,7 +79,7 @@ class TrajPack(object):
     def __init__(self, datadir, xlim, ylim, 
                  pollon = 180., pollat = 90.):
 
-        self.datadir = datadir
+        self.datadir = datadir + '/'
         self._init_prop()
         self.pollon = pollon   # Default: 180
         self.pollat = pollat   # Default: 90
@@ -410,7 +410,7 @@ class TrajPack(object):
         else:
             array = self.data[self.datadict[dataname]]
         if savebase != None:    
-            savename = savebase + 'hist_' + dataname + '_' + filtername + '.png'
+            savename = savebase + 'hist_' + dataname + '_' + str(filtername) + '.png'
         else:
             savename = savebase
         plots.draw_hist(array, savename = savename)
@@ -502,11 +502,16 @@ def minasct(filelist, yspan, tracer):
     asct = []
     ascstart = []
     ascstop = []
-     
-    for i in range(len(filelist)):
-        mat = nc.Dataset(filelist[i], 'r').variables[tracer][:, :]
+    
+    if tracer == 'P':
+        flip = True
+    else:
+        flip = False
+    
+    for f in filelist:
+        mat = nc.Dataset(f, 'r').variables[tracer][:, :]
         for j in range(mat.shape[1]):
-            asctup = minxspan(mat[:, j], yspan)
+            asctup = minxspan(mat[:, j], yspan, flip)
             asct.append(asctup[0])
             ascstart.append(asctup[1])
             ascstop.append(asctup[2])
@@ -519,8 +524,8 @@ def minasct(filelist, yspan, tracer):
 def minxspan(array, yspan, flip = False):
     """
     Returns the minimum time steps needed to conver given criterion.
-    Automatically filters out zero values. If yspan is not fulfilled, returns
-    np.nan. 
+    Automatically filters out zero and nan values. If yspan is not fulfilled, 
+    returns np.nan. 
     
     Parameters
     ----------
@@ -542,29 +547,40 @@ def minxspan(array, yspan, flip = False):
     
     """
     
-    # Filter out zeros, adjust for offset
-    offset = np.where(array != 0)[0][0]
+    # Filter out nans and zeros
+    array = array[np.isfinite(array)]
     array = array[array != 0]
-    
+
     # Flip array if needed
     if flip:
-        array = -array
-    
+        array = -array 
+
     # Check if criterion is met
-    if np.amax(array) - np.amin(array) < crit:
+    #print array
+    if array.shape[0] == 0:
+        xspan = np.nan
+        istart = np.nan
+        istop = np.nan
+    elif np.amax(array) - np.amin(array) < yspan:
         xspan = np.nan
         istart = np.nan
         istop = np.nan
     else:
         # Use Fortran implementation, use 0 as error values
-        xspan, istart, istop  = futils.futils.minxspan(array, crit, 
+        xspan, istart, istop  = futils.futils.minxspan(array, yspan, 
                                                         len(array) + 1, 0, 0)
-
-        assert ((xspan > 0) and (xspan <= len(array)) and (istart >= 0) 
-                and (istop >= 0)), \
-                'One of the minxspan outputs is zero or negative.'
+        
+        # Check if output is correct. NOTE: THIS IS A POTENTIAL BUG!!!
+        if (istart < 0) and (istop < 0):
+            xspan = np.nan
+            istart = np.nan
+            istop = np.nan
             
-    return (xspan, istart + offset, istop + offset)
+        #assert ((xspan > 0) and (xspan <= len(array)) and (istart >= 0) 
+                #and (istop >= 0)), \
+                #'One of the minxspan outputs is zero or negative.'
+            
+    return (xspan, istart, istop)
 
 
 if __name__ == '__main__':
