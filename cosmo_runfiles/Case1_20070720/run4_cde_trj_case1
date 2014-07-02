@@ -11,7 +11,7 @@ QLabel=cde
 
 #Define directories
 indir=/home/scratch/users/stephan.rasp/Case1_20070720/d3dein
-outdir=/home/scratch/users/stephan.rasp/Case1_20070720/d4deout
+outdir=/home/scratch/users/stephan.rasp/Case1_20070720/d4deout_eight
 
 #Define time properties
 date=2007071918
@@ -25,7 +25,7 @@ pollon=-170.0; pollat=40.0
 
 #Define parallelization
 NPX=8
-NPY=6
+NPY=8
 NPIO=0
 
 #Define executable
@@ -194,15 +194,17 @@ rm -f YU* M_* l* cosmo.out
 echo "#$ -S /bin/ksh" >> batchjob
 echo "#$ -cwd" >> batchjob
 echo "#$ -N $QLabel" >> batchjob
-echo "#$ -pe mpich $NP" >> batchjob
+# echo "#$ -pe mpich $NP" >> batchjob
+#Infiniband
+echo "#$ -pe mpiib $NP" >> batchjob
 echo "#$ -V" >> batchjob
 echo "#$ -j y" >> batchjob
 echo "#$ -R y" >> batchjob
-echo "#$ -q cosmo">>batchjob
+echo "#$ -q eight">>batchjob
 echo "#$ -M s.rasp@physik.uni-muenchen.de" >> batchjob
-echo "#$ -m b" >> batchjob
+echo "#$ -m n" >> batchjob
 echo "#$ -o $outdir/cosmo.out" >> batchjob
-echo /home/opt/openmpi-1.6.4/bin/mpirun -np $NP $COSMOEXE >> batchjob
+echo /home/opt/openmpi-1.6.4/bin/mpirun -mca btl self,tcp -np $NP $COSMOEXE >> batchjob
 
 #execute
 chmod u+x batchjob

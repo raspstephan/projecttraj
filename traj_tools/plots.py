@@ -41,6 +41,7 @@ def draw_hist(array, savename = None):
         plt.savefig(savename)
         plt.xlabel('hmmm???')
         plt.ylabel("Number of trajectories")
+        plt.close('all')
         plt.clf()
 
 

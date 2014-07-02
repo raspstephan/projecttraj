@@ -298,7 +298,7 @@ class TrajPack(object):
     
     
         
-    def _mask_iter(self, filtername):
+    def _mask_iter(self, filtername, addmask = None):
         """
         Converts mask to iterable lists. To be used in plotting functions, etc.
         
@@ -306,6 +306,8 @@ class TrajPack(object):
         ----------
         filtername : np.array
           Mask 
+        addmask : logical np.array
+          Additional mask
         
         Returns
         -------
@@ -319,7 +321,11 @@ class TrajPack(object):
           
         """
         maskid = self.filtdict[filtername]
-        mask = self.filtlist[maskid]
+        mask = np.array(self.filtlist[maskid], copy = True)
+        
+        if addmask != None:
+            mask &= addmask
+        
         uniqueloc = np.unique(self.filename[mask])
         idlist = []
         for i in range(len(uniqueloc)):
@@ -329,16 +335,18 @@ class TrajPack(object):
         return list(uniqueloc), idlist
     
     
-    def _mask_array(self, filtername, dataname):
+    def _mask_array(self, filtername, dataname, addmask = None):
         """
         Returns one masked array specified by given mask and dataname.
         
         Parameters
         ----------
         filtername : np.array
-          Mask 
+          Name of filter in dictionary
         dataname : string
           Identifier of data array
+        addmask : logical np.mask
+          Additional mask 
           
         Returns
         -------
@@ -348,7 +356,10 @@ class TrajPack(object):
         """
         
         maskid = self.filtdict[filtername]
-        mask = self.filtlist[maskid]
+        mask = np.array(self.filtlist[maskid], copy = True)
+        
+        if addmask != None:
+            mask &= addmask
         
         dataid = self.datadict[dataname]
         data = self.data[dataid]
@@ -374,7 +385,8 @@ class TrajPack(object):
         
     def calc_theta(self):
         """
-        Class method to add Potential Temperature as a Variable to the netCDF files.
+        Class method to add Potential Temperature as a Variable to the 
+        netCDF files.
         
         """
         
@@ -405,15 +417,38 @@ class TrajPack(object):
           If True, plots histograms for each start time.
         
         """
-        if filtername != None:
-            array = self._mask_array(filtername, dataname)
-        else:
-            array = self.data[self.datadict[dataname]]
-        if savebase != None:    
-            savename = savebase + 'hist_' + dataname + '_' + str(filtername) + '.png'
-        else:
-            savename = savebase
-        plots.draw_hist(array, savename = savename)
+        if starts:
+            # get start times
+            times = list(np.unique(self.data[self.datadict['startt']]))
+            
+            for t in times:
+                # Create temporary mask
+                print 'Creating histogram for time:', t
+                tmpmask = self.data[self.datadict['startt']] == t
+                print t, times, tmpmask[tmpmask != False]
+                
+                if filtername != None:
+                    array = self._mask_array(filtername, dataname, tmpmask)
+                    print array
+                else:
+                    array = self.data[self.datadict[dataname]][tmpmask]
+                if savebase != None:    
+                    savename = (savebase + 'hist_' + dataname + '_' + 
+                                str(filtername) + str(t) + '.png')
+                plots.draw_hist(array, savename = savename)
+                
+        else: 
+            if filtername != None:
+                array = self._mask_array(filtername, dataname)
+                print array
+            else:
+                array = self.data[self.datadict[dataname]]
+            if savebase != None:    
+                savename = (savebase + 'hist_' + dataname + '_' + 
+                            str(filtername) + '.png')
+            else:
+                savename = savebase
+            plots.draw_hist(array, savename = savename)
         
      
     def draw_xy(self, varlist, filtername = None, savebase = None, 
@@ -439,6 +474,9 @@ class TrajPack(object):
         """
         assert (self.xlim != None and self.ylim != None), \
                 'xlim and/or ylim are not specified!'
+        
+        #if starts:
+            
         
         if savebase != None:    
             savename = savebase + 'xy_' + filtername + '.png'
@@ -509,6 +547,7 @@ def minasct(filelist, yspan, tracer):
         flip = False
     
     for f in filelist:
+        print 'Opening file:', f
         mat = nc.Dataset(f, 'r').variables[tracer][:, :]
         for j in range(mat.shape[1]):
             asctup = minxspan(mat[:, j], yspan, flip)
