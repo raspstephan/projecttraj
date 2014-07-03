@@ -380,7 +380,20 @@ class TrajPack(object):
         """
         
         f = open(savename, 'w+')
-        pickle.dump(self, f, 2)   # Using Protocol 2
+        # 1. Save datadir
+        pickle.dump(self.datadir, f, 2)
+        # 2. Save pollon, pollat
+        pickle.dump((self.pollon, self.pollat), f, 2)
+        # 3. Save xlim, ylim
+        pickle.dump((self.xlim, self.ylim), f, 2)
+        # 4. Save data
+        pickle.dump(self.data, f, 2)
+        # 5. Save datadict
+        pickle.dump(self.datadict, f, 2)
+        # 6. Save filtlist
+        pickle.dump(self.filtlist, f, 2)
+        # 7. Save filtdict
+        pickle.dump(self.filtdict, f, 2)
         f.close()
         
     def calc_theta(self):
@@ -425,7 +438,6 @@ class TrajPack(object):
                 # Create temporary mask
                 print 'Creating histogram for time:', t
                 tmpmask = self.data[self.datadict['startt']] == t
-                print t, times, tmpmask[tmpmask != False]
                 
                 if filtername != None:
                     array = self._mask_array(filtername, dataname, tmpmask)
@@ -434,7 +446,7 @@ class TrajPack(object):
                     array = self.data[self.datadict[dataname]][tmpmask]
                 if savebase != None:    
                     savename = (savebase + 'hist_' + dataname + '_' + 
-                                str(filtername) + str(t) + '.png')
+                                str(filtername) + '_' + str(t) + '.png')
                 plots.draw_hist(array, savename = savename)
                 
         else: 
@@ -508,8 +520,24 @@ def loadme(savename):
     """
     
     f = open(savename, 'r')
-    obj = pickle.load(f)
+    # 1. Load datadir
+    datadir = pickle.load(f)
+    # 2. Load pollon, pollat
+    pollon, pollat = pickle.load(f)
+    # 3. Load xlim, ylim
+    xlim, ylim = pickle.load(f)
+    # Allocate object
+    obj = TrajPack(datadir, xlim, ylim, pollon, pollat)
+    # 4. Load data
+    obj.data = pickle.load(f)
+    # 5. Load datadict
+    obj.datadict = pickle.load(f)
+    # 6. Load filtlist
+    obj.filtlist = pickle.load(f)
+    # 7. Load filtdict
+    obj.filtdict = pickle.load(f)
     f.close()
+    
     return obj 
 
 
