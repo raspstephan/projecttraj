@@ -463,8 +463,8 @@ class TrajPack(object):
             plots.draw_hist(array, savename = savename)
         
      
-    def draw_xy(self, varlist, filtername = None, savebase = None, 
-                starts = False):
+    def draw_traj(self, varlist, filtername = None, savebase = None, 
+                  starts = False):
         """
         Draws XY Plot of trajectories with color as a function of 'P'.
         If filtername is given, plots only filetered trajectories.
@@ -497,11 +497,35 @@ class TrajPack(object):
             
         loclist, idlist = self._mask_iter(filtername)
         
-        plots.draw_xy(varlist, loclist, idlist, self.cfile,
-                      self.rfiles, self.pfiles, savename = savename, 
-                      pollon = self.pollon, pollat = self.pollat, 
-                      xlim = self.xlim, ylim = self.ylim)
-         
+        plots.draw_traj(varlist, loclist, idlist, self.cfile,
+                        self.rfiles, self.pfiles, savename = savename, 
+                        pollon = self.pollon, pollat = self.pollat, 
+                        xlim = self.xlim, ylim = self.ylim)
+        
+    def draw_contour(self, varlist, time, savebase = None, interval = None):
+        """
+        Draws a countourplot of given variables.
+        
+        Parameters
+        ----------
+        varlist : list
+          List of variables to be plotted. E.g. ["PMSL", "TOT_PREC_S"]
+        time : integer
+          In steps after model start
+        savebase : string
+          Path to output directory
+        Interval : integer
+          NOT IMPLEMENTED
+        """
+        if savebase != None:    
+            savename = savebase + 'contour_' + '.png'
+        else:
+            savename = savebase
+        
+        plots.draw_contour(varlist, time, self.cfile, self.rfiles, self.pfiles, 
+                           savename = savename, pollon = self.pollon, 
+                           pollat = self.pollat, xlim = self.xlim, 
+                           ylim = self.ylim)
 
 def loadme(savename):
     """

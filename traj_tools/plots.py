@@ -45,10 +45,50 @@ def draw_hist(array, savename = None):
         plt.clf()
 
 
-def draw_xy(varlist, filelist, idlist, cfile, rfiles, pfiles, savename = False, 
-            pollon = None, pollat = None, xlim = None, ylim = None):
+def draw_contour(varlist, time, cfile, rfiles, pfiles, savename = False, 
+                 pollon = None, pollat = None, xlim = None, ylim = None):
     """
-    Plots one xy plot.
+    Plots one contour plot. TEST FOR NOW!
+    """
+    
+    # Getting index for COSMO files
+    outint = 5   # COSMO output interval
+    cosmoind = time
+    
+    # Set up figure
+    fig = plt.figure(figsize = (12,8))
+    ax = plt.gca()   
+    ax.set_aspect('equal')
+    basemap(cfile, xlim, ylim)
+    
+    # Plotting all contour fields
+    for i in range(len(varlist)):   # Plotting all contour fields
+        
+        if varlist[i] in pwg.get_fieldtable(rfiles[cosmoind]).fieldnames:
+            contour(rfiles, varlist[i], cosmoind, xlim, ylim)
+        elif varlist[i] in pwg.get_fieldtable(pfiles[cosmoind]).fieldnames:
+            contour(pfiles, varlist[i], cosmoind, xlim, ylim)
+        else:
+            raise Exception('Variable' + varlist[i] + 'not available!')
+       
+     
+    # Set plot properties
+    if xlim != None:
+        plt.xlim(xlim)
+    if ylim != None:
+        plt.ylim(ylim)
+        
+    if savename != False:
+        print "Saving figure as", savename
+        plt.savefig(savename, dpi = 400)
+        plt.close('all')
+        plt.clf()
+
+def draw_traj(varlist, filelist, idlist, cfile, rfiles, pfiles, 
+              savename = False,pollon = None, pollat = None, xlim = None, 
+              ylim = None):
+    """
+    Plots one xy plot with trajectories.
     
     Parameters
     ----------
@@ -89,15 +129,17 @@ def draw_xy(varlist, filelist, idlist, cfile, rfiles, pfiles, savename = False,
 
     # Plotting all contour fields
     for i in range(len(varlist)):   # Plotting all contour fields
-        try:
-            contour(pfiles, varlist[i], cosmoind, xlim, ylim)
-        except:
-            pass
-        else:
+        
+        if varlist[i] in pwg.get_fieldtable(rfiles[cosmoind]).fieldnames:
             contour(rfiles, varlist[i], cosmoind, xlim, ylim)
+        elif varlist[i] in pwg.get_fieldtable(pfiles[cosmoind]).fieldnames:
+            contour(pfiles, varlist[i], cosmoind, xlim, ylim)
+        else:
+            raise Exception('Variable' + varlist[i] + 'not available!')
     
     # Plot trajectories
     for i in range(len(filelist)):
+        print 'Plotting file', i+1, 'of', len(filelist)
         rootgrp = nc.Dataset(filelist[i], 'r')
         lonmat = rootgrp.variables['longitude'][:, :]
         latmat = rootgrp.variables['latitude'][:, :]
@@ -188,6 +230,7 @@ def contour(filelist, variable, cosmoind, xlim, ylim):
       Dimensions in y-direction in rotated coordinates
       
     """
+    print 'Plotting:', variable
     dt = 5. * 60
     dx = 0.025
     
