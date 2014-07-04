@@ -175,7 +175,7 @@ class TrajPack(object):
             assert (name not in self.datadict), 'Name already exists.' 
             self.datadict[name] = len(self.data)
             self.data.append(array)
-            print(name, 'has been added.')
+            print name, 'has been added.'
             
             
         elif type(name) == tuple or type(name) == list:
@@ -188,7 +188,7 @@ class TrajPack(object):
                                      range(len(self.data), 
                                            len(self.data) + len(name))))
             self.data.extend(array)
-            print(name, 'have been added.')
+            print name, 'have been added.'
         
     
     

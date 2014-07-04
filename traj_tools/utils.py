@@ -155,7 +155,7 @@ def calc_theta(files):
     
     # Iterate over files in filelist
     for f in filelist:
-        print('Open file:', f)
+        print 'Open file:', f 
         rootgrp = nc.Dataset(f, 'a')
         
         # Read file arrays needed for calculation
