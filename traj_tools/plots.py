@@ -9,7 +9,16 @@ This module contains all plotting functions.
 
 import numpy as np
 import matplotlib
-matplotlib.use('Qt4Agg')
+import os
+# from cosmo_utils
+try:
+    os.environ["DISPLAY"]
+    print "X-Server detected, using tkagg backend for plotting"
+except KeyError:
+    if matplotlib.get_backend() in matplotlib.rcsetup.interactive_bk:
+        matplotlib.use("Agg") 
+        # interface "Agg" can plot without x-server connection
+    print "No X-Server detected, using agg backend for plotting"
 import matplotlib.pyplot as plt
 import matplotlib.colors as clr
 import matplotlib.collections as col
