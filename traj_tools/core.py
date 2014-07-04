@@ -74,6 +74,19 @@ class TrajPack(object):
     filtdict : dictionary
       Dictionary containing filter names and matching filter IDs in filtlist
     
+    
+    Examples
+    --------
+    >>> import traj_tools as trj
+    >>> # Define directory containing trajectory and COSMO files
+    >>> datadir = '/home/scratch/users/stephan.rasp/Case1_20070720/d4deout_eight'
+    >>> # Define lon and lat of rotated pole (not necessary, but strongly recommended!)
+    >>> rotlon = -170
+    >>> rotlat = 40
+    >>> # Allocate class object
+    >>> case1 = trj.TrajPack(datadir, rotlon, rotlat)
+    
+    
 
     """
     
@@ -106,10 +119,13 @@ class TrajPack(object):
         assert len(glob.glob(self.datadir + '*00c*')) == 1, \
                'More than one cfile detected'
         trjfiles = glob.glob(self.datadir + 'traj_*')
+        if 'theta' in ''.join(trjfiles):
+            for i in range(len(trjfiles)):
+                trjfiles = [x for x in trjfiles if 'theta' in x]
         self.trjfiles = sorted(trjfiles)
         
         # Getting xlim, ylim from COSMO data
-        tmpfobj = pwg.getfobj(rfiles[0], 'TOT_PREC_S')
+        tmpfobj = pwg.getfobj(self.cfile, 'FR_LAND_S')
         xlim = (tmpfobj.lons[0], tmpfobj.lons[-1])
         ylim = (tmpfobj.lats[0], tmpfobj.lats[-1])
         self.xlim = self._nrot2rot(xlim, 'lon')
@@ -165,7 +181,12 @@ class TrajPack(object):
         name : string or tuple
           name(s) of the array(s) to be added
         array : np.array of tuple
-          data array(s) to be added         
+          data array(s) to be added
+          
+        Examples
+        --------
+        >>> case1.new_prop_array('id', np.array(range(case1.ntrj)))
+        id has been added.
         
         """
         
@@ -203,6 +224,11 @@ class TrajPack(object):
         tracer : str (default = 'P')
           COSMO name of y-axis variable
         
+        Examples
+        --------
+        >>> case1.new_prop_asc(600, 'P')
+        P600 has been added
+        
         """
         
         # Update dictionary
@@ -215,6 +241,7 @@ class TrajPack(object):
         assert (ascdata[0].shape[0] == self.ntrj), \
                 'Array shapes do not match. Look for error in source code.'
         self.data.extend(ascdata)
+        print code, 'has been added.'
     
        
     def create_filter(self, name, filters):
@@ -225,12 +252,18 @@ class TrajPack(object):
         ----------
         name : string
           Name of given filter
-        filters : tuple
+        filters : list
           List of filter tuples, see example.
         
         Examples
         --------
-        >>> filters = (('P600', 2880, 0), ('P300', 1000, 200))
+        >>> case1.create_filter('WCB_start360', [('P600', 0, 2880), ('startt', 360)])
+        WCB_startt360 has been added.
+        
+        If only one filter is given, it still has to be a tuple in a list, like
+        
+        >>> case1.create_filter('WCB', [('P600', 0, 2880)])
+        WCB has been added.
         
         """
         
@@ -243,8 +276,8 @@ class TrajPack(object):
             ind = self.datadict[filters[i][0]]   # Get index in self.data
             
             if len(filters[i]) == 3:
-                mx = filters[i][1]
-                mn = filters[i][2]
+                mn = filters[i][1]
+                mx = filters[i][2]
                 
                 mask &= self.data[ind] <= mx
                 mask &= self.data[ind] >= mn
@@ -259,6 +292,7 @@ class TrajPack(object):
        
         self.filtdict[name] = len(self.filtlist)
         self.filtlist.append(mask)
+        print name, 'has been added.'
 
 
     def _nrot2rot(self, nrcoord, mode):
@@ -382,7 +416,11 @@ class TrajPack(object):
         ----------
         savename : string
           Save path
-          
+        
+        Examples
+        --------
+        >>> case1.saveme('./case1.tp')
+        Saved as ./case1.tp
         """
         
         f = open(savename, 'w+')
@@ -401,15 +439,20 @@ class TrajPack(object):
         # 7. Save filtdict
         pickle.dump(self.filtdict, f, 2)
         f.close()
+        print 'Saved as', savename
         
     def calc_theta(self):
         """
         Class method to add Potential Temperature as a Variable to the 
         netCDF files.
         
+        Examples
+        --------
+        >>> case1.calc_theta()
         """
         
-        utils.calc_theta(self.trjfiles)
+        thetalist = utils.calc_theta(self.trjfiles)
+        self.trjfiles = thetalist
         
         
     ######################

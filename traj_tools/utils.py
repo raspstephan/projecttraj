@@ -7,7 +7,7 @@ Contains helpful functions outside of core functionality.
 """
 
 import glob
-import os.path
+import os
 import numpy as np
 import netCDF4 as nc
 import cosmo_utils.pywgrib as pwg
@@ -153,8 +153,14 @@ def calc_theta(files):
     
     assert (len(filelist) > 0), 'No files selected.'
     
-    # Iterate over files in filelist
+    thetalist = []
     for f in filelist:
+        thetaf = f.rstrip('.nc') + '_theta.nc'
+        thetalist.append(thetaf)
+        os.system('cp ' + f + ' ' + thetaf)
+    
+    # Iterate over files in filelist
+    for f in thetalist:
         print 'Open file:', f 
         rootgrp = nc.Dataset(f, 'a')
         
@@ -167,6 +173,8 @@ def calc_theta(files):
         theta[:, :] = tmat * ((P0 / pmat) ** (R / CP))
         rootgrp.close()
         
+        
+    return thetalist
     
     
     
