@@ -114,6 +114,10 @@ class TrajPack(object):
         ylim = (tmpfobj.lats[0], tmpfobj.lats[-1])
         self.xlim = self._nrot2rot(xlim, 'lon')
         self.ylim = self._nrot2rot(ylim, 'lat')     
+        
+        # Set COSMO and trajectory output interval
+        self.dcosmo = 5.   # Minutes
+        self.dtraj = 5.
 
         # Setting up lists and dictionaries
         self.datadict = dict(startt = 0)
@@ -207,7 +211,7 @@ class TrajPack(object):
         self.datadict[code + '_start'] = len(self.data) + 1
         self.datadict[code + '_stop'] = len(self.data) + 2
         
-        ascdata = minasct(self.trjfiles, yspan, tracer)
+        ascdata = minasct(self.trjfiles, yspan, tracer) * self.dtraj
         assert (ascdata[0].shape[0] == self.ntrj), \
                 'Array shapes do not match. Look for error in source code.'
         self.data.extend(ascdata)
