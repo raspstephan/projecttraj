@@ -14,6 +14,7 @@ import glob
 import plots
 import utils
 import fortran.futils as futils
+import cosmo_utils.pywgrib as pwg
 
 
 class TrajPack(object):
@@ -76,17 +77,12 @@ class TrajPack(object):
 
     """
     
-    def __init__(self, datadir, xlim, ylim, 
-                 pollon = 180., pollat = 90.):
+    def __init__(self, datadir, pollon = 180., pollat = 90.):
 
         self.datadir = datadir + '/'
-        self._init_prop()
         self.pollon = pollon   # Default: 180
         self.pollat = pollat   # Default: 90
-        self.xlim = self._nrot2rot(xlim, 'lon')
-        self.ylim = self._nrot2rot(ylim, 'lat')
-        
-        
+        self._init_prop()       
         
     def _init_prop(self):
         """
@@ -112,6 +108,12 @@ class TrajPack(object):
         trjfiles = glob.glob(self.datadir + 'traj_*')
         self.trjfiles = sorted(trjfiles)
         
+        # Getting xlim, ylim from COSMO data
+        tmpfobj = pwg.getfobj(rfiles[0], 'TOT_PREC_S')
+        xlim = (tmpfobj.lons[0], tmpfobj.lons[-1])
+        ylim = (tmpfobj.lats[0], tmpfobj.lats[-1])
+        self.xlim = self._nrot2rot(xlim, 'lon')
+        self.ylim = self._nrot2rot(ylim, 'lat')     
 
         # Setting up lists and dictionaries
         self.datadict = dict(startt = 0)
