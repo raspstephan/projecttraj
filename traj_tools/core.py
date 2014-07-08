@@ -37,12 +37,6 @@ class TrajPack(object):
     datadir : string
       Path to directory containing output of both, COSMO and trajectory files.
       For now, all files have to be in the same directory.
-    xlim : tuple
-      Domain dimensions in x-direction in non-rotated coordinates 
-      Has to be specified for xy-plotting!
-    ylim : tuple
-      Domain dimensions in y-direction in non-rotated coordinates. 
-      Has to be specified for xy-plotting!
     pollon : float
       Rotated pole longitude. Default value does not change input coordinates.
     pollat : float
@@ -237,7 +231,8 @@ class TrajPack(object):
         self.datadict[code + '_start'] = len(self.data) + 1
         self.datadict[code + '_stop'] = len(self.data) + 2
         
-        ascdata = minasct(self.trjfiles, yspan, tracer) * self.dtraj
+        ascdata = minasct(self.trjfiles, yspan, tracer, self.dtraj)
+        
         assert (ascdata[0].shape[0] == self.ntrj), \
                 'Array shapes do not match. Look for error in source code.'
         self.data.extend(ascdata)
@@ -513,7 +508,7 @@ class TrajPack(object):
         
      
     def draw_traj(self, varlist, filtername = None, savebase = None, 
-                  starts = False):
+                  starts = False, onlyasc = None):
         """
         Draws XY Plot of trajectories with color as a function of 'P'.
         If filtername is given, plots only filetered trajectories.
@@ -531,6 +526,9 @@ class TrajPack(object):
           If False, plots xy plot for entire filtered array (NOT recommended,
           if start time is not used in filter!)
           If True, plots xy plot seperately for each start time.
+        onlyasc : str
+          If name of ascent property given, plots trajectories only during
+          ascen time. E.g. 'P600'
         
         """
         assert (self.xlim != None and self.ylim != None), \
@@ -546,10 +544,22 @@ class TrajPack(object):
             
         loclist, idlist = self._mask_iter(filtername)
         
+        if onlyasc != None:
+            startarray = (self._mask_array(filtername, onlyasc + '_start') / 
+                          self.dtraj)
+            stoparray = (self._mask_array(filtername, onlyasc + '_stop') /
+                         self.dtraj)
+            onlybool = True
+        else:
+            startarray = None
+            stoparray = None
+            onlybool = False
+        
         plots.draw_traj(varlist, loclist, idlist, self.cfile,
                         self.rfiles, self.pfiles, savename = savename, 
                         pollon = self.pollon, pollat = self.pollat, 
-                        xlim = self.xlim, ylim = self.ylim)
+                        xlim = self.xlim, ylim = self.ylim, onlybool = onlybool,
+                        startarray = startarray, stoparray = stoparray)
         
     def draw_contour(self, varlist, time, savebase = None, interval = None):
         """
@@ -600,7 +610,7 @@ def loadme(savename):
     # 3. Load xlim, ylim
     xlim, ylim = pickle.load(f)
     # Allocate object
-    obj = TrajPack(datadir, xlim, ylim, pollon, pollat)
+    obj = TrajPack(datadir, pollon, pollat)
     # 4. Load data
     obj.data = pickle.load(f)
     # 5. Load datadict
@@ -614,7 +624,7 @@ def loadme(savename):
     return obj 
 
 
-def minasct(filelist, yspan, tracer):
+def minasct(filelist, yspan, tracer, dtraj):
     """
     Calculate minimum ascent time for all trajectories from NetCDF files.
     
@@ -657,7 +667,8 @@ def minasct(filelist, yspan, tracer):
             ascstop.append(asctup[2])
     assert (len(asct) == len(ascstart) == len(ascstop)), \
             'Array lengths do not match'
-    ascdata = (np.array(asct), np.array(ascstart), np.array(ascstop))
+    ascdata = (np.array(asct) * dtraj, np.array(ascstart) * dtraj, 
+               np.array(ascstop) * dtraj)
     return ascdata
             
 

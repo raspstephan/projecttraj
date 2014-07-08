@@ -95,7 +95,7 @@ def draw_contour(varlist, time, cfile, rfiles, pfiles, savename = False,
 
 def draw_traj(varlist, filelist, idlist, cfile, rfiles, pfiles, 
               savename = False,pollon = None, pollat = None, xlim = None, 
-              ylim = None):
+              ylim = None, onlybool = False, startarray = None, stoparray = None):
     """
     Plots one xy plot with trajectories.
     
@@ -121,6 +121,9 @@ def draw_traj(varlist, filelist, idlist, cfile, rfiles, pfiles,
       Tuple with x axis bounds
     ylim : tuple
       Tuple with y axis bounds
+    onlybool : bool
+      If True trajectories will be plotted during the ascent time only.
+    startarray : np.array
       
     """
          
@@ -147,6 +150,7 @@ def draw_traj(varlist, filelist, idlist, cfile, rfiles, pfiles,
             raise Exception('Variable' + varlist[i] + 'not available!')
     
     # Plot trajectories
+    cnt = 0   # continuous counter for startarray and stoparray
     for i in range(len(filelist)):
         print 'Plotting file', i+1, 'of', len(filelist)
         rootgrp = nc.Dataset(filelist[i], 'r')
@@ -159,9 +163,15 @@ def draw_traj(varlist, filelist, idlist, cfile, rfiles, pfiles,
         
         for j in idlist[i]:
             # Filter out zero values!
-            parray = pmat[:, j][pmat[:, j] != 0]
-            lonarray = lonmat[:, j][pmat[:, j] != 0]
-            latarray = latmat[:, j][pmat[:, j] != 0]
+            if onlybool:
+                parray = pmat[startarray[cnt]:stoparray[cnt], j]
+                lonarray = lonmat[startarray[cnt]:stoparray[cnt], j]
+                latarray = latmat[startarray[cnt]:stoparray[cnt], j]
+                cnt += 1
+            else:
+                parray = pmat[:, j][pmat[:, j] != 0]
+                lonarray = lonmat[:, j][pmat[:, j] != 0]
+                latarray = latmat[:, j][pmat[:, j] != 0]
             
             single_traj(lonarray, latarray, parray)
     
