@@ -57,6 +57,15 @@ def create_startfile(lonmin, lonmax, dlon,
       Location of COSMO EU constants file
     refdate : str
       Reference date to be written as a header
+      
+    Examples
+    --------
+    
+    >>> import traj_tools as trj
+    >>> cfile = '/home/scratch/users/stephan.rasp/Case1_20070720/d2euout/lfff00000000c'
+    >>> trj.utils.create_startfile(-5, 5, 0.25, -7, 7, 0.25, 1000, 5000, 250, 
+    >>>                            './case1_coarse.sf', zfilter = True,
+    >>>                            cfile, '20070720')
     
     """
     
@@ -153,6 +162,7 @@ def calc_theta(files):
     
     assert (len(filelist) > 0), 'No files selected.'
     
+    # Create new files
     thetalist = []
     for f in filelist:
         thetaf = f.rstrip('.nc') + '_theta.nc'

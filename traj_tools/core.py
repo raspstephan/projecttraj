@@ -80,6 +80,19 @@ class TrajPack(object):
     >>> # Allocate class object
     >>> case1 = trj.TrajPack(datadir, rotlon, rotlat)
     
+    Get an overview:
+    
+    >>> case1
+    >>> # print case1 gives the same output
+    ---------------
+    TrajPack object
+    ---------------
+    File directory =        /home/scratch/users/stephan.rasp/Case1_20070720/d4deout_eight///
+    Contains the following:
+    Data arrays =   ['P400', 'startt', 'P600', 'P300']
+    Filters =       ['WCB_360', 'WCB']
+    ---------------
+
     
 
     """
@@ -585,6 +598,33 @@ class TrajPack(object):
                            savename = savename, pollon = self.pollon, 
                            pollat = self.pollat, xlim = self.xlim, 
                            ylim = self.ylim)
+    
+    def __repr__(self):
+        
+        return self.__str__()
+    
+    def __str__(self):
+        """
+        What you see if you type the object name or print(obj)
+        """
+        
+        o =  '---------------\n'
+        o += 'TrajPack object\n'
+        o += '---------------\n'
+        
+        o += 'File directory = \t' + self.datadir + '\n'
+        o += 'Contains the following:\n'
+        tmpdata = self.datadict.keys()
+        tmpdata = [x for x in tmpdata if not '_stop' in x]
+        tmpdata = [x for x in tmpdata if not '_start' in x]
+        o += 'Data arrays =\t' + str(tmpdata) + '\n'
+        o += 'Filters = \t' +str(self.filtdict.keys()) + '\n'
+        
+        o += '---------------'
+        
+        return o
+        
+    
 
 def loadme(savename):
     """
