@@ -44,7 +44,7 @@ def draw_hist(array, savename = None):
     
     fig = plt.figure()
     # Remove nan values, they cause an error in histogram!
-    plt.hist(array[np.isfinite(array)], bins = 150)  
+    plt.hist(array[np.isfinite(array)], bins = 144)  
     
     if savename != None:
         plt.savefig(savename)
@@ -55,14 +55,15 @@ def draw_hist(array, savename = None):
 
 
 def draw_contour(varlist, time, cfile, rfiles, pfiles, savename = False, 
-                 pollon = None, pollat = None, xlim = None, ylim = None):
+                 pollon = None, pollat = None, xlim = None, ylim = None, 
+                 trjstart = None):
     """
     Plots one contour plot. TEST FOR NOW!
     """
     
     # Getting index for COSMO files
     outint = 5   # COSMO output interval
-    cosmoind = time
+    cosmoind = time / outint
     
     # Set up figure
     fig = plt.figure(figsize = (12,8))
@@ -72,8 +73,10 @@ def draw_contour(varlist, time, cfile, rfiles, pfiles, savename = False,
     
     # Plotting all contour fields
     for i in range(len(varlist)):   # Plotting all contour fields
-        
-        if varlist[i] in pwg.get_fieldtable(rfiles[cosmoind]).fieldnames:
+        if varlist[i] == 'CUM_PREC':
+            contour(rfiles, varlist[i], cosmoind, xlim, ylim, 
+                    trjstart = trjstart)
+        elif varlist[i] in pwg.get_fieldtable(rfiles[cosmoind]).fieldnames:
             contour(rfiles, varlist[i], cosmoind, xlim, ylim)
         elif varlist[i] in pwg.get_fieldtable(pfiles[cosmoind]).fieldnames:
             contour(pfiles, varlist[i], cosmoind, xlim, ylim)
@@ -95,7 +98,8 @@ def draw_contour(varlist, time, cfile, rfiles, pfiles, savename = False,
 
 def draw_traj(varlist, filelist, idlist, cfile, rfiles, pfiles, 
               savename = False,pollon = None, pollat = None, xlim = None, 
-              ylim = None, onlybool = False, startarray = None, stoparray = None):
+              ylim = None, onlybool = False, startarray = None, 
+              stoparray = None, trjstart = None):
     """
     Plots one xy plot with trajectories.
     
@@ -141,8 +145,10 @@ def draw_traj(varlist, filelist, idlist, cfile, rfiles, pfiles,
 
     # Plotting all contour fields
     for i in range(len(varlist)):   # Plotting all contour fields
-        
-        if varlist[i] in pwg.get_fieldtable(rfiles[cosmoind]).fieldnames:
+        if varlist[i] == 'CUM_PREC':
+            contour(rfiles, varlist[i], cosmoind, xlim, ylim, 
+                    trjstart = trjstart)
+        elif varlist[i] in pwg.get_fieldtable(rfiles[cosmoind]).fieldnames:
             contour(rfiles, varlist[i], cosmoind, xlim, ylim)
         elif varlist[i] in pwg.get_fieldtable(pfiles[cosmoind]).fieldnames:
             contour(pfiles, varlist[i], cosmoind, xlim, ylim)
@@ -231,7 +237,7 @@ def basemap(cfile, xlim, ylim):
     del field
     
     
-def contour(filelist, variable, cosmoind, xlim, ylim):
+def contour(filelist, variable, cosmoind, xlim, ylim, trjstart = None):
     """
     Draws contour plot of one variable.
     
@@ -254,7 +260,15 @@ def contour(filelist, variable, cosmoind, xlim, ylim):
     dx = 0.025
     
     #Get field
-    if variable == "TOT_PREC_S":
+    if variable == 'CUM_PREC':
+        field1 = pwg.getfield(filelist[trjstart/5], "TOT_PREC_S", 
+                              invfile = False)
+        field2 = pwg.getfield(filelist[-1], "TOT_PREC_S", 
+                              invfile = False)
+        diff = len(filelist)-1 - trjstart/5
+        field = (field2 - field1)/(dt*diff)*3600
+
+    elif variable == "TOT_PREC_S":
         field1 = pwg.getfield(filelist[cosmoind - 1], "TOT_PREC_S", 
                               invfile = False)
         field2 = pwg.getfield(filelist[cosmoind + 1], "TOT_PREC_S", 
@@ -282,7 +296,7 @@ def contour(filelist, variable, cosmoind, xlim, ylim):
         plt.colorbar()
         # plt.contour(X, Y, field, levels = list(np.arange(150, 350, 4)), 
                      # colors = "grey", linewidths = 2)
-    elif variable == "TOT_PREC_S":
+    elif variable in ["TOT_PREC_S", 'CUM_PREC']:
         cmPrec =( (0    , 0.627 , 1    ),
                   (0.137, 0.235 , 0.98 ),
                   (0.1  , 0.1   , 0.784),
@@ -291,13 +305,13 @@ def contour(filelist, variable, cosmoind, xlim, ylim):
                   (1    , 0.3   , 0.9  ) )   # Tobi's colormap
         levels = [0.1, 0.3, 1, 3, 10, 100]
         plt.contourf(X, Y, field, levels, colors=cmPrec, extend='max', 
-                     alpha = 0.8, zorder = 10)
+                     alpha = 0.8, zorder = 1)
         plt.colorbar(shrink = 0.7)
     elif variable == "PMSL":
         field = smoothfield(field, 8)/100
         levels = list(np.arange(900, 1100, 5))
         CS = plt.contour(X, Y, field, levels = levels, colors = 'k', 
-                         linewidths = 1, zorder = 9, alpha = 0.5)
+                         linewidths = 1, zorder = 0.5, alpha = 0.5)
         plt.clabel(CS, fontsize = 7, inline = 1, fmt = "%.0f")
     else:
         plt.contour(X, Y, field)
@@ -319,7 +333,7 @@ def single_traj(lonarray, latarray, parray, linewidth = 0.7):
     segments = np.concatenate([points[:-1], points[1:]], axis=1)
         
     lc = col.LineCollection(segments, cmap=plt.get_cmap('Spectral'), 
-                            norm=plt.Normalize(100, 1000), alpha = 0.8)
+                            norm=plt.Normalize(100, 1000), alpha = 0.5)
     lc.set_array(p)
     lc.set_linewidth(linewidth)
     plt.gca().add_collection(lc)

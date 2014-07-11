@@ -150,6 +150,11 @@ class TrajPack(object):
         self.filtdict = dict()
         self.filtlist = []
         
+        # Date and time parameters
+        # NOTE: TEMPORARY!!! USE PROPER DATETIME OBJECTS!!!
+        self.date = None
+        self.maxmins = 6120
+        
         
         # Looping over all files, initializing lists instead of np.arrays
         # in order to dynamically add files
@@ -197,7 +202,7 @@ class TrajPack(object):
         
         """
         
-        if type(name) == str:
+        if type(name) == sttr:
             assert (array.shape[0] == self.ntrj), \
                     'Array shaped do not match.'
             assert (name not in self.datadict), 'Name already exists.' 
@@ -521,7 +526,7 @@ class TrajPack(object):
         
      
     def draw_traj(self, varlist, filtername = None, savebase = None, 
-                  starts = False, onlyasc = None):
+                  starts = False, onlyasc = None, trjstart = None):
         """
         Draws XY Plot of trajectories with color as a function of 'P'.
         If filtername is given, plots only filetered trajectories.
@@ -531,6 +536,7 @@ class TrajPack(object):
         ----------
         varlist : list
           List of variables to be plotted. E.g. ["PMSL", "TOT_PREC_S"]
+          'CUM_PREC' for cumulative precipitation
         filtername : string
           Identiefier of wanted filter
         savebase : string
@@ -548,6 +554,7 @@ class TrajPack(object):
                 'xlim and/or ylim are not specified!'
         
         #if starts:
+        #Not possible until mem leak is resolved!!!
             
         
         if savebase != None:    
@@ -572,9 +579,11 @@ class TrajPack(object):
                         self.rfiles, self.pfiles, savename = savename, 
                         pollon = self.pollon, pollat = self.pollat, 
                         xlim = self.xlim, ylim = self.ylim, onlybool = onlybool,
-                        startarray = startarray, stoparray = stoparray)
+                        startarray = startarray, stoparray = stoparray, 
+                        trjstart = trjstart)
         
-    def draw_contour(self, varlist, time, savebase = None, interval = None):
+    def draw_contour(self, varlist, time, savebase = None, interval = None,
+                     trjstart = None):
         """
         Draws a countourplot of given variables.
         
@@ -590,14 +599,25 @@ class TrajPack(object):
           NOT IMPLEMENTED
         """
         if savebase != None:    
-            savename = savebase + 'contour_' + '.png'
+            savename = savebase + 'contour_' + str(time) + '.png'
         else:
             savename = savebase
         
-        plots.draw_contour(varlist, time, self.cfile, self.rfiles, self.pfiles, 
-                           savename = savename, pollon = self.pollon, 
-                           pollat = self.pollat, xlim = self.xlim, 
-                           ylim = self.ylim)
+        if interval == None:
+            timelist = [time]
+        else:
+            timelist = range(time, self.maxmins, interval)
+        for time in timelist:
+            if savebase != None:    
+                savename = savebase + 'contour_' + str(time).zfill(4) + '.png'
+            else:
+                savename = savebase
+            print 'Plotting for time:', time
+            plots.draw_contour(varlist, time, self.cfile, self.rfiles, 
+                               self.pfiles, savename = savename, 
+                               pollon = self.pollon, pollat = self.pollat, 
+                               xlim = self.xlim, ylim = self.ylim,
+                               trjstart = trjstart)
     
     def __repr__(self):
         
