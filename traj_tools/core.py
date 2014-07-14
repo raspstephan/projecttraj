@@ -2,7 +2,7 @@
 core module
 -----------
 
-This module contains the heart of the package: the TrajPack class.
+This module contains the heart of the package: the TrjObj class.
 
 """
 
@@ -13,11 +13,10 @@ import netCDF4 as nc
 import glob
 import plots
 import utils
-import fortran.futils as futils
 import cosmo_utils.pywgrib as pwg
 
 
-class TrajPack(object):
+class TrjObj(object):
     """
     Class containing relevant information for 
     a set (or pack) of trajectories.
@@ -140,13 +139,13 @@ class TrajPack(object):
         
         # Set COSMO and trajectory output interval
         self.dcosmo = 5.   # Minutes
-        self.dtraj = 5.
+        self.dtrj = 5.
 
         # Setting up lists and dictionaries
-        self.datadict = dict(startt = 0)
+        self.datadict = dict(trjid = 0, startt = 1)
         self.filename = []
         self.trjid = []
-        self.data = [[]]
+        self.data = [[], []]
         self.filtdict = dict()
         self.filtlist = []
         
@@ -167,22 +166,22 @@ class TrajPack(object):
             tmpt = self.trjfiles[i].split('/')[-1]
             tmpt = int(tmpt.split('_')[1].lstrip('t'))
             self.filename.extend([self.trjfiles[i]] * ntmp)
-            self.trjid.extend(range(ntmp))
-            self.data[0].extend([tmpt] * ntmp)
+            self.data[0].extend(range(ntmp))
+            self.data[1].extend([tmpt] * ntmp)
             ntot += ntmp
             
         # Convert lists to np.array
         self.ntrj = ntot
         self.filename = np.array(self.filename)
-        self.trjid = np.array(self.trjid)
         self.data[0] = np.array(self.data[0])
+        self.data[1] = np.array(self.data[1])
 
         assert (self.data[0].shape[0] == self.filename.shape[0] == 
                 self.trjid.shape[0] == ntot), \
                 "Error while initializing properties for class: Attribute arrays do not have same shape!"
                                
   
-    def new_prop_array(self, name, array):
+    def new_array(self, name, array):
         """
         Add one or more arrays to data. 
         If more than one array is added, names and data arrays must
@@ -202,7 +201,7 @@ class TrajPack(object):
         
         """
         
-        if type(name) == sttr:
+        if type(name) == str:
             assert (array.shape[0] == self.ntrj), \
                     'Array shaped do not match.'
             assert (name not in self.datadict), 'Name already exists.' 
@@ -225,7 +224,7 @@ class TrajPack(object):
         
     
     
-    def new_prop_asc(self, yspan, tracer = 'P'):
+    def new_asc(self, yspan, tracer = 'P'):
         """
         Adds a new ascent filter to data.
         
@@ -249,7 +248,7 @@ class TrajPack(object):
         self.datadict[code + '_start'] = len(self.data) + 1
         self.datadict[code + '_stop'] = len(self.data) + 2
         
-        ascdata = minasct(self.trjfiles, yspan, tracer, self.dtraj)
+        ascdata = utils._minasct(self.trjfiles, yspan, tracer, self.dtrj)
         
         assert (ascdata[0].shape[0] == self.ntrj), \
                 'Array shapes do not match. Look for error in source code.'
@@ -525,7 +524,7 @@ class TrajPack(object):
             plots.draw_hist(array, savename = savename)
         
      
-    def draw_traj(self, varlist, filtername = None, savebase = None, 
+    def draw_trj(self, varlist, filtername = None, savebase = None, 
                   starts = False, onlyasc = None, trjstart = None):
         """
         Draws XY Plot of trajectories with color as a function of 'P'.
@@ -566,16 +565,16 @@ class TrajPack(object):
         
         if onlyasc != None:
             startarray = (self._mask_array(filtername, onlyasc + '_start') / 
-                          self.dtraj)
+                          self.dtrj)
             stoparray = (self._mask_array(filtername, onlyasc + '_stop') /
-                         self.dtraj)
+                         self.dtrj)
             onlybool = True
         else:
             startarray = None
             stoparray = None
             onlybool = False
         
-        plots.draw_traj(varlist, loclist, idlist, self.cfile,
+        plots.draw_trj(varlist, loclist, idlist, self.cfile,
                         self.rfiles, self.pfiles, savename = savename, 
                         pollon = self.pollon, pollat = self.pollat, 
                         xlim = self.xlim, ylim = self.ylim, onlybool = onlybool,
@@ -670,7 +669,7 @@ def loadme(savename):
     # 3. Load xlim, ylim
     xlim, ylim = pickle.load(f)
     # Allocate object
-    obj = TrajPack(datadir, pollon, pollat)
+    obj = TrjObj(datadir, pollon, pollat)
     # 4. Load data
     obj.data = pickle.load(f)
     # 5. Load datadict
@@ -684,114 +683,7 @@ def loadme(savename):
     return obj 
 
 
-def minasct(filelist, yspan, tracer, dtraj):
-    """
-    Calculate minimum ascent time for all trajectories from NetCDF files.
-    
-    Parameters
-    ----------
-    filelist : list
-      List of saved NetDCF file locations
-    yspan : float
-      Ascent criterion in y-direction
-    tracer : str 
-      COSMO name of y-axis variable
-     
-    Returns
-    -------
-    ascdata : tuple
-      Tuple containing three np.arrays:
-      * Minimum ascent time
-      * Index of ascent start
-      * Index of ascent stop
-    
-    """
-    
-    # Initialize lists, convert to np.array later
-    asct = []
-    ascstart = []
-    ascstop = []
-    
-    if tracer == 'P':
-        flip = True
-    else:
-        flip = False
-    
-    for f in filelist:
-        print 'Opening file:', f
-        mat = nc.Dataset(f, 'r').variables[tracer][:, :]
-        for j in range(mat.shape[1]):
-            asctup = minxspan(mat[:, j], yspan, flip)
-            asct.append(asctup[0])
-            ascstart.append(asctup[1])
-            ascstop.append(asctup[2])
-    assert (len(asct) == len(ascstart) == len(ascstop)), \
-            'Array lengths do not match'
-    ascdata = (np.array(asct) * dtraj, np.array(ascstart) * dtraj, 
-               np.array(ascstop) * dtraj)
-    return ascdata
-            
 
-def minxspan(array, yspan, flip = False):
-    """
-    Returns the minimum time steps needed to conver given criterion.
-    Automatically filters out zero and nan values. If yspan is not fulfilled, 
-    returns np.nan. 
-    
-    Parameters
-    ----------
-    array : np.array
-      Input array
-    yspan : float
-      Ascent criterion in y-direction
-    flip : bool
-      If True array will be flipped (e.g. use for 'P')
-    
-    Returns
-    -------
-    xspan : int
-      Time steps for criterion
-    istart : int
-      Start index of ascent
-    istop : int
-      End index of ascent
-    
-    """
-    
-    # Filter out nans and zeros
-    array = array[np.isfinite(array)]
-    array = array[array != 0]
-
-    # Flip array if needed
-    if flip:
-        array = -array 
-
-    # Check if criterion is met
-    #print array
-    if array.shape[0] == 0:
-        xspan = np.nan
-        istart = np.nan
-        istop = np.nan
-    elif np.amax(array) - np.amin(array) < yspan:
-        xspan = np.nan
-        istart = np.nan
-        istop = np.nan
-    else:
-        # Use Fortran implementation, use 0 as error values
-        xspan, istart, istop  = futils.futils.minxspan(array, yspan, 
-                                                        len(array) + 1, 0, 0)
-        
-        # Check if output is correct. NOTE: THIS IS A POTENTIAL BUG!!!
-        if (istart < 0) and (istop < 0):
-            xspan = np.nan
-            istart = np.nan
-            istop = np.nan
-            
-        #assert ((xspan > 0) and (xspan <= len(array)) and (istart >= 0) 
-                #and (istop >= 0)), \
-                #'One of the minxspan outputs is zero or negative.'
-            
-    return (xspan, istart, istop)
 
 
 if __name__ == '__main__':

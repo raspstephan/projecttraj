@@ -11,6 +11,7 @@ import os
 import numpy as np
 import netCDF4 as nc
 import cosmo_utils.pywgrib as pwg
+import fortran.futils as futils
 
 
 
@@ -186,8 +187,119 @@ def calc_theta(files):
         
     return thetalist
     
+
+####################################################
+# Functions used in core
+####################################################
+
+def _minasct(filelist, yspan, tracer, dtrj):
+    """
+    Calculate minimum ascent time for all trajectories from NetCDF files.
     
+    Parameters
+    ----------
+    filelist : list
+      List of saved NetDCF file locations
+    yspan : float
+      Ascent criterion in y-direction
+    tracer : str 
+      COSMO name of y-axis variable
+     
+    Returns
+    -------
+    ascdata : tuple
+      Tuple containing three np.arrays:
+      * Minimum ascent time
+      * Index of ascent start
+      * Index of ascent stop
     
+    """
+    
+    # Initialize lists, convert to np.array later
+    asct = []
+    ascstart = []
+    ascstop = []
+    
+    if tracer == 'P':
+        flip = True
+    else:
+        flip = False
+    
+    for f in filelist:
+        print 'Opening file:', f
+        mat = nc.Dataset(f, 'r').variables[tracer][:, :]
+        for j in range(mat.shape[1]):
+            asctup = _minxspan(mat[:, j], yspan, flip)
+            asct.append(asctup[0])
+            ascstart.append(asctup[1])
+            ascstop.append(asctup[2])
+    assert (len(asct) == len(ascstart) == len(ascstop)), \
+            'Array lengths do not match'
+    ascdata = (np.array(asct) * dtrj, np.array(ascstart) * dtrj, 
+               np.array(ascstop) * dtrj)
+    return ascdata
+            
+
+def _minxspan(array, yspan, flip = False):
+    """
+    Returns the minimum time steps needed to conver given criterion.
+    Automatically filters out zero and nan values. If yspan is not fulfilled, 
+    returns np.nan. 
+    
+    Parameters
+    ----------
+    array : np.array
+      Input array
+    yspan : float
+      Ascent criterion in y-direction
+    flip : bool
+      If True array will be flipped (e.g. use for 'P')
+    
+    Returns
+    -------
+    xspan : int
+      Time steps for criterion
+    istart : int
+      Start index of ascent
+    istop : int
+      End index of ascent
+    
+    """
+    
+    # Filter out nans and zeros
+    array = array[np.isfinite(array)]
+    array = array[array != 0]
+
+    # Flip array if needed
+    if flip:
+        array = -array 
+
+    # Check if criterion is met
+    #print array
+    if array.shape[0] == 0:
+        xspan = np.nan
+        istart = np.nan
+        istop = np.nan
+    elif np.amax(array) - np.amin(array) < yspan:
+        xspan = np.nan
+        istart = np.nan
+        istop = np.nan
+    else:
+        # Use Fortran implementation, use 0 as error values
+        xspan, istart, istop  = futils.futils.minxspan(array, yspan, 
+                                                        len(array) + 1, 0, 0)
+        
+        # Check if output is correct. NOTE: THIS IS A POTENTIAL BUG!!!
+        if (istart < 0) and (istop < 0):
+            xspan = np.nan
+            istart = np.nan
+            istop = np.nan
+            
+        #assert ((xspan > 0) and (xspan <= len(array)) and (istart >= 0) 
+                #and (istop >= 0)), \
+                #'One of the minxspan outputs is zero or negative.'
+            
+    return (xspan, istart, istop)
     
     
     

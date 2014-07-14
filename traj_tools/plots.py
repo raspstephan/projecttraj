@@ -3,6 +3,9 @@ plots module
 ------------
 
 This module contains all plotting functions.
+To make movie use from command line.
+
+ffmpeg -r 2 -pattern_type glob -i '*.png' -c:v libx264 movie.mkv
 
 """
 
@@ -10,7 +13,7 @@ This module contains all plotting functions.
 import numpy as np
 import matplotlib
 import os
-# from cosmo_utils
+# taken from cosmo_utils:
 try:
     os.environ["DISPLAY"]
     print "X-Server detected, using tkagg backend for plotting"
@@ -96,7 +99,7 @@ def draw_contour(varlist, time, cfile, rfiles, pfiles, savename = False,
         plt.close('all')
         plt.clf()
 
-def draw_traj(varlist, filelist, idlist, cfile, rfiles, pfiles, 
+def draw_trj(varlist, filelist, idlist, cfile, rfiles, pfiles, 
               savename = False,pollon = None, pollat = None, xlim = None, 
               ylim = None, onlybool = False, startarray = None, 
               stoparray = None, trjstart = None):
@@ -179,7 +182,7 @@ def draw_traj(varlist, filelist, idlist, cfile, rfiles, pfiles,
                 lonarray = lonmat[:, j][pmat[:, j] != 0]
                 latarray = latmat[:, j][pmat[:, j] != 0]
             
-            single_traj(lonarray, latarray, parray)
+            single_trj(lonarray, latarray, parray)
     
     # Set plot properties
     if xlim != None:
@@ -319,7 +322,7 @@ def contour(filelist, variable, cosmoind, xlim, ylim, trjstart = None):
     del field
     
     
-def single_traj(lonarray, latarray, parray, linewidth = 0.7):
+def single_trj(lonarray, latarray, parray, linewidth = 0.7):
     """
     Plots XY Plot of one trajectory, with color as a function of p
     Helper Function for DrawXYTraj
