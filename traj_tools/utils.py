@@ -192,6 +192,41 @@ def calc_theta(files):
 # Functions used in core
 ####################################################
 
+def _delta(filelist, tracer):
+    """
+    Calculate difference of given tracer between min und max 'P' values
+    
+    Parameters
+    ----------
+    filelist : list
+      List of saved NetDCF file locations
+    yspan : float
+      Ascent criterion in y-direction
+    tracer : str 
+      COSMO name of y-axis variable
+      
+    Returns
+    -------
+    deltaarray : np.array
+    
+    """
+    # Initialize lists, convert to np.array later
+    deltaarray = []
+    
+    for f in filelist:
+        print 'Opening file:', f
+        pmat = nc.Dataset(f, 'r').variables['P'][:, :]
+        trcmat = nc.Dataset(f, 'r').variables[tracer][:, :]
+        for j in range(pmat.shape[1]):
+            minind = pmat[:, j].argmin()
+            maxind = pmat[:, j].argmax()
+            deltaarray.append(abs(trcmat[maxind, j] - trcmat[minind, j]))
+    return np.array(deltaarray)
+            
+    
+    
+
+
 def _minasct(filelist, yspan, tracer, dtrj):
     """
     Calculate minimum ascent time for all trajectories from NetCDF files.

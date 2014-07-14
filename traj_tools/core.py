@@ -14,6 +14,8 @@ import glob
 import plots
 import utils
 import cosmo_utils.pywgrib as pwg
+import datetime as dt
+import re
 
 
 class TrjObj(object):
@@ -138,20 +140,20 @@ class TrjObj(object):
         self.ylim = self._nrot2rot(ylim, 'lat')     
         
         # Set COSMO and trajectory output interval
-        self.dcosmo = 5.   # Minutes
-        self.dtrj = 5.
+        # Open temporary trj file to read information
+        tmprg = nc.Dataset(trjfiles[0])
+        self.date = dt.datetime(tmprg.ref_year, tmprg.ref_month, 
+                                tmprg.ref_day, tmprg.ref_hour)
+        self.dtrj = tmprg.output_timestep_in_sec / 60 # Minutes
+        self.dcosmo = 5.
 
         # Setting up lists and dictionaries
         self.datadict = dict(trjid = 0, startt = 1)
         self.filename = []
-        self.trjid = []
         self.data = [[], []]
         self.filtdict = dict()
         self.filtlist = []
         
-        # Date and time parameters
-        # NOTE: TEMPORARY!!! USE PROPER DATETIME OBJECTS!!!
-        self.date = None
         self.maxmins = 6120
         
         
@@ -177,7 +179,7 @@ class TrjObj(object):
         self.data[1] = np.array(self.data[1])
 
         assert (self.data[0].shape[0] == self.filename.shape[0] == 
-                self.trjid.shape[0] == ntot), \
+                ntot), \
                 "Error while initializing properties for class: Attribute arrays do not have same shape!"
                                
   
@@ -241,6 +243,8 @@ class TrjObj(object):
         P600 has been added
         
         """
+
+        ascdata = utils._minasct(self.trjfiles, yspan, tracer, self.dtrj)
         
         # Update dictionary
         code = tracer + str(yspan)
@@ -248,12 +252,34 @@ class TrjObj(object):
         self.datadict[code + '_start'] = len(self.data) + 1
         self.datadict[code + '_stop'] = len(self.data) + 2
         
-        ascdata = utils._minasct(self.trjfiles, yspan, tracer, self.dtrj)
-        
         assert (ascdata[0].shape[0] == self.ntrj), \
                 'Array shapes do not match. Look for error in source code.'
         self.data.extend(ascdata)
         print code, 'has been added.'
+    
+    
+    def new_delta(self, tracer):
+        """
+        Adds a new delta array to data.
+        
+        Parameters
+        ----------
+        tracer : str (default = 'P')
+          COSMO name of y-axis variable
+          
+        """
+
+        deltaarray = utils._delta(self.trjfiles, tracer)
+        
+        code = 'delta' + tracer
+        self.datadict[code] = len(self.data)
+        
+        assert (deltaarray.shape[0] == self.ntrj), \
+                'Array shapes do not match. Look for error in source code.'
+        self.data.append(deltaarray)
+        print code, 'has been added.'
+        
+    
     
        
     def create_filter(self, name, filters):
@@ -524,8 +550,8 @@ class TrjObj(object):
             plots.draw_hist(array, savename = savename)
         
      
-    def draw_trj(self, varlist, filtername = None, savebase = None, 
-                  starts = False, onlyasc = None, trjstart = None):
+    def draw_trj_all(self, varlist, filtername = None, savebase = None, 
+                     starts = False, onlyasc = None, trjstart = None):
         """
         Draws XY Plot of trajectories with color as a function of 'P'.
         If filtername is given, plots only filetered trajectories.
@@ -580,6 +606,11 @@ class TrjObj(object):
                         xlim = self.xlim, ylim = self.ylim, onlybool = onlybool,
                         startarray = startarray, stoparray = stoparray, 
                         trjstart = trjstart)
+        
+    def draw_trj_evo():
+        pass
+    
+    
         
     def draw_contour(self, varlist, time, savebase = None, interval = None,
                      trjstart = None):
