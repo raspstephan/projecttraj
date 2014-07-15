@@ -32,7 +32,18 @@ from datetime import datetime, timedelta
 import netCDF4 as nc
 
 
-def draw_hist(array, savename = None):
+def draw_vs_t(dataname, fileloc, fileid, savename = None):
+    """
+    """
+    rootgrp = nc.Dataset(fileloc, 'r')
+    array = rootgrp.variables[dataname][:, fileid]
+    plt.plot(array)
+    if savename != None:
+        plt.savefig(savename)
+        plt.close('all')
+
+
+def draw_hist(array, savename = None, xlim = None):
     """
     Plots a histogram of given array.
     
@@ -46,13 +57,13 @@ def draw_hist(array, savename = None):
     """
     
     fig = plt.figure()
+    
     # Remove nan values, they cause an error in histogram!
-    plt.hist(array[np.isfinite(array)], bins = 144)  
+    plt.hist(array[np.isfinite(array)], bins = 144, range = xlim)  
+    plt.ylabel("Number of trajectories")
     
     if savename != None:
-        plt.savefig(savename)
-        plt.xlabel('hmmm???')
-        plt.ylabel("Number of trajectories")
+        print 'Save figure as', savename
         plt.close('all')
         plt.clf()
 
@@ -201,7 +212,81 @@ def draw_trj(varlist, filelist, idlist, cfile, rfiles, pfiles,
         plt.savefig(savename, dpi = 400)
         plt.close('all')
         plt.clf()
-   
+
+
+def draw_trj_evo(varlist, loclist, idlist, tplus, cfile, rfiles, 
+                 pfiles, savename = None, pollon = None, pollat = None, 
+                 xlim = None, ylim = None, dtrj = None, dcosmo = None):
+    """
+    TODO
+    """
+    
+    # Setting up indices
+    rootgrp = nc.Dataset(loclist[0], 'r')
+    off = int(rootgrp.variables['time'][0] / 60) # also trjstart time
+    cosmoind = (off + tplus) / dcosmo
+    trjind = tplus / dtrj
+    print off, cosmoind, trjind, tplus, dcosmo, dtrj
+    
+    
+    # Set up figure
+    fig = plt.figure(figsize = (12,8))
+    ax = plt.gca()   
+    ax.set_aspect('equal')
+    basemap(cfile, xlim, ylim)
+    
+    
+    # Plotting all contour fields
+    for i in range(len(varlist)):   # Plotting all contour fields
+        if varlist[i] == 'CUM_PREC':
+            contour(rfiles, varlist[i], cosmoind, xlim, ylim, 
+                    trjstart = trjstart)
+        elif varlist[i] in pwg.get_fieldtable(rfiles[cosmoind]).fieldnames:
+            contour(rfiles, varlist[i], cosmoind, xlim, ylim)
+        elif varlist[i] in pwg.get_fieldtable(pfiles[cosmoind]).fieldnames:
+            contour(pfiles, varlist[i], cosmoind, xlim, ylim)
+        else:
+            raise Exception('Variable' + varlist[i] + 'not available!')
+    
+    # Plot trajectories
+    
+    for i in range(len(loclist)):
+        print 'Plotting file', i+1, 'of', len(loclist)
+        rootgrp = nc.Dataset(loclist[i], 'r')
+        lonmat = rootgrp.variables['longitude'][:trjind, :]
+        latmat = rootgrp.variables['latitude'][:trjind, :]
+        pmat = rootgrp.variables['P'][:trjind, :]
+    
+        lonmat[:, :] += (180 - pollon)   # Convert to real coordinates
+        latmat[:, :] += (90 - pollat)
+        
+        for j in idlist[i]:
+            # Filter out zero values!
+            
+            parray = pmat[:, j][pmat[:, j] != 0]
+            lonarray = lonmat[:, j][pmat[:, j] != 0]
+            latarray = latmat[:, j][pmat[:, j] != 0]
+            
+            single_trj(lonarray, latarray, parray)
+    
+    # Set plot properties
+    if xlim != None:
+        plt.xlim(xlim)
+    if ylim != None:
+        plt.ylim(ylim)
+
+    cb = fig.colorbar(lc, shrink = 0.7)
+    cb.set_label('p')
+    cb.ax.invert_yaxis()
+    plt.tight_layout()
+    
+    # Save Plot
+    if savename != False:
+        print "Saving figure as", savename
+        plt.savefig(savename, dpi = 400)
+        plt.close('all')
+        plt.clf()
+
 
 #########################################
 ### Back End Plotting Functions

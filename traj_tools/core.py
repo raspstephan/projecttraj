@@ -144,8 +144,8 @@ class TrjObj(object):
         tmprg = nc.Dataset(trjfiles[0])
         self.date = dt.datetime(tmprg.ref_year, tmprg.ref_month, 
                                 tmprg.ref_day, tmprg.ref_hour)
-        self.dtrj = tmprg.output_timestep_in_sec / 60 # Minutes
-        self.dcosmo = 5.
+        self.dtrj = int(tmprg.output_timestep_in_sec / 60)   # Minutes
+        self.dcosmo = 5
 
         # Setting up lists and dictionaries
         self.datadict = dict(trjid = 0, startt = 1)
@@ -408,7 +408,7 @@ class TrjObj(object):
         idlist = []
         for i in range(len(uniqueloc)):
             locmask = (self.filename == uniqueloc[i])
-            idlist.append(list((self.trjid[locmask & mask])))
+            idlist.append(list((self.data[0][locmask & mask])))
 
         return list(uniqueloc), idlist
     
@@ -497,8 +497,18 @@ class TrjObj(object):
     # Plotting functions
     ######################
     
+    
+    def draw_vs_t(self, dataname, totind, savename = None):
+        """
+        """
+        plots.draw_vs_t(dataname, self.filename[totind], self.data[0][totind],
+                        savename = savename)
+        
+    
+    
+    
     def draw_hist(self, dataname, filtername = None, savebase = None, 
-                  starts = False):
+                  starts = False, xlim = None):
         """
         Draws a Histogram of data specified by dataname.
         If filtername is given, plots only filtered trajectories.
@@ -534,7 +544,7 @@ class TrjObj(object):
                 if savebase != None:    
                     savename = (savebase + 'hist_' + dataname + '_' + 
                                 str(filtername) + '_' + str(t) + '.png')
-                plots.draw_hist(array, savename = savename)
+                plots.draw_hist(array, savename = savename, xlim = xlim)
                 
         else: 
             if filtername != None:
@@ -547,7 +557,7 @@ class TrjObj(object):
                             str(filtername) + '.png')
             else:
                 savename = savebase
-            plots.draw_hist(array, savename = savename)
+            plots.draw_hist(array, savename = savename, xlim = xlim)
         
      
     def draw_trj_all(self, varlist, filtername = None, savebase = None, 
@@ -607,8 +617,36 @@ class TrjObj(object):
                         startarray = startarray, stoparray = stoparray, 
                         trjstart = trjstart)
         
-    def draw_trj_evo():
-        pass
+    def draw_trj_evo(self, varlist, tafter, filtername = None, 
+                     savebase = None, trjstart = None):
+        """
+        Draws trajectories at certain times after trajectory start 
+        with correct background plots
+        """
+        
+        if savebase != None:    
+            savename = savebase + 'xy_' + filtername + '.png'
+        else:
+            savename = savebase
+        
+        
+        # if trjstart is None, check if all trajectories start at same time
+        # TODO
+        
+        # if trjstart is given, create temporary mask
+        tmpmask = None
+        if not trjstart == None:
+            tmpmask = self.data[self.datadict['startt']] == trjstart
+        
+        
+        loclist, idlist = self._mask_iter(filtername, addmask = tmpmask)
+        
+        plots.draw_trj_evo(varlist, loclist, idlist, tafter, self.cfile, 
+                           self.rfiles, self.pfiles, savename = savename, 
+                           pollon = self.pollon, pollat = self.pollat, 
+                           xlim = self.xlim, ylim = self.ylim, 
+                           dtrj = self.dtrj, dcosmo = self.dcosmo)
+        
     
     
         

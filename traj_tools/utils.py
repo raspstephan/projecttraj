@@ -218,9 +218,16 @@ def _delta(filelist, tracer):
         pmat = nc.Dataset(f, 'r').variables['P'][:, :]
         trcmat = nc.Dataset(f, 'r').variables[tracer][:, :]
         for j in range(pmat.shape[1]):
-            minind = pmat[:, j].argmin()
-            maxind = pmat[:, j].argmax()
-            deltaarray.append(abs(trcmat[maxind, j] - trcmat[minind, j]))
+            parray = pmat[:, j][np.isfinite(pmat[:, j])]
+            trcarray = trcmat[:, j][np.isfinite(trcmat[:, j])]
+            minind = parray.argmin()
+            maxind = parray.argmax()
+            delta = abs(trcarray[maxind] - trcarray[minind])
+            if tracer == 'POT_VORTIC' and delta > 0.00005:
+                delta = np.nan
+                print 'Detected irregulat PV value, set to NaN!'
+            deltaarray.append(delta)
+
     return np.array(deltaarray)
             
     
