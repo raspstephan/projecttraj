@@ -225,9 +225,7 @@ def draw_trj_evo(varlist, loclist, idlist, tplus, cfile, rfiles,
     rootgrp = nc.Dataset(loclist[0], 'r')
     off = int(rootgrp.variables['time'][0] / 60) # also trjstart time
     cosmoind = (off + tplus) / dcosmo
-    trjind = tplus / dtrj
-    print off, cosmoind, trjind, tplus, dcosmo, dtrj
-    
+    trjind = tplus / dtrj   
     
     # Set up figure
     fig = plt.figure(figsize = (12,8))
