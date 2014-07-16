@@ -401,8 +401,11 @@ class TrjObj(object):
         maskid = self.filtdict[filtername]
         mask = np.array(self.filtlist[maskid], copy = True)
         
-        if addmask != None:
+        if type(addmask) == np.ndarray:
             mask &= addmask
+        elif type(addmask) in [tuple, list]:
+            for m in addmask:
+                mask &= m
         
         uniqueloc = np.unique(self.filename[mask])
         idlist = []
@@ -655,28 +658,39 @@ class TrjObj(object):
                             dtrj = self.dtrj, dcosmo = self.dcosmo)
         
     
-    def draw_trj_dot(self, varlist, tafter = None, interval = None, 
-                     filtername = None, savebase = None, trjstart = None):
+    def draw_trj_dot(self, varlist, tplus = None, interval = None, 
+                     filtername = None, savebase = None, trjstart = None,
+                     onlyasc = None):
         """
-        Draws trajectoriy position as dots with correct background plots
+        Draws trajectoriy position as dots with correct background plots.
+        Tplus is now time after model start!
         """
         
         # if trjstart is None, check if all trajectories start at same time
         # TODO
         
         if interval == None:
-            tlist = [tafter]
+            tlist = [tplus]
         else:
             tlist = range(0, self.maxmins, interval)
             
         # if trjstart is given, create temporary mask
-        tmpmask = None
+        tmpmask1 = None
         if not trjstart == None:
-            tmpmask = self.data[self.datadict['startt']] == trjstart
-            
-        loclist, idlist = self._mask_iter(filtername, addmask = tmpmask)
-        
+            tmpmask1 = self.data[self.datadict['startt']] == trjstart
+        masklist = [tmpmask1]
+        ascind = self.datadict[onlyasc]
         for t in tlist:
+           
+            tmpmask2 = (t > self.data[ascind+1]) & (t < self.data[ascind+2])
+            #print (t > self.data[ascind+1]) & (t < self.data[ascind+2])
+            masklist = [x for x in masklist if not x == None]
+            #print masklist
+            
+            loclist, idlist = self._mask_iter(filtername, 
+                                              addmask = tmpmask2)
+
+            
             
             if savebase != None:  
                 # TODO Change name

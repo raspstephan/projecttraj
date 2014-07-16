@@ -269,12 +269,14 @@ def _minasct(filelist, yspan, tracer, dtrj):
     
     for f in filelist:
         print 'Opening file:', f
-        mat = nc.Dataset(f, 'r').variables[tracer][:, :]
+        rootgrp = nc.Dataset(f, 'r')
+        mat = rootgrp.variables[tracer][:, :]
+        trjstart = int(rootgrp.variables['time'][0] / 60) / 5
         for j in range(mat.shape[1]):
             asctup = _minxspan(mat[:, j], yspan, flip)
             asct.append(asctup[0])
-            ascstart.append(asctup[1])
-            ascstop.append(asctup[2])
+            ascstart.append(asctup[1] + trjstart)
+            ascstop.append(asctup[2] + trjstart)
     assert (len(asct) == len(ascstart) == len(ascstop)), \
             'Array lengths do not match'
     ascdata = (np.array(asct) * dtrj, np.array(ascstart) * dtrj, 
@@ -341,7 +343,7 @@ def _minxspan(array, yspan, flip = False):
                 #and (istop >= 0)), \
                 #'One of the minxspan outputs is zero or negative.'
             
-    return (xspan, istart, istop)
+    return [xspan, istart, istop]
     
     
     

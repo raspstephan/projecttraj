@@ -110,6 +110,7 @@ def draw_contour(varlist, time, cfile, rfiles, pfiles, savename = False,
         plt.close('all')
         plt.clf()
 
+
 def draw_trj(varlist, filelist, idlist, cfile, rfiles, pfiles, 
               savename = False,pollon = None, pollat = None, xlim = None, 
               ylim = None, onlybool = False, startarray = None, 
@@ -285,15 +286,14 @@ def draw_trj_evo(varlist, loclist, idlist, tplus, cfile, rfiles,
         plt.close('all')
         plt.clf()
 
-def draw_trj_dot(obj, varlist, loclist, idlist, tplus, savename = None):
+def draw_trj_dot(obj, varlist, loclist, idlist, tplus, 
+                 savename = None):
     """
+    tplus = time after MODEL start
     """
     
     # Setting up indices
-    rootgrp = nc.Dataset(loclist[0], 'r')
-    off = int(rootgrp.variables['time'][0] / 60) # also trjstart time
-    cosmoind = (off + tplus) / obj.dcosmo
-    trjind = tplus / obj.dtrj   
+    cosmoind = tplus / obj.dcosmo 
     
     # Set up figure
     fig = plt.figure(figsize = (12,8))
@@ -318,6 +318,8 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus, savename = None):
     for i in range(len(loclist)):
         print 'Plotting file', i+1, 'of', len(loclist)
         rootgrp = nc.Dataset(loclist[i], 'r')
+        trjstart = int(rootgrp.variables['time'][0] / 60)
+        trjind = (tplus - trjstart) / obj.dtrj
         lonarray = rootgrp.variables['longitude'][trjind, idlist[i]]
         latarray = rootgrp.variables['latitude'][trjind, idlist[i]]
         parray = rootgrp.variables['P'][trjind, idlist[i]]
@@ -325,12 +327,14 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus, savename = None):
         lonarray += (180 - obj.pollon)   # Convert to real coordinates
         latarray += (90 - obj.pollat)
         
-        plt.scatter(lonarray, latarray, c = parray, cmap = plt.get_cmap('Spectral'),
+        plt.scatter(lonarray, latarray, c = parray, s = 10,
+                    cmap = plt.get_cmap('Spectral'), linewidth = 0.1,
                     norm=plt.Normalize(100, 1000))
         
     # Set plot properties
     plt.xlim(obj.xlim)
     plt.ylim(obj.ylim)
+    plt.title(obj.date + timedelta(minutes = tplus))
         
     # Save Plot
     if savename != False:
@@ -371,7 +375,7 @@ def basemap(cfile, xlim, ylim):
     
     # Plot and filter field
     field[field != 0] = 1.
-    plt.contourf(X, Y, field, levels = [0.5, 2], colors = ["0.85"])
+    plt.contourf(X, Y, field, levels = [0.5, 2], colors = ["0.85"], zorder=0.4)
     #plt.contour(X, Y, field, 2, colors = "0.5")
     
     del field
@@ -409,11 +413,19 @@ def contour(filelist, variable, cosmoind, xlim, ylim, trjstart = None):
         field = (field2 - field1)/(dt*diff)*3600
 
     elif variable == "TOT_PREC_S":
-        field1 = pwg.getfield(filelist[cosmoind - 1], "TOT_PREC_S", 
-                              invfile = False)
-        field2 = pwg.getfield(filelist[cosmoind + 1], "TOT_PREC_S", 
-                              invfile = False)
-        field = (field2 - field1)/(dt*2)*3600
+        try:
+            field1 = pwg.getfield(filelist[cosmoind - 1], "TOT_PREC_S", 
+                                invfile = False)
+            field2 = pwg.getfield(filelist[cosmoind + 1], "TOT_PREC_S", 
+                                invfile = False)
+            field = (field2 - field1)/(dt*2)*3600
+        except IndexError:
+            # Reached end of array, use precip from previous time step
+            field1 = pwg.getfield(filelist[cosmoind - 2], "TOT_PREC_S", 
+                                invfile = False)
+            field2 = pwg.getfield(filelist[cosmoind], "TOT_PREC_S", 
+                                invfile = False)
+            field = (field2 - field1)/(dt*2)*3600
     else:
         field = pwg.getfield(filelist[cosmoind], variable, invfile = False)
      
