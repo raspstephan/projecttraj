@@ -655,6 +655,39 @@ class TrjObj(object):
                             dtrj = self.dtrj, dcosmo = self.dcosmo)
         
     
+    def draw_trj_dot(self, varlist, tafter = None, interval = None, 
+                     filtername = None, savebase = None, trjstart = None):
+        """
+        Draws trajectoriy position as dots with correct background plots
+        """
+        
+        # if trjstart is None, check if all trajectories start at same time
+        # TODO
+        
+        if interval == None:
+            tlist = [tafter]
+        else:
+            tlist = range(0, self.maxmins, interval)
+            
+        # if trjstart is given, create temporary mask
+        tmpmask = None
+        if not trjstart == None:
+            tmpmask = self.data[self.datadict['startt']] == trjstart
+            
+        loclist, idlist = self._mask_iter(filtername, addmask = tmpmask)
+        
+        for t in tlist:
+            
+            if savebase != None:  
+                # TODO Change name
+                savename = (savebase + 'xy_' + filtername + '_' + 
+                            str(t).zfill(4) + '.png')
+            else:
+                savename = savebase
+
+            plots.draw_trj_dot(self,varlist, loclist, idlist, t, 
+                               savename = savename)
+    
     
         
     def draw_contour(self, varlist, time, savebase = None, interval = None,

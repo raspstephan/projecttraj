@@ -285,6 +285,60 @@ def draw_trj_evo(varlist, loclist, idlist, tplus, cfile, rfiles,
         plt.close('all')
         plt.clf()
 
+def draw_trj_dot(obj, varlist, loclist, idlist, tplus, savename = None):
+    """
+    """
+    
+    # Setting up indices
+    rootgrp = nc.Dataset(loclist[0], 'r')
+    off = int(rootgrp.variables['time'][0] / 60) # also trjstart time
+    cosmoind = (off + tplus) / obj.dcosmo
+    trjind = tplus / obj.dtrj   
+    
+    # Set up figure
+    fig = plt.figure(figsize = (12,8))
+    ax = plt.gca()   
+    ax.set_aspect('equal')
+    basemap(obj.cfile, obj.xlim, obj.ylim)
+    
+    
+    # Plotting all contour fields
+    for i in range(len(varlist)):   # Plotting all contour fields
+        if varlist[i] == 'CUM_PREC':
+            contour(obj.rfiles, varlist[i], cosmoind, obj.xlim, obj.ylim, 
+                    trjstart = trjstart)
+        elif varlist[i] in pwg.get_fieldtable(obj.rfiles[cosmoind]).fieldnames:
+            contour(obj.rfiles, varlist[i], cosmoind, obj.xlim, obj.ylim)
+        elif varlist[i] in pwg.get_fieldtable(obj.pfiles[cosmoind]).fieldnames:
+            contour(obj.pfiles, varlist[i], cosmoind, obj.xlim, obj.ylim)
+        else:
+            raise Exception('Variable' + varlist[i] + 'not available!')
+    
+    # Plot trajectories
+    for i in range(len(loclist)):
+        print 'Plotting file', i+1, 'of', len(loclist)
+        rootgrp = nc.Dataset(loclist[i], 'r')
+        lonarray = rootgrp.variables['longitude'][trjind, idlist[i]]
+        latarray = rootgrp.variables['latitude'][trjind, idlist[i]]
+        parray = rootgrp.variables['P'][trjind, idlist[i]]
+    
+        lonarray += (180 - obj.pollon)   # Convert to real coordinates
+        latarray += (90 - obj.pollat)
+        
+        plt.scatter(lonarray, latarray, c = parray, cmap = plt.get_cmap('Spectral'),
+                    norm=plt.Normalize(100, 1000))
+        
+    # Set plot properties
+    plt.xlim(obj.xlim)
+    plt.ylim(obj.ylim)
+        
+    # Save Plot
+    if savename != False:
+        print "Saving figure as", savename
+        plt.savefig(savename, dpi = 400)
+        plt.close('all')
+        plt.clf()
+
 
 #########################################
 ### Back End Plotting Functions
