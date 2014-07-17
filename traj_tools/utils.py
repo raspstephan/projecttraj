@@ -222,7 +222,10 @@ def _delta(filelist, tracer):
             trcarray = trcmat[:, j][np.isfinite(trcmat[:, j])]
             minind = parray.argmin()
             maxind = parray.argmax()
-            delta = abs(trcarray[maxind] - trcarray[minind])
+            if minind < maxind:
+                delta = trcarray[maxind] - trcarray[minind]
+            else:
+                delta = trcarray[minind] - trcarray[maxind]
             if tracer == 'POT_VORTIC' and delta > 0.00005:
                 delta = np.nan
                 print 'Detected irregulat PV value, set to NaN!'

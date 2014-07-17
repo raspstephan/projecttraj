@@ -64,6 +64,7 @@ def draw_hist(array, savename = None, xlim = None):
     
     if savename != None:
         print 'Save figure as', savename
+        plt.savefig(savename)
         plt.close('all')
         plt.clf()
 
