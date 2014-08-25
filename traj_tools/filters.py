@@ -11,6 +11,7 @@ from common import *
 import cPickle
 import numpy as np
 import loadbin
+import fortran.futils as futils
 
 
 
@@ -145,6 +146,9 @@ def MinXMatrix(FileList, TraceInd, Criterion, StartInd = False, IndMatrix = Fals
     Note: StartInd not compatible with Flat == False!!!
     """
     AscMatrix = []
+    flip = False
+    if TraceInd == 7:
+        flip = True
     if IndMatrix == False:
         for i in range(len(FileList)):
             if i % 10 == 0:
@@ -157,9 +161,11 @@ def MinXMatrix(FileList, TraceInd, Criterion, StartInd = False, IndMatrix = Fals
             for j in range(M.shape[0]):
                 if StartInd:
                     AscArray[1].append(StartPos(M[j])[0])
-                    AscArray[0].append(MinXSpan(M[j, TraceInd, :], Criterion))
+                    AscArray[0].append(MinXSpan(M[j, TraceInd, :], Criterion,
+                                                flip = flip))
                 else:
-                    AscArray.append(MinXSpan(M[j, TraceInd, :], Criterion))
+                    AscArray.append(MinXSpan(M[j, TraceInd, :], Criterion, 
+                                             flip = flip))
             AscMatrix.append(AscArray)
                                 
     elif type(IndMatrix) == list:
@@ -174,9 +180,11 @@ def MinXMatrix(FileList, TraceInd, Criterion, StartInd = False, IndMatrix = Fals
             for j in IndMatrix[i]:
                 if StartInd:
                     AscArray[1].append(StartPos(M[j])[0])
-                    AscArray[0].append(MinXSpan(M[j, TraceInd, :], Criterion))
+                    AscArray[0].append(MinXSpan(M[j, TraceInd, :], Criterion,
+                                                flip = flip))
                 else:
-                    AscArray.append(MinXSpan(M[j, TraceInd, :], Criterion))   
+                    AscArray.append(MinXSpan(M[j, TraceInd, :], Criterion,
+                                             flip= flip))   
             AscMatrix.append(AscArray)
         
     else: 

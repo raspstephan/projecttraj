@@ -16,3 +16,8 @@ c1asc = trj.filters.MinXMatrix(filelist, traceind, criterion1,
 criterion2 = 100
 c2asc = trj.filters.MinXMatrix(filelist, traceind, criterion2, 
                                 IndMatrix = indmat, Flat = True)
+
+# Plot Scatter
+plt.scatter(c1asc, c2asc)
+plt.savefig('../../tmp/SCATTER')
+
