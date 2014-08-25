@@ -209,47 +209,103 @@ def MinXMatrix(FileList, TraceInd, Criterion, StartInd = False, IndMatrix = Fals
             for i in range(len(AscMatrix)):
                 AscFlat += AscMatrix[i]
             return AscFlat
-    
-    
-def MinXSpan(Array, Criterion, mode = 1):
+
+def MinXSpan(array, yspan, mode = 1, flip = False):
     """
-    Returns the min x span for required criterion
-    Automatically converts min to max
+    Returns the minimum time steps needed to conver given criterion.
+    Automatically filters out zero and nan values. If yspan is not fulfilled,
+    returns np.nan.
+    Parameters
+    ----------
+    array : np.array
+    Input array
+    yspan : float
+    Ascent criterion in y-direction
+    flip : bool
+    If True array will be flipped (e.g. use for 'P')
+    Returns
+    -------
+    xspan : int
+    Time steps for criterion
+    istart : int
+    Start index of ascent
+    istop : int
+    End index of ascent
     """
-    a = np.nan
-    b = np.nan
-    off = np.where(Array != 0)[0][0]
-    Array = Array[Array != 0]   # Removes Zero values
-    if np.amax(Array) - np.amin(Array) < Criterion:
-        asc_span = np.nan
-        a = np.nan
-        b = np.nan
+
+    # Filter out nans and zeros
+    array = array[np.isfinite(array)]
+    array = array[array != 0]
+    # Flip array if needed
+    if flip:
+        array = -array
+    # Check if criterion is met
+    #print array
+    if array.shape[0] == 0:
+        xspan = np.nan
+        istart = np.nan
+        istop = np.nan
+    elif np.amax(array) - np.amin(array) < yspan:
+        xspan = np.nan
+        istart = np.nan
+        istop = np.nan
     else:
-        #import pdb; pdb.set_trace()
-        min_tot = Array.argmin()
-        max_tot = Array.argmax()
-        if min_tot > max_tot: 
-            Array = Array[::-1]
-            min_tot = Array.argmin()
-            max_tot = Array.argmax()
-        asc_span = max_tot - min_tot
-        for i in range(max_tot - min_tot):
-            where = np.where(Array > (Array[min_tot+i] + Criterion))[0]
-            where = where[where > min_tot]
-            if where.shape[0] == 0:
-                
-                break
-            asc_ind = where[0]   
-            if (asc_ind - (min_tot+i)) < asc_span:
-                asc_span = asc_ind - (min_tot+i)
-                a = asc_ind
-                b = min_tot+i
-    assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
+        # Use Fortran implementation, use 0 as error values
+        xspan, istart, istop = futils.futils.minxspan(array, yspan,
+        len(array) + 1, 0, 0)
+        # Check if output is correct. NOTE: THIS IS A POTENTIAL BUG!!!
+        if (istart < 0) and (istop < 0):
+            xspan = np.nan
+            istart = np.nan
+            istop = np.nan
+    #assert ((xspan > 0) and (xspan <= len(array)) and (istart >= 0)
+    #and (istop >= 0)), \
+    #'One of the minxspan outputs is zero or negative.'
     if mode == 1:
-        return asc_span
-    elif mode == 2:
-        #print a, Array.shape[0] ,Array.shape[0] - a
-        return (asc_span, Array.shape[0] - a + off, Array.shape[0] - b + off)
+        return xspan
+    elif mode ==2:
+        return (xspan, istart, istop)
+
+# OLD IMPLEMENTATION 
+#def MinXSpan(Array, Criterion, mode = 1):
+    #"""
+    #Returns the min x span for required criterion
+    #Automatically converts min to max
+    #"""
+    #a = np.nan
+    #b = np.nan
+    #off = np.where(Array != 0)[0][0]
+    #Array = Array[Array != 0]   # Removes Zero values
+    #if np.amax(Array) - np.amin(Array) < Criterion:
+        #asc_span = np.nan
+        #a = np.nan
+        #b = np.nan
+    #else:
+        ##import pdb; pdb.set_trace()
+        #min_tot = Array.argmin()
+        #max_tot = Array.argmax()
+        #if min_tot > max_tot: 
+            #Array = Array[::-1]
+            #min_tot = Array.argmin()
+            #max_tot = Array.argmax()
+        #asc_span = max_tot - min_tot
+        #for i in range(max_tot - min_tot):
+            #where = np.where(Array > (Array[min_tot+i] + Criterion))[0]
+            #where = where[where > min_tot]
+            #if where.shape[0] == 0:
+                
+                #break
+            #asc_ind = where[0]   
+            #if (asc_ind - (min_tot+i)) < asc_span:
+                #asc_span = asc_ind - (min_tot+i)
+                #a = asc_ind
+                #b = min_tot+i
+    #assert asc_span > 0 or np.isnan(asc_span), "asc_span is 0 or negative"
+    #if mode == 1:
+        #return asc_span
+    #elif mode == 2:
+        ##print a, Array.shape[0] ,Array.shape[0] - a
+        #return (asc_span, Array.shape[0] - a + off, Array.shape[0] - b + off)
 
     
 def VertVelMatrix(FileList, TraceInd, IntSpan, StartInd = False, IndMatrix = False, Flat = False, mode = 1):
