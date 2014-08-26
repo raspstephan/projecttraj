@@ -46,12 +46,15 @@ def FilterMatrix(Matrix, TraceInd, Criterion, LenMax, LenMin = 0):
     Filters one 3D matrix by trajectories fulfilling Criterion 
     in Len Interval given by LenMax and LenMin for given TraceInd
     """
+    flip = False
+    if TraceInd == 7:
+        flip = True
     IndList = []
     for i in range(len(Matrix[:, 0, 0])):
         if np.average(Matrix[i, TraceInd, :]) == 0:    # Checks for all Zero arrays"
             print "Given array is all zeros, break!"
             break
-        elif MinXSpan(Matrix[i, TraceInd, :], Criterion) <= LenMax and MinXSpan(Matrix[i, TraceInd, :], Criterion) >= LenMin:
+        elif MinXSpan(Matrix[i, TraceInd, :], Criterion, flip = flip) <= LenMax and MinXSpan(Matrix[i, TraceInd, :], Criterion, flip = flip) >= LenMin:
             IndList.append(i)
     return IndList
 
@@ -138,7 +141,8 @@ def StartIndList(CaseName = "test"):
     return StartIndList
 
 
-def MinXMatrix(FileList, TraceInd, Criterion, StartInd = False, IndMatrix = False, Flat = False):
+def MinXMatrix(FileList, TraceInd, Criterion, StartInd = False, IndMatrix = False, IndMatrix2 = False, 
+               Flat = False):
     """
     Returns 2D list of fastest ascent times for given criterion
     if Index Matrix is given, search only for indexed trajectories
@@ -178,13 +182,24 @@ def MinXMatrix(FileList, TraceInd, Criterion, StartInd = False, IndMatrix = Fals
                 AscArray = []
             M = OpenSaveFile(FileList[i])[1]
             for j in IndMatrix[i]:
-                if StartInd:
-                    AscArray[1].append(StartPos(M[j])[0])
-                    AscArray[0].append(MinXSpan(M[j, TraceInd, :], Criterion,
-                                                flip = flip))
+                if IndMatrix2 != False:
+                    if j in IndMatrix2[i]:
+                        if StartInd:
+                            AscArray[1].append(StartPos(M[j])[0])
+                            AscArray[0].append(MinXSpan(M[j, TraceInd, :], Criterion,
+                                                        flip = flip))
+                        else:
+                            AscArray.append(MinXSpan(M[j, TraceInd, :], Criterion,
+                                                    flip= flip))
                 else:
-                    AscArray.append(MinXSpan(M[j, TraceInd, :], Criterion,
-                                             flip= flip))   
+                    
+                    if StartInd:
+                        AscArray[1].append(StartPos(M[j])[0])
+                        AscArray[0].append(MinXSpan(M[j, TraceInd, :], Criterion,
+                                                    flip = flip))
+                    else:
+                        AscArray.append(MinXSpan(M[j, TraceInd, :], Criterion,
+                                                flip= flip))   
             AscMatrix.append(AscArray)
         
     else: 

@@ -100,7 +100,9 @@ def DrawXYInterval(VarList, StartInd, Interval, IndMatrix = None, RealCoord = Tr
         DrawXYSingle(VarList, StartInd, IndMatrix = IndMatrix, t = (i*Interval), RealCoord = RealCoord, SaveBase = SaveBase)
     
     
-def DrawXYSingle(VarList, StartInd, IndMatrix = None, t = "end", RealCoord = True, SaveBase = False, linewidth = 0.7, only = False, StartM = None, EndM = None):
+def DrawXYSingle(VarList, StartInd, IndMatrix = None, 
+                 t = "end", RealCoord = True, SaveBase = False, linewidth = 0.7, 
+                 only = False, StartM = None, EndM = None, title = ''):
     """ 
     Draws single XY plots
     rvar, pvar are lists with desired variable names
@@ -173,6 +175,7 @@ def DrawXYSingle(VarList, StartInd, IndMatrix = None, t = "end", RealCoord = Tru
     cb.set_label('p')
     cb.ax.invert_yaxis()
     plt.tight_layout()
+    plt.title(title)
     
     # Save Plot
     if SaveBase != False:
