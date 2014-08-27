@@ -79,6 +79,9 @@ def StartEndM(Matrix, TraceInd, Criterion, LenMax, LenMin = 0):
     """
     for function above
     """
+    flip = False
+    if TraceInd == 7:
+        flip = True
     IndList = []
     StartList = []
     EndList = []
@@ -87,7 +90,8 @@ def StartEndM(Matrix, TraceInd, Criterion, LenMax, LenMin = 0):
             print "Given array is all zeros, break!"
             break
         else:
-            Span, Start, End = MinXSpan(Matrix[i, TraceInd, :], Criterion, mode = 2)
+            Span, Start, End = MinXSpan(Matrix[i, TraceInd, :], Criterion, mode = 2,
+                                        flip = flip)
             if Span <= LenMax and Span >= LenMin:
                 IndList.append(i)
                 StartList.append(Start)

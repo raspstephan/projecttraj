@@ -45,9 +45,9 @@ for i in range(len(nconv)):
                        #SaveBase='/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/XY_start360_classicWCB',
                        #title = '260814b')
 # Plot XY for non-convective
-#trj.plots.DrawXYSingle([], 360, newindmat,
-                       #SaveBase='/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/XY_start360_nonconv',
-                       #title = '260814c')
+trj.plots.DrawXYSingle([], 360, newindmat,
+                       SaveBase='/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/XY_start360_nonconv',
+                       title = '260814c')
 
 # Plot XY only of 100hPa ascent
 
