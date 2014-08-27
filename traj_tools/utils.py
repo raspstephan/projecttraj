@@ -12,6 +12,7 @@ import numpy as np
 import netCDF4 as nc
 import cosmo_utils.pywgrib as pwg
 import fortran.futils as futils
+import cPickle
 
 
 
@@ -187,6 +188,36 @@ def calc_theta(files):
         
     return thetalist
     
+
+def convert_pickle2netcdf():
+    """
+    Converts pickled trajectory files to NetCDF files, so they can be used with
+    this version of traj_tools
+    
+    Parameters
+    ----------
+    
+    
+    
+    """
+    
+    # loop over all files
+    for fn in filelist
+        
+        # Load pickled files and extract data
+        f = open(fn, 'r')
+        spec = cPickle.load(f)
+        mat = cPickle.load(f)
+        f.close()
+        
+        # Convert data
+        
+        # Create netCDF file and put data
+        
+    
+    
+    
+
 
 ####################################################
 # Functions used in core
