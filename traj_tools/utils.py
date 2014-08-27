@@ -200,6 +200,7 @@ def convert_pickle2netcdf():
     
     
     """
+    pnum = 7   # ptracer
     
     # loop over all files
     for fn in filelist
@@ -210,12 +211,47 @@ def convert_pickle2netcdf():
         mat = cPickle.load(f)
         f.close()
         
-        # Convert data
+        # Check for starting time
+        tstart = np.nonzero(mat[0, pnum, :])[0][0]   # Start index of first traj
+        split = False
+        if np.where(mat[:, pnum, tstart])[0].shape[0] != 0:
+            split = True
+            splitind = mat[:, pnum, tstart])[0][0]
+            tstart2 = np.nonzero(mat[splitind, p, :])[0][0]
+            
+            # Swap axes
+            conmat = np.swapaxes(mat[:splitind, :, tstart:], 0, 2)
+            conmat2 = np.swapaxes(mat[splitind:, :, tstart2:], 0, 2)
+        
+        else:
+            # Swap axes
+            conmat = np.swapaxes(mat[:splitind, :, tstart:], 0, 2)
         
         # Create netCDF file and put data
         
-    
-    
+        
+        if split:
+            # First file
+            rootgrp = nc.Dataset(NAME, 'w')
+            # Create dimensions
+            time = rootgrp.createDimension('time', ???)
+            id = rootgrp.createDimension('id', ???)
+            # Create variables
+            times = rootgrp.createVariable('time', 'f4', ('time', ))
+            ...
+            p = rootgrp.createVariable('P', 'f4', ('time', 'id', ))
+            # Fill variables
+            p[:, :] = conmat[:, 7, :]
+            
+            rootgrp.close()
+            
+            # Second file
+            ...
+            
+        else:
+            # Just one file
+            ...
+            
     
 
 
