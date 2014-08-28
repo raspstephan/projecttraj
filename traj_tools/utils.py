@@ -220,6 +220,7 @@ def convert_pickle2netcdf(indir, outdir):
     
     # loop over all files
     for fn in filelist:
+        print 'Converting file:', fn
         
         # Load pickled files and extract data
         f = open(fn, 'r')
@@ -231,76 +232,84 @@ def convert_pickle2netcdf(indir, outdir):
         tstart = np.nonzero(mat[0, pnum, :])[0][0]   # Start index of first traj
         
         # Check if mat needs to be split
-        if np.where(mat[:, pnum, tstart])[0].shape[0] != 0:
-            splitind = mat[:, pnum, tstart][0][0]
-            tstart2 = np.nonzero(mat[splitind, p, :])[0][0]
+        if np.where(mat[:, pnum, tstart] == 0)[0].shape[0] != 0:
+            splitind = np.where(mat[:, pnum, tstart] == 0)[0][0]
+            if np.nonzero(mat[splitind, pnum, :])[0].shape[0] != 0:
+                tstart2 = np.nonzero(mat[splitind, pnum, :])[0][0]
+            else:
+                print 'Arrays contain only zeros! END!'
+                break
             
             # Swap axes
             conmat = np.swapaxes(mat[:splitind, :, tstart:], 0, 2)
             conmat2 = np.swapaxes(mat[splitind:, :, tstart2:], 0, 2)
             
             # First file
+            print '2'
             _write2netcdf(conmat, tstart, savebase, fcount)
             fcount = 1
             # Second file
+            print '3'
             _write2netcdf(conmat2, tstart2, savebase, fcount)
             fcount += 1
         
         else:
             # Swap axes
-            conmat = np.swapaxes(mat[:splitind, :, tstart:], 0, 2)  
+            conmat = np.swapaxes(mat[:, :, tstart:], 0, 2)  
             
             # Just one file
+            print '1'
             _write2netcdf(conmat, tstart, savebase, fcount)
             fcount += 1
         
         
-        def _write2netcdf(conmat, tstart, savebase, fcount):
-            """
-            To be used inside this function
-            
-            Parameters
-            ----------
-            conmat : np.array
-              Converted and trimmed matrix
-            savename : string
-              Path of new netCDF file
-            
-            """
-            # Specifics for Case0, see above (repeated here for convenience)
-            trjstart = 360 * 60   # Trj start after model start in secs
-            dt = 300   # Save time interval in secs
-            tsteps = 1369   # Max time steps in pickled files
-            
-            # Create savename
-            savename = (savebase + str(360 + tstart * 5).zfill(6) + 
-                        '_p' + str(fcount).zfill(3) + '.nc')
-            
-            # Create time array
-            tarray = np.arange(tstart * dt + trjstart, 
-                               (tsteps + 1) * dt + trjstart, dt)
-            
-            # Create NetCDF file
-            print 'Creating netCDF file:', savename
-            rootgrp = nc.Dataset(savename, 'w')
-            # Create dimensions
-            time = rootgrp.createDimension('time', tarray.shape[0])
-            id = rootgrp.createDimension('id', conmat.shape[2])
-            # Create variables
-            times = rootgrp.createVariable('time', 'f4', ('time', ))
-            lon = rootgrp.createVariable('longitude', 'f4', ('time', 'id', ))
-            lat = rootgrp.createVariable('latitude', 'f4', ('time', 'id', ))
-            z = rootgrp.createVariable('z', 'f4', ('time', 'id', ))
-            p = rootgrp.createVariable('P', 'f4', ('time', 'id', ))
-            # Fill variables
-            times[:] = tarray
-            lon[:, :] = conmat[:, 0, :]
-            lat[:, :] = conmat[:, 1, :]
-            z[:, :] = conmat[:, 2, :]
-            p[:, :] = conmat[:, 7, :]
-            
-            rootgrp.close()
-            
+def _write2netcdf(conmat, tstart, savebase, fcount):
+    """
+    To be used inside this function
+    
+    Parameters
+    ----------
+    conmat : np.array
+        Converted and trimmed matrix
+    savename : string
+        Path of new netCDF file
+    
+    """
+    # Specifics for Case0, see above (repeated here for convenience)
+    trjstart = 360 * 60   # Trj start after model start in secs
+    dt = 300   # Save time interval in secs
+    tsteps = 1369   # Max time steps in pickled files
+    
+    # Create savename
+    savename = (savebase + str(360 + tstart * 5).zfill(6) + 
+                '_p' + str(fcount).zfill(3) + '.nc')
+    
+    # Create time array
+    tarray = np.arange(tstart * dt + trjstart, 
+                       tsteps* dt + trjstart, dt)
+    
+    # Create NetCDF file
+    print 'Creating netCDF file:', savename
+    rootgrp = nc.Dataset(savename, 'w')
+    # Create dimensions
+    time = rootgrp.createDimension('time', tarray.shape[0])
+    id = rootgrp.createDimension('id', conmat.shape[2])
+    print tarray.shape[0], conmat.shape[2]
+    # Create variables
+    times = rootgrp.createVariable('time', 'f4', ('time', ))
+    lon = rootgrp.createVariable('longitude', 'f4', ('time', 'id', ))
+    lat = rootgrp.createVariable('latitude', 'f4', ('time', 'id', ))
+    z = rootgrp.createVariable('z', 'f4', ('time', 'id', ))
+    p = rootgrp.createVariable('P', 'f4', ('time', 'id', ))
+    # Fill variables
+    times[:] = tarray
+    lon[:, :] = conmat[:, 0, :]
+    lat[:, :] = conmat[:, 1, :]
+    z[:, :] = conmat[:, 2, :]
+    p[:, :] = conmat[:, 7, :]
+    
+    rootgrp.close()
+        
     
 
 
