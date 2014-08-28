@@ -636,10 +636,12 @@ class TrjObj(object):
         loclist, idlist = self._mask_iter(filtername)
         
         if onlyasc != None:
-            startarray = (self._mask_array(filtername, onlyasc + '_start') / 
-                          self.dtrj)
-            stoparray = (self._mask_array(filtername, onlyasc + '_stop') /
-                         self.dtrj)
+            starttarray = self._mask_array(filtername, 'startt')
+            startarray = (self._mask_array(filtername, onlyasc + '_start') - 
+                          starttarray) / self.dtrj
+            stoparray = (self._mask_array(filtername, onlyasc + '_stop') - 
+                          starttarray) / self.dtrj
+
             onlybool = True
         else:
             startarray = None
