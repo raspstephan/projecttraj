@@ -189,21 +189,37 @@ def calc_theta(files):
     return thetalist
     
 
-def convert_pickle2netcdf():
+def convert_pickle2netcdf(indir, outdir):
     """
     Converts pickled trajectory files to NetCDF files, so they can be used with
     this version of traj_tools
     
     Parameters
     ----------
-    
-    
-    
+    indir : string
+      Path to directory containing GRIB files
+    outdir : string
+      Path to directory where netcdf files are created
     """
+    
+    # Specifics for Case0
     pnum = 7   # ptracer
+    trjstart = 360 * 60   # Trj start after model start in secs
+    dt = 300   # Save time interval in secs
+    tsteps = 1369   # Max time steps in pickled files
+    
+    # Create filelist
+    inprefix = '/test_case_'
+    filelist = sorted(glob.glob(indir + inprefix + '*'))
+    
+    # Output prefix
+    savebase = outdir + '/traj_t' 
+    
+    # Set counter
+    fcount = 1
     
     # loop over all files
-    for fn in filelist
+    for fn in filelist:
         
         # Load pickled files and extract data
         f = open(fn, 'r')
@@ -213,44 +229,77 @@ def convert_pickle2netcdf():
         
         # Check for starting time
         tstart = np.nonzero(mat[0, pnum, :])[0][0]   # Start index of first traj
-        split = False
+        
+        # Check if mat needs to be split
         if np.where(mat[:, pnum, tstart])[0].shape[0] != 0:
-            split = True
-            splitind = mat[:, pnum, tstart])[0][0]
+            splitind = mat[:, pnum, tstart][0][0]
             tstart2 = np.nonzero(mat[splitind, p, :])[0][0]
             
             # Swap axes
             conmat = np.swapaxes(mat[:splitind, :, tstart:], 0, 2)
             conmat2 = np.swapaxes(mat[splitind:, :, tstart2:], 0, 2)
+            
+            # First file
+            _write2netcdf(conmat, tstart, savebase, fcount)
+            fcount = 1
+            # Second file
+            _write2netcdf(conmat2, tstart2, savebase, fcount)
+            fcount += 1
         
         else:
             # Swap axes
-            conmat = np.swapaxes(mat[:splitind, :, tstart:], 0, 2)
+            conmat = np.swapaxes(mat[:splitind, :, tstart:], 0, 2)  
+            
+            # Just one file
+            _write2netcdf(conmat, tstart, savebase, fcount)
+            fcount += 1
         
-        # Create netCDF file and put data
         
-        
-        if split:
-            # First file
-            rootgrp = nc.Dataset(NAME, 'w')
+        def _write2netcdf(conmat, tstart, savebase, fcount):
+            """
+            To be used inside this function
+            
+            Parameters
+            ----------
+            conmat : np.array
+              Converted and trimmed matrix
+            savename : string
+              Path of new netCDF file
+            
+            """
+            # Specifics for Case0, see above (repeated here for convenience)
+            trjstart = 360 * 60   # Trj start after model start in secs
+            dt = 300   # Save time interval in secs
+            tsteps = 1369   # Max time steps in pickled files
+            
+            # Create savename
+            savename = (savebase + str(360 + tstart * 5).zfill(6) + 
+                        '_p' + str(fcount).zfill(3) + '.nc')
+            
+            # Create time array
+            tarray = np.arange(tstart * dt + trjstart, 
+                               (tsteps + 1) * dt + trjstart, dt)
+            
+            # Create NetCDF file
+            print 'Creating netCDF file:', savename
+            rootgrp = nc.Dataset(savename, 'w')
             # Create dimensions
-            time = rootgrp.createDimension('time', ???)
-            id = rootgrp.createDimension('id', ???)
+            time = rootgrp.createDimension('time', tarray.shape[0])
+            id = rootgrp.createDimension('id', conmat.shape[2])
             # Create variables
             times = rootgrp.createVariable('time', 'f4', ('time', ))
-            ...
+            lon = rootgrp.createVariable('longitude', 'f4', ('time', 'id', ))
+            lat = rootgrp.createVariable('latitude', 'f4', ('time', 'id', ))
+            z = rootgrp.createVariable('z', 'f4', ('time', 'id', ))
             p = rootgrp.createVariable('P', 'f4', ('time', 'id', ))
             # Fill variables
+            times[:] = tarray
+            lon[:, :] = conmat[:, 0, :]
+            lat[:, :] = conmat[:, 1, :]
+            z[:, :] = conmat[:, 2, :]
             p[:, :] = conmat[:, 7, :]
             
             rootgrp.close()
-            
-            # Second file
-            ...
-            
-        else:
-            # Just one file
-            ...
             
     
 
