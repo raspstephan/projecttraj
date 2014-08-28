@@ -42,6 +42,18 @@ def draw_vs_t(dataname, fileloc, fileid, savename = None):
         plt.savefig(savename)
         plt.close('all')
 
+def draw_scatter(array1, array2, savename = None):
+    """
+    TODO
+    """
+    fig = plt.figure()
+    plt.scatter(array1, array2)
+    
+    if savename != None:
+        plt.savefig(savename)
+        plt.close('all')
+
+
 
 def draw_hist(array, savename = None, xlim = None):
     """

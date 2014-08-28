@@ -124,8 +124,9 @@ class TrjObj(object):
         self.pfiles = sorted(pfiles)
         self.rfiles = [x for x in rfiles if x not in pfiles]
         self.cfile = glob.glob(self.datadir + '*00c*')[0]
-        assert len(glob.glob(self.datadir + '*00c*')) == 1, \
-               'More than one cfile detected'
+        if len(glob.glob(self.datadir + '*00c*')) != 1:
+            print 'More than one c file detected, take first one!'
+            self.cfile = sorted(glob.glob(self.datadir + '*00c*'))[0]
         trjfiles = glob.glob(self.datadir + 'traj_*')
         if 'theta' in ''.join(trjfiles):
             for i in range(len(trjfiles)):
@@ -507,7 +508,38 @@ class TrjObj(object):
         plots.draw_vs_t(dataname, self.filename[totind], self.data[0][totind],
                         savename = savename)
         
-    
+    def draw_scatter(self, dataname1, dataname2, factor1 = None, factor2 = None, 
+                     filtername = None, savebase = None):
+        """
+        Make a scatter plot of two data arrays, multiplied by factors.
+        
+        Parameters
+        ----------
+        
+        """
+        
+        # Retrieve first array
+        if filtername != None:
+            array1 = self._mask_array(filtername, dataname1)
+        else:
+            array1 = self.data[self.datadict[dataname1]]
+        
+        # Retrieve second array
+        if filtername != None:
+            array2 = self._mask_array(filtername, dataname2)
+        else:
+            array2 = self.data[self.datadict[dataname2]]
+        
+        # Multiply by factor if given
+        if factor1 != None:
+            array1 = array1 * factor1
+        if factor2 != None:
+            array2 = array2 * factor2
+        
+        savename = savebase
+
+        plots.draw_scatter(array1, array2, savename)
+        
     
     
     def draw_hist(self, dataname, filtername = None, savebase = None, 

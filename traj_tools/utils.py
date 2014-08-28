@@ -217,6 +217,7 @@ def convert_pickle2netcdf(indir, outdir):
     
     # Set counter
     fcount = 1
+    end = False
     
     # loop over all files
     for fn in filelist:
@@ -237,20 +238,22 @@ def convert_pickle2netcdf(indir, outdir):
             if np.nonzero(mat[splitind, pnum, :])[0].shape[0] != 0:
                 tstart2 = np.nonzero(mat[splitind, pnum, :])[0][0]
             else:
-                print 'Arrays contain only zeros! END!'
-                break
+                end = True
+
             
             # Swap axes
             conmat = np.swapaxes(mat[:splitind, :, tstart:], 0, 2)
             conmat2 = np.swapaxes(mat[splitind:, :, tstart2:], 0, 2)
             
             # First file
-            print '2'
             _write2netcdf(conmat, tstart, savebase, fcount)
             fcount = 1
             # Second file
-            print '3'
-            _write2netcdf(conmat2, tstart2, savebase, fcount)
+            if end:
+                print 'Arrays contain only zeros! END!'
+                break
+            else:
+                _write2netcdf(conmat2, tstart2, savebase, fcount)
             fcount += 1
         
         else:
@@ -258,7 +261,6 @@ def convert_pickle2netcdf(indir, outdir):
             conmat = np.swapaxes(mat[:, :, tstart:], 0, 2)  
             
             # Just one file
-            print '1'
             _write2netcdf(conmat, tstart, savebase, fcount)
             fcount += 1
         
@@ -291,10 +293,20 @@ def _write2netcdf(conmat, tstart, savebase, fcount):
     # Create NetCDF file
     print 'Creating netCDF file:', savename
     rootgrp = nc.Dataset(savename, 'w')
+    # Write global attributes
+    rootgrp.ref_year = 2012
+    rootgrp.ref_month = 10
+    rootgrp.ref_day = 13
+    rootgrp.ref_hour = 0
+    rootgrp.ref_min = 0
+    rootgrp.ref_sec = 0
+    rootgrp.duration_in_sec = tsteps* dt + trjstart
+    rootgrp.pollon = -165
+    rootgrp.pollat = 35
+    rootgrp.output_timestep_in_sec = 300
     # Create dimensions
     time = rootgrp.createDimension('time', tarray.shape[0])
     id = rootgrp.createDimension('id', conmat.shape[2])
-    print tarray.shape[0], conmat.shape[2]
     # Create variables
     times = rootgrp.createVariable('time', 'f4', ('time', ))
     lon = rootgrp.createVariable('longitude', 'f4', ('time', 'id', ))
