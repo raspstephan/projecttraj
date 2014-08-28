@@ -596,7 +596,8 @@ class TrjObj(object):
         
      
     def draw_trj_all(self, varlist, filtername = None, savebase = None, 
-                     starts = False, onlyasc = None, trjstart = None):
+                     starts = False, onlyasc = None, trjstart = None, 
+                     idtext = '', linewidth = 0.7):
         """
         Draws XY Plot of trajectories with color as a function of 'P'.
         If filtername is given, plots only filetered trajectories.
@@ -650,7 +651,8 @@ class TrjObj(object):
                         pollon = self.pollon, pollat = self.pollat, 
                         xlim = self.xlim, ylim = self.ylim, onlybool = onlybool,
                         startarray = startarray, stoparray = stoparray, 
-                        trjstart = trjstart)
+                        trjstart = trjstart, idtext = idtext, 
+                        linewidth = linewidth)
         
     def draw_trj_evo(self, varlist, tafter = None, interval = None, 
                      filtername = None, savebase = None, trjstart = None):

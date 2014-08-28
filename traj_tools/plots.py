@@ -134,7 +134,7 @@ def draw_contour(varlist, time, cfile, rfiles, pfiles, savename = False,
 def draw_trj(varlist, filelist, idlist, cfile, rfiles, pfiles, 
               savename = False,pollon = None, pollat = None, xlim = None, 
               ylim = None, onlybool = False, startarray = None, 
-              stoparray = None, trjstart = None):
+              stoparray = None, trjstart = None, idtext = '', linewidth = 0.7):
     """
     Plots one xy plot with trajectories.
     
@@ -214,7 +214,7 @@ def draw_trj(varlist, filelist, idlist, cfile, rfiles, pfiles,
                 lonarray = lonmat[:, j][pmat[:, j] != 0]
                 latarray = latmat[:, j][pmat[:, j] != 0]
             
-            single_trj(lonarray, latarray, parray)
+            single_trj(lonarray, latarray, parray, linewidth = linewidth)
     
     # Set plot properties
     if xlim != None:
@@ -226,6 +226,8 @@ def draw_trj(varlist, filelist, idlist, cfile, rfiles, pfiles,
     cb.set_label('p')
     cb.ax.invert_yaxis()
     plt.tight_layout()
+    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
+             fontsize = 6)
     
     # Save Plot
     if savename != False:
