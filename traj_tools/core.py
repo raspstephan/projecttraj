@@ -508,8 +508,8 @@ class TrjObj(object):
         plots.draw_vs_t(dataname, self.filename[totind], self.data[0][totind],
                         savename = savename)
         
-    def draw_scatter(self, dataname1, dataname2, factor1 = None, factor2 = None, 
-                     filtername = None, savebase = None):
+    def draw_scatter(self, dataname1, dataname2, factor1 = 1, factor2 = 1, 
+                     filtername = None, idtext = '', savebase = None):
         """
         Make a scatter plot of two data arrays, multiplied by factors.
         
@@ -531,14 +531,14 @@ class TrjObj(object):
             array2 = self.data[self.datadict[dataname2]]
         
         # Multiply by factor if given
-        if factor1 != None:
-            array1 = array1 * factor1
-        if factor2 != None:
-            array2 = array2 * factor2
+        array1 = array1 * factor1
+        array2 = array2 * factor2
         
         savename = savebase
-
-        plots.draw_scatter(array1, array2, savename)
+        xlabel = 'Time x ' + str(factor1) +' for ' + str(dataname1) + ' [mins]'
+        ylabel = 'Time x ' + str(factor2) +' for ' + str(dataname2) + ' [mins]'
+        
+        plots.draw_scatter(array1, array2, idtext, xlabel, ylabel, savename)
         
     
     

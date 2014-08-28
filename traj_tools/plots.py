@@ -42,13 +42,20 @@ def draw_vs_t(dataname, fileloc, fileid, savename = None):
         plt.savefig(savename)
         plt.close('all')
 
-def draw_scatter(array1, array2, savename = None):
+def draw_scatter(array1, array2, idtext, xlabel, ylabel, savename = None):
     """
     TODO
     """
-    fig = plt.figure()
+    fig = plt.figure(figsize = (10, 10))
     plt.scatter(array1, array2)
-    
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    mx = max(np.amax(array1), np.amax(array2))
+    plt.xlim(0, mx)
+    plt.ylim(0, mx)
+    plt.plot([0, mx], [0, mx])
+    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
+             fontsize = 6)
     if savename != None:
         plt.savefig(savename)
         plt.close('all')
