@@ -543,7 +543,7 @@ class TrjObj(object):
     
     
     def draw_hist(self, dataname, filtername = None, savebase = None, 
-                  starts = False, xlim = None):
+                  starts = False, xlim = None, idtext = ''):
         """
         Draws a Histogram of data specified by dataname.
         If filtername is given, plots only filtered trajectories.
@@ -573,13 +573,14 @@ class TrjObj(object):
                 
                 if filtername != None:
                     array = self._mask_array(filtername, dataname, tmpmask)
-                    print array
                 else:
                     array = self.data[self.datadict[dataname]][tmpmask]
                 if savebase != None:    
                     savename = (savebase + 'hist_' + dataname + '_' + 
                                 str(filtername) + '_' + str(t) + '.png')
-                plots.draw_hist(array, savename = savename, xlim = xlim)
+                print 'a', idtext
+                plots.draw_hist(array, savename = savename, xlim = xlim,
+                                idtext = idtext)
                 
         else: 
             if filtername != None:

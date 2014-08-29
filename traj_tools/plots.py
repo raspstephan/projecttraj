@@ -62,7 +62,7 @@ def draw_scatter(array1, array2, idtext, xlabel, ylabel, savename = None):
 
 
 
-def draw_hist(array, savename = None, xlim = None):
+def draw_hist(array, savename = None, xlim = None, idtext = ''):
     """
     Plots a histogram of given array.
     
@@ -80,7 +80,10 @@ def draw_hist(array, savename = None, xlim = None):
     # Remove nan values, they cause an error in histogram!
     plt.hist(array[np.isfinite(array)], bins = 144, range = xlim)  
     plt.ylabel("Number of trajectories")
-    
+    print idtext
+    #plt.title(idtext, fontsize = 6)
+    plt.text(0.94, 1.02, '290814a', transform = plt.gca().transAxes, 
+             fontsize = 6)   # TEMPORARY NOTE
     if savename != None:
         print 'Save figure as', savename
         plt.savefig(savename)
