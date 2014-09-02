@@ -69,11 +69,14 @@ def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None,
     
     # Set up figure size
     fig = plt.figure(figsize = (10, 10))
+    ax = plt.gca()   
+    ax.set_aspect('equal')
     if carray == None:
         carray = 'b'   # Set to default
         
     # Plot scatter plot, add labels
-    plt.scatter(array1, array2, c = carray)
+    sca = ax.scatter(array1, array2, c = carray, cmap=plt.get_cmap('Spectral'), 
+                      norm=plt.Normalize(100, 1000), linewidths = 0)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     
@@ -86,6 +89,9 @@ def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None,
     # Add idtext
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
              fontsize = 6)
+    cb = fig.colorbar(sca, shrink = 0.7)
+    cb.set_label('p')
+    cb.ax.invert_yaxis()
     
     if savename != None:
         plt.savefig(savename)

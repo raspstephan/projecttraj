@@ -511,7 +511,8 @@ class TrjObj(object):
                         savename = savename)
         
     def draw_scatter(self, dataname1, dataname2, factor1 = 1, factor2 = 1, 
-                     filtername = None, idtext = '', savebase = None):
+                     carray = None, filtername = None, idtext = '', 
+                     savebase = None):
         """
         Make a scatter plot of two data arrays, multiplied by factors.
         
@@ -526,6 +527,8 @@ class TrjObj(object):
           Multiplication factory for first parameter
         factor2 : float
           Multiplication factory for second parameter
+        carray : string
+          Name of criterion for color coding
         filtername : string
           Name of filter to be applied 
         idtext : string
@@ -550,6 +553,11 @@ class TrjObj(object):
         # Multiply by factor if given
         array1 = array1 * factor1
         array2 = array2 * factor2
+        
+        # Get carray
+        startval = self._mask_array(filtername, carray + '_start_val')
+        stopval = self._mask_array(filtername, carray + '_stop_val')
+        carray = (startval + stopval) / 2
         
         savename = (savebase + '/scatter_' + dataname1 + '_' + dataname2 + '_' +
                     str(filtername))
