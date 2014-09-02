@@ -252,6 +252,8 @@ class TrjObj(object):
         self.datadict[code] = len(self.data)
         self.datadict[code + '_start'] = len(self.data) + 1
         self.datadict[code + '_stop'] = len(self.data) + 2
+        self.datadict[code + '_start_val'] = len(self.data) + 3
+        self.datadict[code + '_stop_val'] = len(self.data) + 4
         
         assert (ascdata[0].shape[0] == self.ntrj), \
                 'Array shapes do not match. Look for error in source code.'
@@ -516,6 +518,21 @@ class TrjObj(object):
         Parameters
         ----------
         
+        dataname1 : string
+          Name of parameter on x-axis
+        dataname2 : string
+          Name of parameter on y-axis
+        factor1 : float
+          Multiplication factory for first parameter
+        factor2 : float
+          Multiplication factory for second parameter
+        filtername : string
+          Name of filter to be applied 
+        idtext : string
+          Text to be displayed in plot
+        savebase : string
+          Path to output directory
+          
         """
         
         # Retrieve first array
@@ -534,11 +551,13 @@ class TrjObj(object):
         array1 = array1 * factor1
         array2 = array2 * factor2
         
-        savename = savebase
+        savename = (savebase + '/scatter_' + dataname1 + '_' + dataname2 + '_' +
+                    str(filtername))
         xlabel = 'Time x ' + str(factor1) +' for ' + str(dataname1) + ' [mins]'
         ylabel = 'Time x ' + str(factor2) +' for ' + str(dataname2) + ' [mins]'
         
-        plots.draw_scatter(array1, array2, idtext, xlabel, ylabel, savename)
+        plots.draw_scatter(array1, array2, carray, idtext, xlabel, ylabel, 
+                           savename)
         
     
     

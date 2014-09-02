@@ -1,18 +1,19 @@
 ! Fortran subroutines for use in traj_tools python module
-! Built using f2py -c futils.f90 -m futils
+! Build using f2py -c futils.f90 -m futils
 
 module futils
 
     contains
 
-    subroutine minxspan(data, crit, span, istart, istop)
+    subroutine minxspan(data, crit, span, istart, istop, startval, stopval)
         implicit none
         
         ! Declaration of I/O variables
         real, dimension(:), intent(in) :: data
         real, intent(in) :: crit
         integer, intent(inout) :: span, istart, istop
-!f2py intent(in,out) :: span, istart, istop
+        real, intent(inout) :: startval, stopval
+!f2py intent(in,out) :: span, istart, istop, startval, stopval
         
         ! Declaration of internal variables
         integer :: i, j, datalen, found
@@ -34,6 +35,9 @@ module futils
                         istart = i
                         istop = i + j
                         span = j
+                        startval = data(i)
+                        stopval = data(i + j)
+                        !print *, startval, stopval
                         found = 1
                     endif
                     j = j + 1
@@ -44,7 +48,7 @@ module futils
         
         ! Adjust for zero-based indexing in Python
         istart = istart - 1
-        istop = istop -1
+        istop = istop - 1
 
     end subroutine minxspan
 

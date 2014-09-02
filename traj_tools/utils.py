@@ -394,6 +394,8 @@ def _minasct(filelist, yspan, tracer, dtrj):
       * Minimum ascent time
       * Index of ascent start
       * Index of ascent stop
+      * Value of tracer at start index
+      * Value of tracer at stop index
     
     """
     
@@ -401,6 +403,8 @@ def _minasct(filelist, yspan, tracer, dtrj):
     asct = []
     ascstart = []
     ascstop = []
+    ascstartval = []
+    ascstopval = []
     
     if tracer == 'P':
         flip = True
@@ -417,10 +421,14 @@ def _minasct(filelist, yspan, tracer, dtrj):
             asct.append(asctup[0])
             ascstart.append(asctup[1] + trjstart)
             ascstop.append(asctup[2] + trjstart)
-    assert (len(asct) == len(ascstart) == len(ascstop)), \
+            ascstartval.append(asctup[3])
+            ascstopval.append(asctup[4])
+    assert (len(asct) == len(ascstart) == len(ascstop) == len(ascstartval) == 
+            len (ascstopval)), \
             'Array lengths do not match'
     ascdata = (np.array(asct) * dtrj, np.array(ascstart) * dtrj, 
-               np.array(ascstop) * dtrj)
+               np.array(ascstop) * dtrj, np.array(ascstartval), 
+               np.array(ascstopval))
     return ascdata
             
 
@@ -447,13 +455,16 @@ def _minxspan(array, yspan, flip = False):
       Start index of ascent
     istop : int
       End index of ascent
-    
+    startval : float 
+      Value of tracer at start index
+    stopval : float
+      Value of tracer at stop index
     """
     
     # Filter out nans and zeros
     array = array[np.isfinite(array)]
     array = array[array != 0]
-
+    error = array
     # Flip array if needed
     if flip:
         array = -array 
@@ -464,26 +475,34 @@ def _minxspan(array, yspan, flip = False):
         xspan = np.nan
         istart = np.nan
         istop = np.nan
+        startval = np.nan
+        stopval = np.nan
     elif np.amax(array) - np.amin(array) < yspan:
         xspan = np.nan
         istart = np.nan
         istop = np.nan
+        startval = np.nan
+        stopval = np.nan
     else:
         # Use Fortran implementation, use 0 as error values
-        xspan, istart, istop  = futils.futils.minxspan(array, yspan, 
-                                                        len(array) + 1, 0, 0)
+        xspan, istart, istop, startval, stopval  = futils.futils.minxspan(array, 
+                                                   yspan, len(array) + 1, 0, 0, 0, 0)
         
         # Check if output is correct. NOTE: THIS IS A POTENTIAL BUG!!!
         if (istart < 0) and (istop < 0):
             xspan = np.nan
             istart = np.nan
             istop = np.nan
+            startval = np.nan
+            stopval = np.nan
             
         #assert ((xspan > 0) and (xspan <= len(array)) and (istart >= 0) 
                 #and (istop >= 0)), \
                 #'One of the minxspan outputs is zero or negative.'
-            
-    return [xspan, istart, istop]
+    if flip:
+        startval = -startval
+        stopval = -stopval
+    return [xspan, istart, istop, startval, stopval]
     
     
     

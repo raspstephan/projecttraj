@@ -42,20 +42,51 @@ def draw_vs_t(dataname, fileloc, fileid, savename = None):
         plt.savefig(savename)
         plt.close('all')
 
-def draw_scatter(array1, array2, idtext, xlabel, ylabel, savename = None):
+def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None, 
+                 ylabel = None, savename = None):
     """
-    TODO
+    Returns/Saves a scatter plot of two arrays.
+    
+    Parameters
+    ----------
+    
+    array1 : np.array
+      Data on x-axis
+    array2 : np.array
+      Data on y-axis
+    carray : np.array
+      Array for color coding
+    idtext : string
+      Text to be displayed in plot
+    xlabel : string
+      Text for xlabel
+    ylabel : string
+      Text for ylabel
+    savename : string
+      Full path of file to be saved
+      
     """
+    
+    # Set up figure size
     fig = plt.figure(figsize = (10, 10))
-    plt.scatter(array1, array2)
+    if carray == None:
+        carray = 'b'   # Set to default
+        
+    # Plot scatter plot, add labels
+    plt.scatter(array1, array2, c = carray)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
+    
+    # Set limits, plot diagnonal line
     mx = max(np.amax(array1), np.amax(array2))
     plt.xlim(0, mx)
     plt.ylim(0, mx)
     plt.plot([0, mx], [0, mx])
+    
+    # Add idtext
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
              fontsize = 6)
+    
     if savename != None:
         plt.savefig(savename)
         plt.close('all')
