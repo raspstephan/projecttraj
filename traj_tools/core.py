@@ -227,7 +227,7 @@ class TrjObj(object):
         
     
     
-    def new_asc(self, yspan, tracer = 'P'):
+    def new_asc(self, yspan, tracer = 'P', interpolate = True):
         """
         Adds a new ascent filter to data.
         
@@ -245,7 +245,8 @@ class TrjObj(object):
         
         """
 
-        ascdata = utils._minasct(self.trjfiles, yspan, tracer, self.dtrj)
+        ascdata = utils._minasct(self.trjfiles, yspan, tracer, self.dtrj, 
+                                 interpolate)
         
         # Update dictionary
         code = tracer + str(yspan)
@@ -605,7 +606,6 @@ class TrjObj(object):
                 if savebase != None:    
                     savename = (savebase + 'hist_' + dataname + '_' + 
                                 str(filtername) + '_' + str(t) + '.png')
-                print 'a', idtext
                 plots.draw_hist(array, savename = savename, xlim = xlim,
                                 idtext = idtext)
                 
@@ -620,7 +620,8 @@ class TrjObj(object):
                             str(filtername) + '.png')
             else:
                 savename = savebase
-            plots.draw_hist(array, savename = savename, xlim = xlim)
+            plots.draw_hist(array, savename = savename, xlim = xlim, 
+                            idtext = idtext)
         
      
     def draw_trj_all(self, varlist, filtername = None, savebase = None, 

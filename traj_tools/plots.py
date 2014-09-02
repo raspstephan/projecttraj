@@ -117,7 +117,6 @@ def draw_hist(array, savename = None, xlim = None, idtext = ''):
     # Remove nan values, they cause an error in histogram!
     plt.hist(array[np.isfinite(array)], bins = 144, range = xlim)  
     plt.ylabel("Number of trajectories")
-    print idtext
     #plt.title(idtext, fontsize = 6)
     plt.text(0.94, 1.02, '290814a', transform = plt.gca().transAxes, 
              fontsize = 6)   # TEMPORARY NOTE

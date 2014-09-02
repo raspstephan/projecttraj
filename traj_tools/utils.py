@@ -374,7 +374,7 @@ def _delta(filelist, tracer):
     
 
 
-def _minasct(filelist, yspan, tracer, dtrj):
+def _minasct(filelist, yspan, tracer, dtrj, interpolate = False):
     """
     Calculate minimum ascent time for all trajectories from NetCDF files.
     
@@ -386,6 +386,10 @@ def _minasct(filelist, yspan, tracer, dtrj):
       Ascent criterion in y-direction
     tracer : str 
       COSMO name of y-axis variable
+    dtrj : float
+      Timestep between saved values
+    interpolate : bool
+      If True, ascent time will be interpolated
      
     Returns
     -------
@@ -426,6 +430,13 @@ def _minasct(filelist, yspan, tracer, dtrj):
     assert (len(asct) == len(ascstart) == len(ascstop) == len(ascstartval) == 
             len (ascstopval)), \
             'Array lengths do not match'
+    if interpolate:
+        if tracer == 'P':
+            diff = np.array(ascstartval) - np.array(ascstopval)
+        else: 
+            diff = np.array(ascstopval) - np.array(ascstartval)
+        asct = (np.array(asct) * yspan) / diff
+        
     ascdata = (np.array(asct) * dtrj, np.array(ascstart) * dtrj, 
                np.array(ascstop) * dtrj, np.array(ascstartval), 
                np.array(ascstopval))
