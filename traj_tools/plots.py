@@ -109,6 +109,38 @@ def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None,
         plt.close('all')
 
 
+def draw_vs_hist(array, idtext = '', xlabel =  None, savename = None):
+    """
+    Returns/Saves a histogram of given array
+    
+    array : np.array
+      Array to be used for histogram
+    idtext : string
+      Text to be displayed in plot
+    xlabel : string
+      Text for xlabel
+    savename : string
+      Full path of file to be saved
+      
+    """
+    # Set up figure
+    fig = plt.figure()
+    
+    # Plot histogram, remove nans
+    plt.hist(array[np.isfinite(array)], bins = 100, range = (0, 10))
+    
+    # Add labels and text
+    plt.ylabel("Number of trajectories")
+    plt.xlabel(xlabel)
+    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
+             fontsize = 6)
+    
+    if savename != None:
+        print 'Save figure as', savename
+        plt.savefig(savename)
+        plt.close('all')
+        plt.clf()
+        
 
 def draw_hist(array, savename = None, xlim = None, idtext = ''):
     """

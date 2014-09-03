@@ -539,7 +539,7 @@ class TrjObj(object):
           
         """
         
-        # Retrieve the two array
+        # Retrieve the two arrays
         if filtername != None:
             array1 = self._mask_array(filtername, dataname1)
             array2 = self._mask_array(filtername, dataname2)
@@ -571,7 +571,57 @@ class TrjObj(object):
         plots.draw_scatter(array1, array2, carray, idtext, xlabel, ylabel, 
                            savename)
         
-    
+    def draw_vs_hist(self, dataname1, dataname2, factor1 = 1, factor2 = 1, 
+                     filtername = None, idtext = '', savebase = None):
+        """
+        Make a histogram of the ratio of two parameters.
+        dataname1 / dataname 2 adjusted by multiplication factor.
+        
+        Parameters
+        ----------
+        
+        dataname1 : string
+          Name of parameter on numerator
+        dataname2 : string
+          Name of parameter on denominator
+        factor1 : float
+          Multiplication factory for first parameter
+        factor2 : float
+          Multiplication factory for second parameter
+        filtername : string
+          Name of filter to be applied 
+        idtext : string
+          Text to be displayed in plot
+        savebase : string
+          Path to output directory
+          
+        """
+        
+        # Retrieve the two arrays
+        if filtername != None:
+            array1 = self._mask_array(filtername, dataname1)
+            array2 = self._mask_array(filtername, dataname2)
+        else:
+            array1 = self.data[self.datadict[dataname1]]
+            array2 = self.data[self.datadict[dataname2]]
+        
+        # Multiply by factor if given and get ratio
+        array1 = array1 * factor1
+        array2 = array2 * factor2
+        ratioarray = array1 / array2
+        
+        # Create savename and label names
+        savename = (savebase + '/hist_' + dataname1 + 'vs' + dataname2 + '_' +
+                    str(filtername) + '_' + str(idtext))
+        xlabel = ('Ratio ' + dataname1 + ' x ' + str(factor1) + ' / ' + 
+                  dataname2 + ' x ' + str(factor2))
+        
+        # Pass parameters to plots function
+        plots.draw_vs_hist(ratioarray, idtext, xlabel, savename)
+        
+        
+        
+        
     
     def draw_hist(self, dataname, filtername = None, savebase = None, 
                   starts = False, xlim = None, idtext = ''):
