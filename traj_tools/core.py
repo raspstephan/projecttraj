@@ -539,16 +539,12 @@ class TrjObj(object):
           
         """
         
-        # Retrieve first array
+        # Retrieve the two array
         if filtername != None:
             array1 = self._mask_array(filtername, dataname1)
-        else:
-            array1 = self.data[self.datadict[dataname1]]
-        
-        # Retrieve second array
-        if filtername != None:
             array2 = self._mask_array(filtername, dataname2)
         else:
+            array1 = self.data[self.datadict[dataname1]]
             array2 = self.data[self.datadict[dataname2]]
         
         # Multiply by factor if given
@@ -556,15 +552,22 @@ class TrjObj(object):
         array2 = array2 * factor2
         
         # Get carray
-        startval = self._mask_array(filtername, carray + '_start_val')
-        stopval = self._mask_array(filtername, carray + '_stop_val')
-        carray = (startval + stopval) / 2
+        if carray != None:
+            if filtername != None:
+                startval = self._mask_array(filtername, carray + '_start_val')
+                stopval = self._mask_array(filtername, carray + '_stop_val')
+            else:
+                startval = self.data[self.datadict[carray + '_start_val']]
+                stopval = self.data[self.datadict[carray + '_stop_val']]
+            carray = (startval + stopval) / 2
         
+        # Create savename and label names
         savename = (savebase + '/scatter_' + dataname1 + '_' + dataname2 + '_' +
-                    str(filtername))
-        xlabel = 'Time x ' + str(factor1) +' for ' + str(dataname1) + ' [mins]'
-        ylabel = 'Time x ' + str(factor2) +' for ' + str(dataname2) + ' [mins]'
+                    str(filtername) + '_' + str(idtext))
+        xlabel = 'Time x ' + str(factor1) +' for ' + str(dataname1) + ' [hrs]'
+        ylabel = 'Time x ' + str(factor2) +' for ' + str(dataname2) + ' [hrs]'
         
+        # Pass parameters to plots function
         plots.draw_scatter(array1, array2, carray, idtext, xlabel, ylabel, 
                            savename)
         

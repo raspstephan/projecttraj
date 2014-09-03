@@ -70,21 +70,30 @@ def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None,
     # Set up figure size
     fig = plt.figure(figsize = (10, 10))
     ax = plt.gca()   
-    ax.set_aspect('equal')
+    #ax.set_aspect('equal')
     if carray == None:
         carray = 'b'   # Set to default
         
+    # Convert to hours
+    array1 = array1 / 60
+    array2 = array2 / 60
+    
     # Plot scatter plot, add labels
-    sca = ax.scatter(array1, array2, c = carray, cmap=plt.get_cmap('Spectral'), 
-                      norm=plt.Normalize(100, 1000), linewidths = 0)
+    sca = ax.scatter(array1, array2, c = carray, s = 8,
+                     cmap=plt.get_cmap('Spectral'), 
+                     norm=plt.Normalize(100, 1000), linewidths = 0)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     
-    # Set limits, plot diagnonal line
-    mx = max(np.amax(array1), np.amax(array2))
-    plt.xlim(0, mx)
-    plt.ylim(0, mx)
+    # Set limits, plot diagnonal line, set ticks
+    xmx = np.amax(array1)
+    ymx = np.amax(array2)
+    mx = max(xmx, ymx)
+    plt.xlim(0, xmx)
+    plt.ylim(0, ymx+1)
     plt.plot([0, mx], [0, mx])
+    plt.xticks(np.arange(0, xmx+3, 3))
+    plt.yticks(np.arange(0, ymx+3, 3))
     
     # Add idtext
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
@@ -92,8 +101,10 @@ def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None,
     cb = fig.colorbar(sca, shrink = 0.7)
     cb.set_label('p')
     cb.ax.invert_yaxis()
+    ax.set_axis_bgcolor('grey')
     
     if savename != None:
+        print 'Save figure as', savename
         plt.savefig(savename)
         plt.close('all')
 
