@@ -50,3 +50,15 @@ c1.draw_scatter('P600', 'P100', factor2 = 6, carray = 'P100',
                 filtername = 'WCB', 
                 savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/', 
                 idtext = '030914f')
+
+# Histograms of ascent location
+c0.draw_hist('P100_val', 'WCB', '030914g', 
+             '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013')
+c0.draw_hist('P100_val', 'WCB_NonConv', '030914h', 
+             '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013')
+
+c0.draw_hist('P100_val', 'WCB_Conv', '030914i', 
+             '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013')
+
+c1.draw_hist('P100_val', 'WCB', '030914j', 
+             '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720')
