@@ -571,8 +571,9 @@ class TrjObj(object):
         plots.draw_scatter(array1, array2, carray, idtext, xlabel, ylabel, 
                            savename)
         
-    def draw_vs_hist(self, dataname1, dataname2, factor1 = 1, factor2 = 1, 
-                     filtername = None, idtext = '', savebase = None):
+        
+        
+    def draw_hist(self, data, filtername = None, idtext = '', savebase = None):
         """
         Make a histogram of the ratio of two parameters.
         dataname1 / dataname 2 adjusted by multiplication factor.
@@ -580,14 +581,9 @@ class TrjObj(object):
         Parameters
         ----------
         
-        dataname1 : string
-          Name of parameter on numerator
-        dataname2 : string
-          Name of parameter on denominator
-        factor1 : float
-          Multiplication factory for first parameter
-        factor2 : float
-          Multiplication factory for second parameter
+        data : string or list
+          Name of data. If '_val' is at the end, takes the average value.
+          Or list with [dataname1, dataname2, factor 1, factor2]
         filtername : string
           Name of filter to be applied 
         idtext : string
@@ -597,84 +593,67 @@ class TrjObj(object):
           
         """
         
-        # Retrieve the two arrays
-        if filtername != None:
-            array1 = self._mask_array(filtername, dataname1)
-            array2 = self._mask_array(filtername, dataname2)
-        else:
-            array1 = self.data[self.datadict[dataname1]]
-            array2 = self.data[self.datadict[dataname2]]
-        
-        # Multiply by factor if given and get ratio
-        array1 = array1 * factor1
-        array2 = array2 * factor2
-        ratioarray = array1 / array2
-        
-        # Create savename and label names
-        savename = (savebase + '/hist_' + dataname1 + 'vs' + dataname2 + '_' +
-                    str(filtername) + '_' + str(idtext))
-        xlabel = ('Ratio ' + dataname1 + ' x ' + str(factor1) + ' / ' + 
-                  dataname2 + ' x ' + str(factor2))
-        
-        # Pass parameters to plots function
-        plots.draw_vs_hist(ratioarray, idtext, xlabel, savename)
-        
-        
-        
-        
-    
-    def draw_hist(self, dataname, filtername = None, savebase = None, 
-                  starts = False, xlim = None, idtext = ''):
-        """
-        Draws a Histogram of data specified by dataname.
-        If filtername is given, plots only filtered trajectories.
-        If starts is True, plots one histogram seperately for each start time.
-        
-        Parameters
-        ----------
-        dataname : string
-          Identifier of wanted data array
-        filtername : string
-          Identifier of wanted filter
-        savebase : string
-          Path to output directory
-        starts : bool
-          If False, plots histogram for entire array given by filter.
-          If True, plots histograms for each start time.
-        
-        """
-        if starts:
-            # get start times
-            times = list(np.unique(self.data[self.datadict['startt']]))
+        # Check data type
+        if (type(data) == str):
             
-            for t in times:
-                # Create temporary mask
-                print 'Creating histogram for time:', t
-                tmpmask = self.data[self.datadict['startt']] == t
-                
+            # Histogram of ascent location
+            if '_val' in data:
+                dataname = data[:4]   # NOTE: Lazy, could lead to problems
                 if filtername != None:
-                    array = self._mask_array(filtername, dataname, tmpmask)
+                    startval = self._mask_array(filtername, 
+                                                dataname + '_start_val')
+                    stopval = self._mask_array(filtername, 
+                                               dataname + '_stop_val')
                 else:
-                    array = self.data[self.datadict[dataname]][tmpmask]
-                if savebase != None:    
-                    savename = (savebase + 'hist_' + dataname + '_' + 
-                                str(filtername) + '_' + str(t) + '.png')
-                plots.draw_hist(array, savename = savename, xlim = xlim,
-                                idtext = idtext)
-                
-        else: 
+                    startval = self.data[self.datadict[dataname + '_start_val']]
+                    stopval = self.data[self.datadict[dataname + '_stop_val']]
+                array = (startval + stopval) / 2
+                savename = (savebase + '/hist_' + dataname + '_loc' 
+                            + '_' + str(filtername) + '_' + str(idtext))
+                xlabel = ('Location [hPa] of fastest ' + dataname + ' ascent')
+            
+            # Regular histogram of given array
+            else:
+                if filtername != None:
+                    array = self._mask_array(filtername, data)
+                else:
+                    array = self.data[self.datadict[dataname]]
+                # Create savename and label names
+                savename = (savebase + '/hist_' + data 
+                            + '_' + str(filtername) + '_' + str(idtext))
+                xlabel = data
+                    
+        # Histogram of ratio of two arrays            
+        elif len(data) == 4:
+            dataname1 = data[0]
+            dataname2 = data[1]
+            factor1 = data[2]
+            factor2 = data[3]
+            
+            # Retrieve the two arrays
             if filtername != None:
-                array = self._mask_array(filtername, dataname)
-                print array
+                array1 = self._mask_array(filtername, dataname1)
+                array2 = self._mask_array(filtername, dataname2)
             else:
-                array = self.data[self.datadict[dataname]]
-            if savebase != None:    
-                savename = (savebase + 'hist_' + dataname + '_' + 
-                            str(filtername) + '.png')
-            else:
-                savename = savebase
-            plots.draw_hist(array, savename = savename, xlim = xlim, 
-                            idtext = idtext)
+                array1 = self.data[self.datadict[dataname1]]
+                array2 = self.data[self.datadict[dataname2]]
+            # Multiply by factor if given and get ratio
+            array1 = array1 * factor1
+            array2 = array2 * factor2
+            array = array1 / array2
+            # Create savename and label names
+            savename = (savebase + '/hist_' + dataname1 + 'vs' + dataname2 + '_' 
+                        + str(filtername) + '_' + str(idtext))
+            xlabel = ('Ratio ' + dataname1 + ' x ' + str(factor1) + ' / ' + 
+                      dataname2 + ' x ' + str(factor2))
+            
+        # Unknown input
+        else:
+            raise Exception('Wrong input for data')
+
+        # Pass parameters to plots function
+        plots.draw_hist(array, idtext, xlabel, savename)
+
         
      
     def draw_trj_all(self, varlist, filtername = None, savebase = None, 

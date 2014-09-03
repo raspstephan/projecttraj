@@ -109,7 +109,7 @@ def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None,
         plt.close('all')
 
 
-def draw_vs_hist(array, idtext = '', xlabel =  None, savename = None):
+def draw_hist(array, idtext = '', xlabel =  None, savename = None):
     """
     Returns/Saves a histogram of given array
     
@@ -127,7 +127,7 @@ def draw_vs_hist(array, idtext = '', xlabel =  None, savename = None):
     fig = plt.figure()
     
     # Plot histogram, remove nans
-    plt.hist(array[np.isfinite(array)], bins = 100, range = (0, 10))
+    plt.hist(array[np.isfinite(array)], bins = 144)
     
     # Add labels and text
     plt.ylabel("Number of trajectories")
@@ -141,34 +141,6 @@ def draw_vs_hist(array, idtext = '', xlabel =  None, savename = None):
         plt.close('all')
         plt.clf()
         
-
-def draw_hist(array, savename = None, xlim = None, idtext = ''):
-    """
-    Plots a histogram of given array.
-    
-    Parameters
-    ----------
-    array : np.array
-      Array to be used for histogram
-    savename : string
-      Full path of wanted save names
-      
-    """
-    
-    fig = plt.figure()
-    
-    # Remove nan values, they cause an error in histogram!
-    plt.hist(array[np.isfinite(array)], bins = 144, range = xlim)  
-    plt.ylabel("Number of trajectories")
-    #plt.title(idtext, fontsize = 6)
-    plt.text(0.94, 1.02, '290814a', transform = plt.gca().transAxes, 
-             fontsize = 6)   # TEMPORARY NOTE
-    if savename != None:
-        print 'Save figure as', savename
-        plt.savefig(savename)
-        plt.close('all')
-        plt.clf()
-
 
 def draw_contour(varlist, time, cfile, rfiles, pfiles, savename = False, 
                  pollon = None, pollat = None, xlim = None, ylim = None, 
