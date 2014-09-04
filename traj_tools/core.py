@@ -155,7 +155,7 @@ class TrjObj(object):
         self.filtdict = dict()
         self.filtlist = []
         
-        self.maxmins = 6120
+        self.maxmins = (len(self.pfiles) - 1) * self.dcosmo
         
         
         # Looping over all files, initializing lists instead of np.arrays
@@ -573,7 +573,8 @@ class TrjObj(object):
         
         
         
-    def draw_hist(self, data, filtername = None, idtext = '', savebase = None):
+    def draw_hist(self, data, filtername = None, idtext = '', savebase = None,
+                  log = False):
         """
         Make a histogram of the ratio of two parameters.
         dataname1 / dataname 2 adjusted by multiplication factor.
@@ -590,6 +591,8 @@ class TrjObj(object):
           Text to be displayed in plot
         savebase : string
           Path to output directory
+        log : bool
+          If true x axis is logarithmic NOTE: range is hardcoded!
           
         """
         
@@ -652,7 +655,7 @@ class TrjObj(object):
             raise Exception('Wrong input for data')
 
         # Pass parameters to plots function
-        plots.draw_hist(array, idtext, xlabel, savename)
+        plots.draw_hist(array, idtext, xlabel, savename, log = log)
 
         
      
@@ -821,7 +824,7 @@ class TrjObj(object):
           
         """
         if savebase != None:    
-            savename = savebase + 'contour_' + str(time) + '.png'
+            savename = savebase + 'contour_' + str(time) + '.jpeg'
         else:
             savename = savebase
         
@@ -831,7 +834,7 @@ class TrjObj(object):
             timelist = range(time, self.maxmins, interval)
         for time in timelist:
             if savebase != None:    
-                savename = savebase + 'contour_' + str(time).zfill(4) + '.png'
+                savename = savebase + 'contour_' + str(time).zfill(5) + '.jpeg'
             else:
                 savename = savebase
             print 'Plotting for time:', time

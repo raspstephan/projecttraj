@@ -109,7 +109,7 @@ def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None,
         plt.close('all')
 
 
-def draw_hist(array, idtext = '', xlabel =  None, savename = None):
+def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False):
     """
     Returns/Saves a histogram of given array
     
@@ -127,7 +127,12 @@ def draw_hist(array, idtext = '', xlabel =  None, savename = None):
     fig = plt.figure()
     
     # Plot histogram, remove nans
-    plt.hist(array[np.isfinite(array)], bins = 144)
+    if log:
+        plt.hist(array[np.isfinite(array)], bins = np.logspace(-1, 3, 144))
+        plt.gca().set_xscale('log')
+    else:
+        plt.hist(array[np.isfinite(array)], bins = 144)
+        
     
     # Add labels and text
     plt.ylabel("Number of trajectories")
