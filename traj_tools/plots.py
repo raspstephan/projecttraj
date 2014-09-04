@@ -142,7 +142,7 @@ def draw_hist(array, idtext = '', xlabel =  None, savename = None):
         plt.clf()
         
 
-def draw_contour(obj, varlist, time, savename = None):
+def draw_contour(obj, varlist, time, idtext, savename = None):
     """
     Plots a contour plot of the given variables at the specified time.
     
@@ -193,24 +193,28 @@ def draw_contour(obj, varlist, time, savename = None):
     plt.xlabel('longitude')
     plt.ylabel('latitude')
     plt.title(obj.date + timedelta(minutes = time))
+    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
+             fontsize = 6)
     
         
-    if savename != False:
+    if savename != None:
         print "Saving figure as", savename
         plt.savefig(savename, dpi = 400)
         plt.close('all')
         plt.clf()
 
 
-def draw_trj(varlist, filelist, idlist, cfile, rfiles, pfiles, 
-              savename = False,pollon = None, pollat = None, xlim = None, 
-              ylim = None, onlybool = False, startarray = None, 
-              stoparray = None, trjstart = None, idtext = '', linewidth = 0.7):
+def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles, 
+             savename = False,pollon = None, pollat = None, xlim = None, 
+             ylim = None, onlybool = False, startarray = None, 
+             stoparray = None, trjstart = None, idtext = '', linewidth = 0.7):
     """
     Plots one xy plot with trajectories.
     
     Parameters
     ----------
+    obj : TrjObj object
+      self object
     filelist : list
       List of unique file locations
     idlist : list
@@ -236,30 +240,13 @@ def draw_trj(varlist, filelist, idlist, cfile, rfiles, pfiles,
     startarray : np.array
       
     """
-         
-    # Getting index for COSMO files
-    outint = 5   # COSMO output interval
+    
+    # Get trj_time after model start 
     tmpt = filelist[0].split('/')[-1]
     tmpt = int(tmpt.split('_')[1].lstrip('t'))
-    cosmoind = int(tmpt/outint)
     
-    # Set up figure
-    fig = plt.figure(figsize = (12,8))
-    ax = plt.gca()   
-    ax.set_aspect('equal')
-    basemap(cfile, xlim, ylim)
-
-    # Plotting all contour fields
-    for i in range(len(varlist)):   # Plotting all contour fields
-        if varlist[i] == 'CUM_PREC':
-            contour(rfiles, varlist[i], cosmoind, xlim, ylim, 
-                    trjstart = trjstart)
-        elif varlist[i] in pwg.get_fieldtable(rfiles[cosmoind]).fieldnames:
-            contour(rfiles, varlist[i], cosmoind, xlim, ylim)
-        elif varlist[i] in pwg.get_fieldtable(pfiles[cosmoind]).fieldnames:
-            contour(pfiles, varlist[i], cosmoind, xlim, ylim)
-        else:
-            raise Exception('Variable' + varlist[i] + 'not available!')
+    # Plot contours
+    draw_contour(obj, varlist, tmpt, idtext = idtext)
     
     # Plot trajectories
     cnt = 0   # continuous counter for startarray and stoparray
@@ -286,19 +273,12 @@ def draw_trj(varlist, filelist, idlist, cfile, rfiles, pfiles,
                 latarray = latmat[:, j][pmat[:, j] != 0]
             
             single_trj(lonarray, latarray, parray, linewidth = linewidth)
-    
-    # Set plot properties
-    if xlim != None:
-        plt.xlim(xlim)
-    if ylim != None:
-        plt.ylim(ylim)
 
-    cb = fig.colorbar(lc, shrink = 0.7)
+    cb = plt.colorbar(lc, shrink = 0.7)
     cb.set_label('p')
     cb.ax.invert_yaxis()
     plt.tight_layout()
-    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
-             fontsize = 6)
+    
     
     # Save Plot
     if savename != False:

@@ -709,7 +709,7 @@ class TrjObj(object):
             stoparray = None
             onlybool = False
         
-        plots.draw_trj(varlist, loclist, idlist, self.cfile,
+        plots.draw_trj(self, varlist, loclist, idlist, self.cfile,
                         self.rfiles, self.pfiles, savename = savename, 
                         pollon = self.pollon, pollat = self.pollat, 
                         xlim = self.xlim, ylim = self.ylim, onlybool = onlybool,
@@ -801,8 +801,8 @@ class TrjObj(object):
     
     
         
-    def draw_contour(self, varlist, time, savebase = None, interval = None,
-                     trjstart = None):
+    def draw_contour(self, varlist, time, savebase = None, interval = None, 
+                     idtext = ''):
         """
         Draws a countourplot of given variables.
         
@@ -815,7 +815,10 @@ class TrjObj(object):
         savebase : string
           Path to output directory
         Interval : integer
-          NOT IMPLEMENTED
+          If specified, plots for all in range(time, self.maxmins, interval)
+        idtext : string
+          Text to be diplayed
+          
         """
         if savebase != None:    
             savename = savebase + 'contour_' + str(time) + '.png'
@@ -832,10 +835,13 @@ class TrjObj(object):
             else:
                 savename = savebase
             print 'Plotting for time:', time
-            plots.draw_contour(self, varlist, time, savename = savename)
+            plots.draw_contour(self, varlist, time, savename = savename, 
+                               idtext = idtext)
             
             
-            
+    ##################
+    # String functions
+    ##################
             
     def __repr__(self):
         
