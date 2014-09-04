@@ -832,12 +832,11 @@ class TrjObj(object):
             else:
                 savename = savebase
             print 'Plotting for time:', time
-            plots.draw_contour(varlist, time, self.cfile, self.rfiles, 
-                               self.pfiles, savename = savename, 
-                               pollon = self.pollon, pollat = self.pollat, 
-                               xlim = self.xlim, ylim = self.ylim,
-                               trjstart = trjstart)
-    
+            plots.draw_contour(self, varlist, time, savename = savename)
+            
+            
+            
+            
     def __repr__(self):
         
         return self.__str__()

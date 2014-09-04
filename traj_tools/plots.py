@@ -142,41 +142,58 @@ def draw_hist(array, idtext = '', xlabel =  None, savename = None):
         plt.clf()
         
 
-def draw_contour(varlist, time, cfile, rfiles, pfiles, savename = False, 
-                 pollon = None, pollat = None, xlim = None, ylim = None, 
-                 trjstart = None):
+def draw_contour(obj, varlist, time, savename = None):
     """
-    Plots one contour plot. TEST FOR NOW!
+    Plots a contour plot of the given variables at the specified time.
+    
+    Parameters
+    ----------
+    obj : TrjObj object
+      Object
+    varlist : list
+      List of variables to be plotted
+    time : int
+      Time in minutes after simulation start
+    savename : string
+      Full path to file to be saved
+      
     """
     
     # Getting index for COSMO files
-    outint = 5   # COSMO output interval
-    cosmoind = time / outint
+    cosmoind = int(time / obj.dcosmo)
     
-    # Set up figure
+    # Setting up figure
     fig = plt.figure(figsize = (12,8))
     ax = plt.gca()   
     ax.set_aspect('equal')
-    basemap(cfile, xlim, ylim)
+    
+    # Draw basemap
+    basemap(obj.cfile, obj.xlim, obj.ylim)
     
     # Plotting all contour fields
-    for i in range(len(varlist)):   # Plotting all contour fields
-        if varlist[i] == 'CUM_PREC':
-            contour(rfiles, varlist[i], cosmoind, xlim, ylim, 
-                    trjstart = trjstart)
-        elif varlist[i] in pwg.get_fieldtable(rfiles[cosmoind]).fieldnames:
-            contour(rfiles, varlist[i], cosmoind, xlim, ylim)
-        elif varlist[i] in pwg.get_fieldtable(pfiles[cosmoind]).fieldnames:
-            contour(pfiles, varlist[i], cosmoind, xlim, ylim)
+    for i in range(len(varlist)):   
+        # NOTE: 'CUM_PREC' not implemented right now
+        #if varlist[i] == 'CUM_PREC':
+            #contour(rfiles, varlist[i], cosmoind, xlim, ylim, 
+                    #trjstart = trjstart)
+        # Check if variable is in rfiles
+        if varlist[i] in pwg.get_fieldtable(obj.rfiles[cosmoind]).fieldnames:
+            contour(obj.rfiles, varlist[i], cosmoind, obj.xlim, obj.ylim)
+        # Check if variable is in pfiles
+        elif varlist[i] in pwg.get_fieldtable(obj.pfiles[cosmoind]).fieldnames:
+            contour(obj.pfiles, varlist[i], cosmoind, obj.xlim, obj.ylim)
         else:
             raise Exception('Variable' + varlist[i] + 'not available!')
-       
-     
+        
     # Set plot properties
-    if xlim != None:
-        plt.xlim(xlim)
-    if ylim != None:
-        plt.ylim(ylim)
+    plt.xlim(obj.xlim)
+    plt.ylim(obj.ylim)
+    
+    # Set labels and title
+    plt.xlabel('longitude')
+    plt.ylabel('latitude')
+    plt.title(obj.date + timedelta(minutes = time))
+    
         
     if savename != False:
         print "Saving figure as", savename
@@ -479,16 +496,19 @@ def contour(filelist, variable, cosmoind, xlim, ylim, trjstart = None):
     dt = 5. * 60
     dx = 0.025
     
-    #Get field
-    if variable == 'CUM_PREC':
-        field1 = pwg.getfield(filelist[trjstart/5], "TOT_PREC_S", 
-                              invfile = False)
-        field2 = pwg.getfield(filelist[-1], "TOT_PREC_S", 
-                              invfile = False)
-        diff = len(filelist)-1 - trjstart/5
-        field = (field2 - field1)/(dt*diff)*3600
-
-    elif variable == "TOT_PREC_S":
+    # Retrieve or evaluate fields
+    
+    # NOTE: 'CUM_PREC' note implemented right now!
+    #if variable == 'CUM_PREC':
+        #field1 = pwg.getfield(filelist[trjstart/5], "TOT_PREC_S", 
+                              #invfile = False)
+        #field2 = pwg.getfield(filelist[-1], "TOT_PREC_S", 
+                              #invfile = False)
+        #diff = len(filelist)-1 - trjstart/5
+        #field = (field2 - field1)/(dt*diff)*3600
+    
+    # Get precipitation difference
+    if variable == "TOT_PREC_S":
         try:
             field1 = pwg.getfield(filelist[cosmoind - 1], "TOT_PREC_S", 
                                 invfile = False)
@@ -502,6 +522,7 @@ def contour(filelist, variable, cosmoind, xlim, ylim, trjstart = None):
             field2 = pwg.getfield(filelist[cosmoind], "TOT_PREC_S", 
                                 invfile = False)
             field = (field2 - field1)/(dt*2)*3600
+    # Retrieve regular fields
     else:
         field = pwg.getfield(filelist[cosmoind], variable, invfile = False)
      
@@ -509,22 +530,21 @@ def contour(filelist, variable, cosmoind, xlim, ylim, trjstart = None):
     ny, nx = field.shape
     x = np.linspace(xlim[0], xlim[1], nx)
     y = np.linspace(ylim[0], ylim[1], ny)
-
     X, Y = np.meshgrid(x, y)
     
-    
-    if variable == "FI":
+    # Plot fields with special format
+    if variable == "FI":   # Geopotential field
         field = smoothfield(field, 8)
-        levels = list(np.arange(400,600,8))   # Needs smoothing?
+        levels = list(np.arange(400,600,8)) 
         plt.contour(X, Y, field/100, levels = levels, colors = "k", 
                     linewidths = 2)
-    elif variable == "T":
+    elif variable == "T":   # Temperature field
         field = smoothfield(field, 8)
         plt.contourf(X, Y, field, alpha = 0.5)
         plt.colorbar()
         # plt.contour(X, Y, field, levels = list(np.arange(150, 350, 4)), 
                      # colors = "grey", linewidths = 2)
-    elif variable in ["TOT_PREC_S", 'CUM_PREC']:
+    elif variable in ["TOT_PREC_S", 'CUM_PREC']:   # Precipitation fields
         cmPrec =( (0    , 0.627 , 1    ),
                   (0.137, 0.235 , 0.98 ),
                   (0.1  , 0.1   , 0.784),
@@ -534,14 +554,23 @@ def contour(filelist, variable, cosmoind, xlim, ylim, trjstart = None):
         levels = [0.1, 0.3, 1, 3, 10, 100]
         plt.contourf(X, Y, field, levels, colors=cmPrec, extend='max', 
                      alpha = 0.8, zorder = 1)
-        plt.colorbar(shrink = 0.7)
-    elif variable == "PMSL":
+        cbar = plt.colorbar(shrink = 0.7)
+        cbar.set_label('Precipitation [cm/h]', rotation = 90)
+    elif variable == "PMSL":   # Surface pressure
         field = smoothfield(field, 8)/100
         levels = list(np.arange(900, 1100, 5))
         CS = plt.contour(X, Y, field, levels = levels, colors = 'k', 
                          linewidths = 1, zorder = 0.5, alpha = 0.5)
         plt.clabel(CS, fontsize = 7, inline = 1, fmt = "%.0f")
-    else:
+    elif variable == 'var145_S':   # CAPE
+        field = smoothfield(field, 8)
+        levels = list(np.arange(100, 3000, 100))
+        plt.contourf(X, Y, field, cmap = plt.get_cmap('hot_r'), 
+                     extend = 'max', levels = levels, alpha = 0.8, zorder = 0.8)
+        cbar = plt.colorbar(shrink = 0.7)
+        cbar.set_label('CAPE [J/kg]', rotation = 90)
+        
+    else:   # All other fields, unformatted
         plt.contour(X, Y, field)
         #plt.colorbar()
     del field
