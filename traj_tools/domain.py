@@ -53,13 +53,13 @@ def convert_domain(pollon, pollat, lonlim, latlim, savename = None):
     # Convert to radians
     rlon = np.deg2rad(rlon)   
     rlat = np.deg2rad(rlat)
-    pollon = np.deg2rad(pollon)
+    pollon = np.deg2rad(pollon + 180)   # Not sure why and if correct
     pollat = np.deg2rad(pollat)
     
     # Convert into real coordinates
     glon = np.arctan((np.cos(rlat) * np.sin(rlon)) / 
                      (np.sin(pollat) * np.cos(rlat) * np.cos(rlon) - 
-                      np.sin(rlat) * np.cos(pollat))) 
+                      np.sin(rlat) * np.cos(pollat))) + pollon
     glat = np.arcsin(np.sin(rlat) * np.sin(pollat) + np.cos(rlat) * 
                      np.cos(rlon) * np.cos(pollat))
     
@@ -71,16 +71,16 @@ def convert_domain(pollon, pollat, lonlim, latlim, savename = None):
     plt.figure(figsize = (10, 10)) 
     
     # Draw basemap
-    mlonid = (np.amax(glon) + np.amin(glon)) / 2   # Evaluate midpoints off plot
-    mlatid = (np.amax(glat) + np.amin(glat)) / 2
+    #lonmid = (np.amax(glon) + np.amin(glon)) / 2   # Evaluate midpoints of plot
+    #latmid = (np.amax(glat) + np.amin(glat)) / 2
     dg = 5   # Extra margin around domain
     m = Basemap(projection = 'npstere', lon_0 = 0, lat_0 = 90, boundinglat = 20,
                 resolution = 'l')
     m.drawcoastlines()
-    m.drawcountries()
+    #m.drawcountries()
     m.drawparallels(np.arange(0, 105, 15), 
                     labels = [0, 0, 0, 0])
-    m.drawmeridians(np.arange(0, 390, 60),
+    m.drawmeridians(np.arange(0, 390, 30),
                     labels = [1, 1, 1, 1])
     
     # Convert lat and lon to map projection
@@ -90,12 +90,13 @@ def convert_domain(pollon, pollat, lonlim, latlim, savename = None):
     plt.plot(mlon, mlat, 'r')
   
     # Save figure
+    print 'Saving figure as: ', savename
     plt.savefig(savename)
     
     # Print out additional information
     ie = (lonlim[1] - lonlim[0]) / 0.025 + 1   # Cosmo grid points
     je = (latlim[1] - latlim[0]) / 0.025 + 1
-    print '==========================================='
+    print '============================================'
     print 'With dx = 0.025: ie = ', ie, ' , je = ', je
     print 'Total number of grid points: ' , ie * je
 
