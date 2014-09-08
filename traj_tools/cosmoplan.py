@@ -11,9 +11,9 @@ from mpl_toolkits.basemap import Basemap
 
 # Callable function
 
-def convert_domain(pollon, pollat, lonlim, latlim, savename = None):
+def cosmo2geo(pollon, pollat, lonlim, latlim, savename = None):
     """
-    Projects COSMO coordinates onto a real grid.
+    Projects COSMO coordinates onto a geographical grid.
     NOTE: Projection type is hard coded at the moment!
     
     Parameters
@@ -29,14 +29,16 @@ def convert_domain(pollon, pollat, lonlim, latlim, savename = None):
     savename : str
       Path where output plot will be saved
       If None, function will return fig object
-      
-    Returns
-    -------
-    fig : plt.fig object
-      If savename is None
     
     """
     
+    # Set up figure
+    plt.figure(figsize = (10, 10)) 
+    plt.text(0.5, 1.1, ('N pole lon/lat = ' + str(pollon) + '/' + str(pollat) + 
+                        ' lonlim = ' + str(lonlim) + ' latlim = ' + 
+                        str(latlim)), transform = plt.gca().transAxes, 
+                        horizontalalignment='center')
+        
     # Create boundaries 
     ns = 100   # Number of points on each side
     lon1 = np.linspace(lonlim[0], lonlim[1], ns)
@@ -67,13 +69,12 @@ def convert_domain(pollon, pollat, lonlim, latlim, savename = None):
     glon = np.rad2deg(glon)   
     glat = np.rad2deg(glat)
     
-    # Set up figure
-    plt.figure(figsize = (10, 10)) 
+    
     
     # Draw basemap
     #lonmid = (np.amax(glon) + np.amin(glon)) / 2   # Evaluate midpoints of plot
     #latmid = (np.amax(glat) + np.amin(glat)) / 2
-    dg = 5   # Extra margin around domain
+    #dg = 5   # Extra margin around domain
     m = Basemap(projection = 'npstere', lon_0 = 0, lat_0 = 90, boundinglat = 20,
                 resolution = 'l')
     m.drawcoastlines()
@@ -88,20 +89,24 @@ def convert_domain(pollon, pollat, lonlim, latlim, savename = None):
     
     # Draw converted boundaries
     plt.plot(mlon, mlat, 'r')
-  
-    # Save figure
-    print 'Saving figure as: ', savename
-    plt.savefig(savename)
     
-    # Print out additional information
+    # Save figure
+    if savename != None:
+        print 'Saving figure as: ', savename
+        plt.savefig(savename)
+    
+    # Print out additional information to console
     ie = (lonlim[1] - lonlim[0]) / 0.025 + 1   # Cosmo grid points
     je = (latlim[1] - latlim[0]) / 0.025 + 1
     print '============================================'
     print 'With dx = 0.025: ie = ', ie, ' , je = ', je
     print 'Total number of grid points: ' , ie * je
+    print '============================================'
+
+
 
 
 # Plot test map if called directly 
 if __name__ == '__main__':
-    convert_domain(-170, 40, (-14, 14), (-12, 12), 
+    cosmo2geo(-170, 40, (-14, 14), (-12, 12), 
                    '/usr/users/stephan.rasp/tmp/latlon.png')
