@@ -22,7 +22,7 @@ def convert_domain(pollon, pollat, lonlim, latlim, savename = None):
     pollat : float
       Latitude of rotated pole
     lonlim : tuple
-      x-direction limits of rotated projection
+      x-direction limits of rotated projection, e.g. (-10, 10)
     latlim : tuple
       y-direction limits of rotated projection
     savename : str
@@ -37,24 +37,69 @@ def convert_domain(pollon, pollat, lonlim, latlim, savename = None):
     """
     
     # Create boundaries 
+    ns = 100   # Number of points on each side
+    lon1 = np.linspace(lonlim[0], lonlim[1], ns)
+    lat1 = np.linspace(latlim[1], latlim[1], ns)
+    lon2 = np.linspace(lonlim[1], lonlim[1], ns)
+    lat2 = np.linspace(latlim[1], latlim[0], ns)
+    lon3 = np.linspace(lonlim[1], lonlim[0], ns)
+    lat3 = np.linspace(latlim[0], latlim[0], ns)
+    lon4 = np.linspace(lonlim[0], lonlim[0], ns)
+    lat4 = np.linspace(latlim[0], latlim[1], ns)
+    rlon = np.concatenate((lon1, lon2, lon3, lon4))
+    rlat = np.concatenate((lat1, lat2, lat3, lat4))
     
-    
+    # Convert to radians
+    rlon = np.deg2rad(rlon)   
+    rlat = np.deg2rad(rlat)
+    pollon = np.deg2rad(pollon)
+    pollat = np.deg2rad(pollat)
     
     # Convert into real coordinates
+    glon = np.arctan((np.cos(rlat) * np.sin(rlon)) / 
+                     (np.sin(pollat) * np.cos(rlat) * np.cos(rlon) - 
+                      np.sin(rlat) * np.cos(pollat))) 
+    glat = np.arcsin(np.sin(rlat) * np.sin(pollat) + np.cos(rlat) * 
+                     np.cos(rlon) * np.cos(pollat))
     
+    # Convert back to degrees
+    glon = np.rad2deg(glon)   
+    glat = np.rad2deg(glat)
+    
+    # Set up figure
+    plt.figure(figsize = (10, 10)) 
     
     # Draw basemap
-    m = Basemap(projection = 'ortho', lon_0 = pollon, lat_0 = pollat, 
-                resolution = 'l')  # NOTE: Use different coordinates
+    mlonid = (np.amax(glon) + np.amin(glon)) / 2   # Evaluate midpoints off plot
+    mlatid = (np.amax(glat) + np.amin(glat)) / 2
+    dg = 5   # Extra margin around domain
+    m = Basemap(projection = 'npstere', lon_0 = 0, lat_0 = 90, boundinglat = 20,
+                resolution = 'l')
     m.drawcoastlines()
-    m.drawparallels(np.arange(-90.,120.,30.))
-    m.drawmeridians(np.arange(0.,420.,60.))
-    plt.show()
+    m.drawcountries()
+    m.drawparallels(np.arange(0, 105, 15), 
+                    labels = [0, 0, 0, 0])
+    m.drawmeridians(np.arange(0, 390, 60),
+                    labels = [1, 1, 1, 1])
+    
+    # Convert lat and lon to map projection
+    mlon, mlat = m(glon, glat)
     
     # Draw converted boundaries
+    plt.plot(mlon, mlat)
+  
+    # Save figure
+    plt.savefig(savename)
     
+    # Print out additional information
+    ie = (lonlim[1] - lonlim[0]) / 0.025 + 1   # Cosmo grid points
+    je = (latlim[1] - latlim[0]) / 0.025 + 1
+    print '==========================================='
+    print 'With dx = 0.025: ie = ', ie, ' , je = ', je
+    print 'Total number of grid points: ' , ie * je
 
 
 # Plot test map if called directly 
 if __name__ == '__main__':
-    convert_domain(0, 35, None, None, None)
+    convert_domain(-170, 40, (-14, 14), (-12, 12), 
+                   '/usr/users/stephan.rasp/tmp/latlon.png')
