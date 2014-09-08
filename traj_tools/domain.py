@@ -13,7 +13,8 @@ from mpl_toolkits.basemap import Basemap
 
 def convert_domain(pollon, pollat, lonlim, latlim, savename = None):
     """
-    Projects COSMO coordinates onto a real grid
+    Projects COSMO coordinates onto a real grid.
+    NOTE: Projection type is hard coded at the moment!
     
     Parameters
     ----------
@@ -86,7 +87,7 @@ def convert_domain(pollon, pollat, lonlim, latlim, savename = None):
     mlon, mlat = m(glon, glat)
     
     # Draw converted boundaries
-    plt.plot(mlon, mlat)
+    plt.plot(mlon, mlat, 'r')
   
     # Save figure
     plt.savefig(savename)
