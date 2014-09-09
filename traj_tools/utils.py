@@ -581,6 +581,25 @@ def _allxspan(array, yspan, xmax, flip = False):
     if flip:
         startval = -startval
         stopval = -stopval
+        
+    # Remove zeros
+    xspan = xspan[xspan != 0]
+    startval = startval[xspan != 0]
+    stopval = stopval[xspan != 0]
+    
+    # Get slices
+    mask = np.ma.masked_where(xspan > xmax, xspan)
+    slices = np.ma.notmasked_contiguous(mask)
+    
+    # Create lists
+    startstop = []
+    vals = []
+    
+    # Loop
+    for s in slices:
+        # ...
+    
+    
     return [xspan, startval, stopval]   
     
     
