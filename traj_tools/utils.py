@@ -475,7 +475,6 @@ def _minxspan(array, yspan, flip = False):
     # Filter out nans and zeros
     array = array[np.isfinite(array)]
     array = array[array != 0]
-    error = array
     # Flip array if needed
     if flip:
         array = -array 
@@ -514,8 +513,75 @@ def _minxspan(array, yspan, flip = False):
         startval = -startval
         stopval = -stopval
     return [xspan, istart, istop, startval, stopval]
+ 
+ 
+ 
+def _allxspan(array, yspan, xmax, flip = False):
+    """
+    Returns the minimum time steps needed to conver given criterion.
+    Automatically filters out zero and nan values. If yspan is not fulfilled, 
+    returns np.nan. 
     
+    Parameters
+    ----------
+    array : np.array
+      Input array
+    yspan : float
+      Ascent criterion in y-direction
+    xmax : float
+      Maximum x-span for yspan
+    flip : bool
+      If True array will be flipped (e.g. use for 'P')
     
+    Returns
+    -------
+    xspan : np.array
+      Time steps for criterion
+    startval : np.array 
+      Value of tracer at start index
+    stopval : np.array
+      Value of tracer at stop index
+      
+    """
+    
+    # Filter out nans and zeros
+    array = array[np.isfinite(array)]
+    array = array[array != 0]
+    
+    # Flip array if needed
+    if flip:
+        array = -array 
+
+    # Check if criterion is met
+    #print array
+    if array.shape[0] == 0:
+        xspan = np.nan
+        startval = np.nan
+        stopval = np.nan
+    elif np.amax(array) - np.amin(array) < yspan:
+        xspan = np.nan
+        startval = np.nan
+        stopval = np.nan
+    else:
+        # Use Fortran implementation, use 0 arrays as error values
+        
+        xspan, istart, istop, startval, stopval  = futils.futils.allxspan(
+            array, yspan, np.array([len(array) + 1] * array.shape[0]), 
+            np.zeros(array.shape[0]), np.zeros(array.shape[0]))
+        
+        # Check if output is correct. NOTE: THIS IS A POTENTIAL BUG!!!
+        if (istart < 0) and (istop < 0):
+            xspan = np.nan
+            startval = np.nan
+            stopval = np.nan
+            
+        #assert ((xspan > 0) and (xspan <= len(array)) and (istart >= 0) 
+                #and (istop >= 0)), \
+                #'One of the minxspan outputs is zero or negative.'
+    if flip:
+        startval = -startval
+        stopval = -stopval
+    return [xspan, startval, stopval]   
     
     
     

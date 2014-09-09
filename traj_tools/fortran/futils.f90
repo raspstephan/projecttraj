@@ -22,11 +22,10 @@ module futils
         ! Initial values
         datalen = size(data)
         
-        !span = datalen + 1
+        ! span = datalen + 1
         i = 1
-        ! print *, maxval(data(i:)), data(i), maxval(data(i:)) - minval(data(i:)), crit
-        do while ((i <= datalen) .and. ((maxval(data(i:)) - minval(data(i:))) > crit))
-            ! print *, 'here'
+        do while ((i <= datalen) .and. &
+                 ((maxval(data(i:)) - minval(data(i:))) > crit))
             if (data(i) < data(i + 1)) then 
                 j = 1
                 found = 0
@@ -37,7 +36,6 @@ module futils
                         span = j
                         startval = data(i)
                         stopval = data(i + j)
-                        !print *, startval, stopval
                         found = 1
                     endif
                     j = j + 1
@@ -52,4 +50,47 @@ module futils
 
     end subroutine minxspan
 
+    
+    
+    subroutine allxspan(data, crit, span, startval, stopval)
+        implicit none
+        
+        ! Declaration of I/O variables
+        real, dimension(:), intent(in) :: data
+        real, intent(in) :: crit
+        integer, dimension(size(data)), intent(inout) :: span
+        real, dimension(size(data)), intent(inout) :: startval, stopval
+        
+!f2py intent(in,out) :: span, startval, stopval
+        
+        ! Declaration of internal variables
+        integer :: i, j, datalen, found
+        
+        
+        ! Initial values
+        datalen = size(data)
+        
+        ! span = datalen + 1
+        i = 1
+        do while ((i <= datalen) .and. &
+                 ((maxval(data(i:)) - minval(data(i:))) > crit))
+            if (data(i) < data(i + 1)) then 
+                j = 1
+                found = 0
+                do while ((i + j <= datalen) .and. (found == 0))
+                    if ((data(i + j) - data(i)) >= crit) then
+                        span(i) = j
+                        startval(i) = data(i)
+                        stopval(i) = data(i + j)
+                        found = 1
+                    endif
+                    j = j + 1
+                end do
+            endif
+            i = i + 1
+        end do
+
+    end subroutine allxspan
+    
 end module futils
+
