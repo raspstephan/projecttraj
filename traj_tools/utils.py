@@ -419,7 +419,7 @@ def _minasct(filelist, yspan, tracer, dtrj, interpolate = False):
         print 'Opening file:', f
         rootgrp = nc.Dataset(f, 'r')
         mat = rootgrp.variables[tracer][:, :]
-        trjstart = int(rootgrp.variables['time'][0] / 60) / 5
+        trjstart = int(rootgrp.variables['time'][0] / 60) / dtrj
         for j in range(mat.shape[1]):
             asctup = _minxspan(mat[:, j], yspan, flip)
             asct.append(asctup[0])
@@ -441,7 +441,72 @@ def _minasct(filelist, yspan, tracer, dtrj, interpolate = False):
                np.array(ascstop) * dtrj, np.array(ascstartval), 
                np.array(ascstopval))
     return ascdata
-            
+
+
+def _allasct(filelist, yspan, xmax, tracer, dtrj):
+    """
+    Calculate minimum ascent time for all trajectories from NetCDF files.
+    
+    Parameters
+    ----------
+    filelist : list
+      List of saved NetDCF file locations
+    yspan : float
+      Ascent criterion in y-direction
+    tracer : str 
+      COSMO name of y-axis variable
+    dtrj : float
+      Timestep between saved values
+    interpolate : bool
+      If True, ascent time will be interpolated
+     
+    Returns
+    -------
+    ascdata : tuple
+      Tuple containing three np.arrays:
+      * Minimum ascent time
+      * Index of ascent start
+      * Index of ascent stop
+      * Value of tracer at start index
+      * Value of tracer at stop index
+    
+    """
+    
+    # Initialize list
+    alllist = []
+    
+    if tracer == 'P':
+        flip = True
+    else:
+        flip = False
+    
+    for f in filelist:
+        print 'Opening file:', f
+        rootgrp = nc.Dataset(f, 'r')
+        mat = rootgrp.variables[tracer][:, :]
+        lon = rootgrp.variables['longitude'][:, :]
+        lat = rootgrp.variables['latitude'][:, :]
+        trjstart = int(rootgrp.variables['time'][0] / 60)
+        for j in range(mat.shape[1]):
+            print j
+            tuplist = _allxspan(mat[:, j], yspan, xmax, flip)
+            exttuplist = []
+            for tup in tuplist:
+                xstart = lon[tup[0], j]
+                xstop = lon[tup[1] -1, j]
+                ystart = lat[tup[0], j]
+                ystop = lat[tup[1] - 1, j]
+                exttuplist.append( (xstart, xstop, ystart, ystop) + 
+                                  (tup[0] * dtrj + trjstart, 
+                                   tup[1] * dtrj + trjstart, tup[2], tup[3]) )
+                
+            alllist.append(exttuplist)
+ 
+
+    return alllist
+
+
+           
 
 def _minxspan(array, yspan, flip = False):
     """
@@ -553,60 +618,61 @@ def _allxspan(array, yspan, xmax, flip = False):
         array = -array 
 
     # Check if criterion is met
-    #print array
     if array.shape[0] == 0:
         xspan = np.nan
-        startval = np.nan
-        stopval = np.nan
+
     elif np.amax(array) - np.amin(array) < yspan:
-        xspan = np.nan
-        startval = np.nan
-        stopval = np.nan
+        xspan = np.array([len(array) + 1] * array.shape[0])
     else:
         # Use Fortran implementation, use 0 arrays as error values
         
-        xspan, istart, istop, startval, stopval  = futils.futils.allxspan(
-            array, yspan, np.array([len(array) + 1] * array.shape[0]), 
+        xspan, startval, stopval  = futils.futils.allxspan(
+            array, yspan, np.array([len(array) + 1] * array.shape[0]),
             np.zeros(array.shape[0]), np.zeros(array.shape[0]))
-        
+
         # Check if output is correct. NOTE: THIS IS A POTENTIAL BUG!!!
-        if (istart < 0) and (istop < 0):
-            xspan = np.nan
-            startval = np.nan
-            stopval = np.nan
+        #if (istart < 0) and (istop < 0):
+            #xspan = np.nan
+            #startval = np.nan
+            #stopval = np.nan
             
         #assert ((xspan > 0) and (xspan <= len(array)) and (istart >= 0) 
                 #and (istop >= 0)), \
                 #'One of the minxspan outputs is zero or negative.'
     if flip:
-        startval = -startval
-        stopval = -stopval
-        
-    # Remove zeros
-    xspan = xspan[xspan != 0]
-    startval = startval[xspan != 0]
-    stopval = stopval[xspan != 0]
+        array = -array   # Flip array back
+
     
     # Get slices
     mask = np.ma.masked_where(xspan > xmax, xspan)
     slices = np.ma.notmasked_contiguous(mask)
     
     # Create lists
-    startstop = []
-    vals = []
+    tuplist = []
     
     # Loop
-    for s in slices:
-        # ...
+    if slices == None:
+        return ()
+    else:
+        for s in slices:
+            istart = s.start
+            istop = s.stop
+            tuplist.append( (istart, istop, array[istart], 
+                            array[istop - 1 + xspan[istop -1]]) )
+        return tuplist   
     
     
-    return [xspan, startval, stopval]   
+# Testing
+if __name__ == '__main__':   
+    #from random import randrange
+    #fn = '/home/scratch/users/stephan.rasp/Case1_20070720/d4deout/traj_t001800_p001.nc'
+    #rootgrp = nc.Dataset(fn, 'r')
+    #array = rootgrp.variables['P'][:, 182]
+    #print _allxspan(array, 100, 10, True)
     
-    
-    
-    
-    
-    
+    fl = ['/home/scratch/users/stephan.rasp/Case1_20070720/d4deout/traj_t001800_p001.nc',
+          '/home/scratch/users/stephan.rasp/Case1_20070720/d4deout/traj_t001800_p002.nc']
+    tout = _allasct(fl, 100, 10, 'P', 5)
     
     
     
