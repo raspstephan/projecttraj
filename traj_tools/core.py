@@ -135,8 +135,8 @@ class TrjObj(object):
         
         # Getting xlim, ylim from COSMO data
         tmpfobj = pwg.getfobj(self.cfile, 'FR_LAND_S')
-        xlim = (tmpfobj.lons[0], tmpfobj.lons[-1])
-        ylim = (tmpfobj.lats[0], tmpfobj.lats[-1])
+        xlim = (tmpfobj.rlons[0][0], tmpfobj.rlons[0][-1])
+        ylim = (tmpfobj.rlats[0][0], tmpfobj.rlats[-1][0])
         self.xlim = self._nrot2rot(xlim, 'lon')
         self.ylim = self._nrot2rot(ylim, 'lat')     
         
@@ -261,6 +261,21 @@ class TrjObj(object):
         self.data.extend(ascdata)
         print code, 'has been added.'
     
+    
+    def new_allasct(self, yspan, xmax, tracer = 'P'):
+        """
+        TODO
+        """
+        
+        allmat = utils._allasct(self.trjfiles, yspan, xmax, tracer, self.dtrj)
+        print allmat.shape
+        # Update dictionary
+        code = tracer + str(yspan) + 'in' + str(xmax)
+        self.datadict[code] = len(self.data)
+        
+        self.data.append(allmat)
+        print code, 'has been added.'
+        
     
     def new_delta(self, tracer):
         """
@@ -801,6 +816,31 @@ class TrjObj(object):
 
             plots.draw_trj_dot(self,varlist, loclist, idlist, t, 
                                savename = savename)
+    
+    def draw_asc_loc(self, dataname, varlist, tplot, tspan, idtext = '', 
+                     savebase = None):
+        """
+        TODO
+        """
+        
+        # Filter by time
+        mat = self.data[self.datadict[dataname]]
+        tavg = (mat[:, 6] + mat[:, 7] ) / 2 
+        mask = tavg >= (tplot - tspan)
+        mask &= tavg <= (tplot + tspan)
+        
+        # Get avg arrays
+        lonavg = (mat[:, 2] + mat[:, 3]) / 2
+        latavg = (mat[:, 4] + mat[:, 5]) / 2
+        lonavg = lonavg[mask]
+        latavg = latavg[mask]
+        
+        # Create Savename
+        savename = savebase
+        
+        plots.draw_asc_loc(self, lonavg, latavg, varlist, tplot, idtext, 
+                           savename)
+    
     
     
         

@@ -421,6 +421,31 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
         plt.close('all')
         plt.clf()
 
+def draw_asc_loc(obj, lon, lat, varlist, tplot, idtext = '', savename = None):
+    """
+    TODO
+    """
+
+    
+    # Plot contours
+    draw_contour(obj, varlist, tplot, idtext = idtext, savename = None)
+    
+    # Convert to Real coords
+    lon += (180 - obj.pollon)   
+    lat += (90 - obj.pollat)
+
+    print lon, lat
+    
+    # Plot trajectory dots
+    plt.scatter(lon, lat)
+    
+    # Save Plot
+    if savename != False:
+        print "Saving figure as", savename
+        plt.savefig(savename, dpi = 400)
+        plt.close('all')
+        plt.clf()
+
 
 #########################################
 ### Back End Plotting Functions

@@ -462,14 +462,9 @@ def _allasct(filelist, yspan, xmax, tracer, dtrj):
      
     Returns
     -------
-    ascdata : tuple
-      Tuple containing three np.arrays:
-      * Minimum ascent time
-      * Index of ascent start
-      * Index of ascent stop
-      * Value of tracer at start index
-      * Value of tracer at stop index
-    
+    alllist : np.array
+      [file index in trjlist, index in file, lonstart, lonstop, latstart, latstop,
+       startt, stopt in mins after modelstart, startval, stopval]
     """
     
     # Initialize list
@@ -479,7 +474,7 @@ def _allasct(filelist, yspan, xmax, tracer, dtrj):
         flip = True
     else:
         flip = False
-    
+    fi = 0
     for f in filelist:
         print 'Opening file:', f
         rootgrp = nc.Dataset(f, 'r')
@@ -488,22 +483,18 @@ def _allasct(filelist, yspan, xmax, tracer, dtrj):
         lat = rootgrp.variables['latitude'][:, :]
         trjstart = int(rootgrp.variables['time'][0] / 60)
         for j in range(mat.shape[1]):
-            print j
             tuplist = _allxspan(mat[:, j], yspan, xmax, flip)
-            exttuplist = []
             for tup in tuplist:
                 xstart = lon[tup[0], j]
                 xstop = lon[tup[1] -1, j]
                 ystart = lat[tup[0], j]
                 ystop = lat[tup[1] - 1, j]
-                exttuplist.append( (xstart, xstop, ystart, ystop) + 
+                alllist.append( (fi, j, xstart, xstop, ystart, ystop) + 
                                   (tup[0] * dtrj + trjstart, 
                                    tup[1] * dtrj + trjstart, tup[2], tup[3]) )
-                
-            alllist.append(exttuplist)
- 
-
-    return alllist
+        fi +=1
+        
+    return np.array(alllist)
 
 
            
