@@ -483,13 +483,14 @@ def _allasct(filelist, yspan, xmax, tracer, dtrj):
         lat = rootgrp.variables['latitude'][:, :]
         trjstart = int(rootgrp.variables['time'][0] / 60)
         for j in range(mat.shape[1]):
+            alllist.append([])
             tuplist = _allxspan(mat[:, j], yspan, xmax, flip)
             for tup in tuplist:
                 xstart = lon[tup[0], j]
                 xstop = lon[tup[1] -1, j]
                 ystart = lat[tup[0], j]
                 ystop = lat[tup[1] - 1, j]
-                alllist.append( (fi, j, xstart, xstop, ystart, ystop) + 
+                alllist[-1].append( (fi, j, xstart, xstop, ystart, ystop) + 
                                   (tup[0] * dtrj + trjstart, 
                                    tup[1] * dtrj + trjstart, tup[2], tup[3]) )
         fi +=1

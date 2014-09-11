@@ -817,17 +817,28 @@ class TrjObj(object):
             plots.draw_trj_dot(self,varlist, loclist, idlist, t, 
                                savename = savename)
     
-    def draw_asc_loc(self, dataname, varlist, tplot, tspan, idtext = '', 
-                     savebase = None):
+    def draw_asc_loc(self, dataname, varlist, filtername, tplot, tspan, 
+                     idtext = '', savebase = None):
         """
         TODO
         """
         
+        # Filter by filter
+        mat = self._mask_array(filtername, dataname)
+        
+        # Rearrange data
+        newlist = []
+        for i in list(mat):
+            for j in i:
+                newlist.append(j)
+        mat = np.array(newlist)
+        
         # Filter by time
-        mat = self.data[self.datadict[dataname]]
         tavg = (mat[:, 6] + mat[:, 7] ) / 2 
         mask = tavg >= (tplot - tspan)
         mask &= tavg <= (tplot + tspan)
+        
+        # Filter
         
         # Get avg arrays
         lonavg = (mat[:, 2] + mat[:, 3]) / 2
