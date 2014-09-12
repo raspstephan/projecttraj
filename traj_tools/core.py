@@ -265,9 +265,10 @@ class TrjObj(object):
     def new_allasct(self, yspan, xmax, tracer = 'P'):
         """
         TODO
+        xmax now in minutes!!!
         """
-        
-        allmat = utils._allasct(self.trjfiles, yspan, xmax, tracer, self.dtrj)
+        xsteps = int(xmax / self.dtrj)
+        allmat = utils._allasct(self.trjfiles, yspan, xsteps, tracer, self.dtrj)
         print allmat.shape
         # Update dictionary
         code = tracer + str(yspan) + 'in' + str(xmax)
@@ -843,13 +844,20 @@ class TrjObj(object):
         # Get avg arrays
         lonavg = (mat[:, 2] + mat[:, 3]) / 2
         latavg = (mat[:, 4] + mat[:, 5]) / 2
+        pavg = (mat[:, 8] + mat[:, 9]) / 2
         lonavg = lonavg[mask]
         latavg = latavg[mask]
+        pavg = pavg[mask]
         
         # Create Savename
-        savename = savebase
+        if savebase != None:  
+            # TODO Change name
+            savename = (savebase + 'xy_' + filtername + '_' + dataname + '_' +
+                        str(tplot).zfill(4) + '.png')
+        else:
+            savename = savebase
         
-        plots.draw_asc_loc(self, lonavg, latavg, varlist, tplot, idtext, 
+        plots.draw_asc_loc(self, lonavg, latavg, pavg, varlist, tplot, idtext, 
                            savename)
     
     

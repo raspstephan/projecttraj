@@ -421,7 +421,7 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
         plt.close('all')
         plt.clf()
 
-def draw_asc_loc(obj, lon, lat, varlist, tplot, idtext = '', savename = None):
+def draw_asc_loc(obj, lon, lat, p, varlist, tplot, idtext = '', savename = None):
     """
     TODO
     """
@@ -434,10 +434,16 @@ def draw_asc_loc(obj, lon, lat, varlist, tplot, idtext = '', savename = None):
     lon += (180 - obj.pollon)   
     lat += (90 - obj.pollat)
 
-    print lon, lat
     
     # Plot trajectory dots
-    plt.scatter(lon, lat)
+    plt.scatter(lon, lat, c = p, cmap = plt.get_cmap('Spectral'), 
+                norm=plt.Normalize(100, 1000), linewidth = 0.1)
+    
+    # Draw colorbar
+    cb = plt.colorbar(shrink = 0.7)
+    cb.set_label('p')
+    cb.ax.invert_yaxis()
+    plt.tight_layout()
     
     # Save Plot
     if savename != False:
@@ -550,10 +556,10 @@ def contour(filelist, variable, cosmoind, xlim, ylim, trjstart = None):
                     linewidths = 2)
     elif variable == "T":   # Temperature field
         field = smoothfield(field, 8)
-        plt.contourf(X, Y, field, alpha = 0.5)
-        plt.colorbar()
-        # plt.contour(X, Y, field, levels = list(np.arange(150, 350, 4)), 
-                     # colors = "grey", linewidths = 2)
+        #plt.contourf(X, Y, field, alpha = 0.5, zorder = 0.45)
+        #plt.colorbar(shrink = 0.7)
+        plt.contour(X, Y, field, levels = list(np.arange(150, 350, 4)), 
+                     colors = "r", linewidths = 0.5, zorder = 0.45)
     elif variable in ["TOT_PREC_S", 'CUM_PREC']:   # Precipitation fields
         cmPrec =( (0    , 0.627 , 1    ),
                   (0.137, 0.235 , 0.98 ),
