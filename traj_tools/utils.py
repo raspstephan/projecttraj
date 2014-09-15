@@ -445,7 +445,8 @@ def _minasct(filelist, yspan, tracer, dtrj, interpolate = False):
 
 def _allasct(filelist, yspan, xmax, tracer, dtrj):
     """
-    Calculate minimum ascent time for all trajectories from NetCDF files.
+    Finds and returns info about all areas in all given trajectories where 
+    yspan is covered in xmax.
     
     Parameters
     ----------
@@ -453,18 +454,20 @@ def _allasct(filelist, yspan, xmax, tracer, dtrj):
       List of saved NetDCF file locations
     yspan : float
       Ascent criterion in y-direction
+    xmax : float
+      Maximum x-span for yspan
     tracer : str 
       COSMO name of y-axis variable
     dtrj : float
       Timestep between saved values
-    interpolate : bool
-      If True, ascent time will be interpolated
+    
      
     Returns
     -------
-    alllist : np.array
-      [file index in trjlist, index in file, lonstart, lonstop, latstart, latstop,
-       startt, stopt in mins after modelstart, startval, stopval]
+    alllist : np.array with type object
+      Contains following information for all seperate areas for all trjs
+      [file index in trjlist, index in file, lonstart, lonstop, latstart, 
+      latstop, startt, stopt in mins after modelstart, startval, stopval]
     """
     
     # Initialize list
@@ -575,9 +578,10 @@ def _minxspan(array, yspan, flip = False):
  
 def _allxspan(array, yspan, xmax, flip = False):
     """
-    Returns the minimum time steps needed to conver given criterion.
+    Finds all areas in array where yspan is covered in xmax and returns 
+    information.
     Automatically filters out zero and nan values. If yspan is not fulfilled, 
-    returns np.nan. 
+    returns empty tuple. 
     
     Parameters
     ----------
@@ -592,12 +596,11 @@ def _allxspan(array, yspan, xmax, flip = False):
     
     Returns
     -------
-    xspan : np.array
-      Time steps for criterion
-    startval : np.array 
-      Value of tracer at start index
-    stopval : np.array
-      Value of tracer at stop index
+    tuplist : list of tuples
+      If criterion is not met for array, returns empty tuple.
+      Otherwise returns list of tuples, e.g. [(...), (...)],
+      where each tuple contains the following information:
+      (startindex, stopindex, startvalue, stopvalue)
       
     """
     

@@ -264,8 +264,17 @@ class TrjObj(object):
     
     def new_allasct(self, yspan, xmax, tracer = 'P'):
         """
-        TODO
-        xmax now in minutes!!!
+        Creats new array in data, with informations about trajectory ascent 
+        positions. 
+        
+        Parameters
+        ----------
+        yspan : float
+          Criterion to be covered on y-axis
+        xmax : float
+          Maximum span on x-axis
+        tracer : string
+          COSMO name of y-axis variable
         """
         xsteps = int(xmax / self.dtrj)
         allmat = utils._allasct(self.trjfiles, yspan, xsteps, tracer, self.dtrj)
@@ -821,7 +830,28 @@ class TrjObj(object):
     def draw_asc_loc(self, dataname, varlist, filtername, tplot, tspan, 
                      idtext = '', savebase = None):
         """
-        TODO
+        Draws ascent locations as dots for all trjs in filter where ascent is 
+        happening within tspan of tplot.
+        
+        Parameters
+        ----------
+        dataname : string
+          Name of ascent locations to be plotted. (Created with new_allasct)
+        varlist : list
+          List of variables to be plotted. E.g. ["PMSL", "TOT_PREC_S"]
+          'CUM_PREC' for cumulative precipitation
+        filtername : string
+          Identiefier of wanted filter
+        tplot : float
+          Time [in mins after model start] of plot
+        tspan : float
+          Tolerance interval. All asc plotted which are in 
+          [tplot - tspan, tplot + tspan]
+        idtext : string
+          Text to be displayed in plot
+        savebase : string
+          Path to output directory
+          
         """
         
         # Filter by filter

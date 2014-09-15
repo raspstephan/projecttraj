@@ -220,6 +220,8 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
     ----------
     obj : TrjObj object
       self object
+    varlist : list
+      List of contours to be plotted
     filelist : list
       List of unique file locations
     idlist : list
@@ -423,9 +425,26 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
 
 def draw_asc_loc(obj, lon, lat, p, varlist, tplot, idtext = '', savename = None):
     """
-    TODO
+    Plots map at tplot with colorcoded (key: p) dots (lon, lat). 
+    
+    obj : TrjObj object
+      self object
+    lon : np.array
+      Array of x positions
+    lat : np.array
+      Array of y positions
+    p : np.array
+      Array for color coding
+    varlist : list
+      List of contours to be plotted
+    tplot : float
+      Time of contour plot in mins after model start
+    idtext : string
+      text diplayed on plot
+    savename : string
+      Name of save location
     """
-
+    
     
     # Plot contours
     draw_contour(obj, varlist, tplot, idtext = idtext, savename = None)
@@ -440,9 +459,10 @@ def draw_asc_loc(obj, lon, lat, p, varlist, tplot, idtext = '', savename = None)
                 norm=plt.Normalize(100, 1000), linewidth = 0.1)
     
     # Draw colorbar
-    cb = plt.colorbar(shrink = 0.7)
-    cb.set_label('p')
-    cb.ax.invert_yaxis()
+    if lon.shape[0] != 0:
+        cb = plt.colorbar(shrink = 0.7)
+        cb.set_label('p')
+        cb.ax.invert_yaxis()
     plt.tight_layout()
     
     # Save Plot
