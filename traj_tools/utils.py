@@ -311,6 +311,10 @@ def _write2netcdf(conmat, tstart, savebase, fcount):
     times = rootgrp.createVariable('time', 'f4', ('time', ))
     lon = rootgrp.createVariable('longitude', 'f4', ('time', 'id', ))
     lat = rootgrp.createVariable('latitude', 'f4', ('time', 'id', ))
+    u = rootgrp.createVariable('u', 'f4', ('time', 'id', ))
+    v = rootgrp.createVariable('v', 'f4', ('time', 'id', ))
+    w = rootgrp.createVariable('w', 'f4', ('time', 'id', ))
+    t = rootgrp.createVariable('T', 'f4', ('time', 'id', ))
     z = rootgrp.createVariable('z', 'f4', ('time', 'id', ))
     p = rootgrp.createVariable('P', 'f4', ('time', 'id', ))
     # Fill variables
@@ -318,6 +322,10 @@ def _write2netcdf(conmat, tstart, savebase, fcount):
     lon[:, :] = conmat[:, 0, :]
     lat[:, :] = conmat[:, 1, :]
     z[:, :] = conmat[:, 2, :]
+    u[:, :] = conmat[:, 3, :]
+    v[:, :] = conmat[:, 4, :]
+    w[:, :] = conmat[:, 5, :]
+    t[:, :] = conmat[:, 6, :]
     p[:, :] = conmat[:, 7, :]
     
     rootgrp.close()

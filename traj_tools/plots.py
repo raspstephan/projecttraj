@@ -32,11 +32,22 @@ from datetime import datetime, timedelta
 import netCDF4 as nc
 
 
-def draw_vs_t(dataname, fileloc, fileid, savename = None):
+
+
+def draw_vs_t(dataname, fileloc, fileid, savename = None, sigma = None):
     """
+    TODO
     """
     rootgrp = nc.Dataset(fileloc, 'r')
-    array = rootgrp.variables[dataname][:, fileid]
+    if dataname == 'z_CD':
+        array = rootgrp.variables['z'][:, fileid]
+        if sigma != None:
+            array = ndi.filters.gaussian_filter(array, sigma)
+        array = np.gradient(array)
+    else:
+        array = rootgrp.variables[dataname][:, fileid]
+        if sigma != None:
+            array = ndi.filters.gaussian_filter(array, sigma)
     plt.plot(array)
     if savename != None:
         plt.savefig(savename)
@@ -212,7 +223,8 @@ def draw_contour(obj, varlist, time, idtext, savename = None):
 def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles, 
              savename = False,pollon = None, pollat = None, xlim = None, 
              ylim = None, onlybool = False, startarray = None, 
-             stoparray = None, trjstart = None, idtext = '', linewidth = 0.7):
+             stoparray = None, trjstart = None, idtext = '', linewidth = 0.7,
+             carray = 'P', centdiff = False, sigma = None):
     """
     Plots one xy plot with trajectories.
     
@@ -245,7 +257,13 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
     onlybool : bool
       If True trajectories will be plotted during the ascent time only.
     startarray : np.array
-      
+    
+    carray : string
+      NetCDF code of array used for color coding
+    centdiff : bool
+      If true apply centered differencing on carray
+    sigma : float
+      If value given, apply filter on carray
     """
     
     # Get trj_time after model start 
@@ -262,7 +280,7 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
         rootgrp = nc.Dataset(filelist[i], 'r')
         lonmat = rootgrp.variables['longitude'][:, :]
         latmat = rootgrp.variables['latitude'][:, :]
-        pmat = rootgrp.variables['P'][:, :]
+        pmat = rootgrp.variables[carray][:, :]
     
         lonmat[:, :] += (180 - pollon)   # Convert to real coordinates
         latmat[:, :] += (90 - pollat)
@@ -279,11 +297,18 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
                 lonarray = lonmat[:, j][pmat[:, j] != 0]
                 latarray = latmat[:, j][pmat[:, j] != 0]
             
-            single_trj(lonarray, latarray, parray, linewidth = linewidth)
+            if centdiff:
+                if sigma != None:
+                    parray = ndi.filters.gaussian_filter(parray, sigma)
+                parray = np.gradient(parray)
+            
+            single_trj(lonarray, latarray, parray, linewidth = linewidth, 
+                       carray = carray)
 
-    cb = plt.colorbar(lc, shrink = 0.7)
-    cb.set_label('p')
-    cb.ax.invert_yaxis()
+    cb = plt.colorbar(lc, shrink = 0.7) 
+    cb.set_label(carray)
+    if carray == 'P':
+        cb.ax.invert_yaxis()
     plt.tight_layout()
     
     
@@ -612,7 +637,7 @@ def contour(filelist, variable, cosmoind, xlim, ylim, trjstart = None):
     del field
     
     
-def single_trj(lonarray, latarray, parray, linewidth = 0.7):
+def single_trj(lonarray, latarray, parray, linewidth = 0.7, carray = 'P'):
     """
     Plots XY Plot of one trajectory, with color as a function of p
     Helper Function for DrawXYTraj
@@ -624,9 +649,23 @@ def single_trj(lonarray, latarray, parray, linewidth = 0.7):
 
     points = np.array([x,y]).T.reshape(-1,1,2)
     segments = np.concatenate([points[:-1], points[1:]], axis=1)
-        
-    lc = col.LineCollection(segments, cmap=plt.get_cmap('Spectral'), 
-                            norm=plt.Normalize(100, 1000), alpha = 0.5)
+    
+    # get colormap and normalize according to carray
+    if carray == 'P':
+        cmap = plt.get_cmap('Spectral')
+        norm = plt.Normalize(100, 1000)
+    elif carray == 'w':
+        cmap = plt.get_cmap('Reds')
+        norm = plt.Normalize(0, 2)
+    elif carray == 'z':   #NOTE: Temporary solution
+        cmap = clr.ListedColormap(['b', 'cornflowerblue', 'lightblue', 
+                                       'lightblue', 'lightsalmon', 'lightsalmon',
+                                       'tomato', 'r'])
+        norm = plt.Normalize(-100, 100)
+    else:
+        cmap = plt.get_cmap('Spectral')
+        norm = plt.Normalize(0, 1000)
+    lc = col.LineCollection(segments, cmap = cmap, norm = norm, alpha = 0.5)
     lc.set_array(p)
     lc.set_linewidth(linewidth)
     plt.gca().add_collection(lc)

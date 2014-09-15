@@ -530,11 +530,11 @@ class TrjObj(object):
     ######################
     
     
-    def draw_vs_t(self, dataname, totind, savename = None):
+    def draw_vs_t(self, dataname, totind, savename = None, sigma = None):
         """
         """
         plots.draw_vs_t(dataname, self.filename[totind], self.data[0][totind],
-                        savename = savename)
+                        savename = savename, sigma = sigma)
         
     def draw_scatter(self, dataname1, dataname2, factor1 = 1, factor2 = 1, 
                      carray = None, filtername = None, idtext = '', 
@@ -686,7 +686,8 @@ class TrjObj(object):
      
     def draw_trj_all(self, varlist, filtername = None, savebase = None, 
                      starts = False, onlyasc = None, trjstart = None, 
-                     idtext = '', linewidth = 0.7):
+                     idtext = '', linewidth = 0.7, carray = 'P',
+                     centdiff = False, sigma = None):
         """
         Draws XY Plot of trajectories with color as a function of 'P'.
         If filtername is given, plots only filetered trajectories.
@@ -743,7 +744,8 @@ class TrjObj(object):
                         xlim = self.xlim, ylim = self.ylim, onlybool = onlybool,
                         startarray = startarray, stoparray = stoparray, 
                         trjstart = trjstart, idtext = idtext, 
-                        linewidth = linewidth)
+                        linewidth = linewidth, carray = carray,
+                        centdiff = centdiff, sigma = sigma)
         
     def draw_trj_evo(self, varlist, tafter = None, interval = None, 
                      filtername = None, savebase = None, trjstart = None):
