@@ -390,7 +390,21 @@ class TrjObj(object):
         self.data.append(allmat)
         print code, 'has been added.'
         
+    
+    def new_loc_filter(self, xmin, xmax, ymin, ymax):
+        """
+        TODO
         
+        NOTE: For now in rotated coords
+        """
+        
+        boolarr = utils._loc_filter(self.trjfiles, xmin, xmax, ymin, ymax)
+        
+        code = str(xmin) + str(xmax) + str(ymin) + str(ymax)
+        self.datadict[code] = len(self.data)
+        
+        self.data.append(boolarr)
+        print code, 'has been added.'
         
     
     def new_delta(self, tracer):

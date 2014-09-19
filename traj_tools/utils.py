@@ -338,6 +338,25 @@ def _write2netcdf(conmat, tstart, savebase, fcount):
 # Functions used in core
 ####################################################
 
+def _loc_filter(filelist, xmin, xmax, ymin, ymax):
+    """
+    TODO
+    """
+    boollist = []
+    for f in filelist:
+        print 'Opening file:', f
+        rootgrp = nc.Dataset(f, 'r')
+        lon = rootgrp.variables['longitude'][:, :]
+        lat = rootgrp.variables['latitude'][:, :]
+        
+        for j in range(lon.shape[1]):
+            m =  (lon[:, j] > xmin) & (lon[:, j] < xmax)
+            m &= (lat[:, j] > ymin) & (lat[:, j] < ymax)
+            boollist.append(np.any(m))
+            
+    return np.array(boollist)
+
+
 def _delta(filelist, tracer):
     """
     Calculate difference of given tracer between min und max 'P' values
