@@ -716,7 +716,17 @@ class TrjObj(object):
         plots.draw_scatter(array1, array2, carray, idtext, xlabel, ylabel, 
                            savename)
         
+    
+    def draw_avg(self, dataname, filtername, idtext = '', savebase = None):
+        """
+        TODO
+        """
         
+        loclist, idlist = self._mask_iter(filtername)
+        
+        plots.draw_avg(dataname, loclist, idlist, idtext, savebase)
+    
+    
         
     def draw_hist(self, data, filtername = None, idtext = '', savebase = None,
                   log = False):

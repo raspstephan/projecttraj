@@ -122,6 +122,28 @@ def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None,
         plt.close('all')
 
 
+def draw_avg(dataname, loclist, idlist, idtext = '', savename = None):
+    """
+    TODO
+    """
+    fig = plt.figure()
+    newmat = []
+    
+    for i in range(len(loclist)):
+        print 'Plotting file', i+1, 'of', len(loclist)
+        rootgrp = nc.Dataset(loclist[i], 'r')
+        mat = rootgrp.variables[dataname][:, :]
+        for j in idlist[i]:
+            newmat.append(mat[:, j])
+            plt.plot(mat[:, j], 'grey')
+    newmat = np.array(newmat)
+    avg = np.average(newmat, axis = 0)
+    plt.plot(avg, 'r')
+    
+    plt.savefig(savename)
+        
+
+
 def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False):
     """
     Returns/Saves a histogram of given array
