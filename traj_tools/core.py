@@ -16,6 +16,7 @@ import utils
 import cosmo_utils.pywgrib as pwg
 import datetime as dt
 import re
+import scipy.ndimage as ndi
 
 
 class TrjObj(object):
@@ -285,6 +286,111 @@ class TrjObj(object):
         
         self.data.append(allmat)
         print code, 'has been added.'
+
+    
+    def new_allasct_cd(self, diff, sigma, tracer = 'z'):
+        """
+        Creats new array in data, with informations about trajectory ascent 
+        positions. Filtered by velocities after Gaussian smoothing
+        
+        Parameters
+        ----------
+        diff : float
+          threshold difference in one time 
+        sigma : float
+          sigma for gaussian smoothing
+        tracer : string
+          COSMO name of y-axis variable
+          
+        """
+        
+        allmat = utils._allasct_cd(self.trjfiles, diff, sigma, tracer, self.dtrj)
+        print allmat.shape
+        
+        # Update dictionary
+        code = tracer + str(diff) + 'per_min'
+        self.datadict[code] = len(self.data)
+        
+        self.data.append(allmat)
+        print code, 'has been added.'
+        
+        
+    def new_allasct2(self, diff, sigma, tracer = 'z'):
+        """
+        Creats new array in data, with informations about trajectory ascent 
+        positions. Filtered by velocities after Gaussian smoothing
+        
+        Parameters
+        ----------
+        diff : float
+          threshold difference in one time 
+        sigma : float
+          sigma for gaussian smoothing
+        tracer : string
+          COSMO name of y-axis variable
+          
+        """
+        # Initialize list
+        alllist = []
+        
+        if tracer == 'P':
+            flip = True
+        else:
+            flip = False
+        fi = 0
+        
+        for f in self.trjfiles:
+            print 'Opening file:', f
+            rootgrp = nc.Dataset(f, 'r')
+            mat = rootgrp.variables[tracer][:, :]
+            lon = rootgrp.variables['longitude'][:, :]
+            lat = rootgrp.variables['latitude'][:, :]            
+            trjstart = int(rootgrp.variables['time'][0] / 60)
+            
+            for j in range(mat.shape[1]):
+                alllist.append([])
+                #tuplist = _allxspan(mat[:, j], yspan, xmax, flip)
+                # Smooth and get CD
+                array = ndi.filters.gaussian_filter(mat[:, j], sigma)
+                array = np.gradient(array)
+                
+                # Get slices 
+                mask = np.ma.masked_where(array > diff, array)
+                slices = np.ma.notmasked_contiguous(mask)
+                
+                # Create lists
+                tuplist = []
+                
+                # Loop
+                if slices == None:
+                    return ()
+                else:
+                    for s in slices:
+                        istart = s.start
+                        istop = s.stop
+                        tuplist.append( (istart, istop, array[istart], 
+                                        array[istop - 1]) )
+                for tup in tuplist:
+                    xstart = lon[tup[0], j]
+                    xstop = lon[tup[1] -1, j]
+                    ystart = lat[tup[0], j]
+                    ystop = lat[tup[1] - 1, j]
+                    alllist[-1].append( (fi, j, xstart, xstop, ystart, ystop) + 
+                                    (tup[0] * self.dtrj + trjstart, 
+                                    tup[1] * self.dtrj + trjstart, tup[2], tup[3]) )
+            fi +=1
+        
+        allmat = np.array(alllist)
+        print allmat.shape
+        
+        # Update dictionary
+        code = tracer + str(diff / self.dtrj) + 'per_min'
+        self.datadict[code] = len(self.data)
+        
+        self.data.append(allmat)
+        print code, 'has been added.'
+        
+        
         
     
     def new_delta(self, tracer):

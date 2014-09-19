@@ -10,6 +10,10 @@ for t in range(720, 7200, 180):
                      savebase = 
                      '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/P100in30/')
      
-c0.create_filter('WCB_NonConv_1620', [('P600', 0, 2880), ('P400', 120, 2880), ('startt', 1620)])
+c0.create_filter('WCB_NonConv_1620', [('P600', 0, 2880), ('P400', 120, 2880), 
+                                      ('startt', 1620)])
 
-c0.draw_trj_all([], 'WCB_NonConv_1620', '/usr/users/stephan.rasp/tmp/w_test', carray = 'z', centdiff = True, sigma=5)
+c0.draw_trj_all([], 'WCB_NonConv_1620', '/usr/users/stephan.rasp/tmp/z_CD_150914b', 
+                carray = 'z', centdiff = True, sigma=5)
+
+

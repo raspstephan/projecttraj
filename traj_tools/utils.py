@@ -13,6 +13,7 @@ import netCDF4 as nc
 import cosmo_utils.pywgrib as pwg
 import fortran.futils as futils
 import cPickle
+import scipy.ndimage as ndi
 
 
 
@@ -485,7 +486,7 @@ def _allasct(filelist, yspan, xmax, tracer, dtrj):
         flip = True
     else:
         flip = False
-    fi = 0
+    fi = 0   # File Index
     for f in filelist:
         print 'Opening file:', f
         rootgrp = nc.Dataset(f, 'r')
@@ -509,6 +510,71 @@ def _allasct(filelist, yspan, xmax, tracer, dtrj):
     return np.array(alllist)
 
 
+def _allasct_cd(filelist, diff, sigma, tracer, dtrj):
+    """
+    TODO
+    """
+    
+    # Initialize list
+    alllist = []
+    
+    if tracer == 'P':
+        flip = True
+    else:
+        flip = False
+    fi = 0
+    
+    for f in filelist:
+        print 'Opening file:', f
+        rootgrp = nc.Dataset(f, 'r')
+        mat = rootgrp.variables[tracer][:, :]
+        pmat = rootgrp.variables['P'][:, :]
+        lon = rootgrp.variables['longitude'][:, :]
+        lat = rootgrp.variables['latitude'][:, :]            
+        trjstart = int(rootgrp.variables['time'][0] / 60)
+        
+        for j in range(mat.shape[1]):
+            alllist.append([])
+            
+            # Smooth, filter and get CD
+            array = mat[:, j]
+            array = array[np.isfinite(array)]
+            array = array[array != 0]
+            array = np.gradient(array)
+            array = ndi.filters.gaussian_filter(array, sigma)
+
+            # Get slices 
+            mask = np.ma.masked_where(array > (diff * 5), array)
+            slices = np.ma.notmasked_contiguous(mask)
+            
+            # Create lists
+            tuplist = []
+            
+            # Loop
+            if slices == None:
+                return ()
+            elif type(slices) != list:
+                istart = slices.start
+                istop = slices.stop
+                tuplist.append( (istart, istop, pmat[istart, j], 
+                                pmat[istop - 1, j]) )
+            else:
+                for s in slices:
+                    istart = s.start
+                    istop = s.stop
+                    tuplist.append( (istart, istop, pmat[istart, j], 
+                                    pmat[istop - 1, j]) )
+            for tup in tuplist:
+                xstart = lon[tup[0], j]
+                xstop = lon[tup[1] -1, j]
+                ystart = lat[tup[0], j]
+                ystop = lat[tup[1] - 1, j]
+                alllist[-1].append( (fi, j, xstart, xstop, ystart, ystop) + 
+                                (tup[0] * dtrj + trjstart, 
+                                tup[1] * dtrj + trjstart, tup[2], tup[3]) )
+        fi +=1
+        
+    return np.array(alllist)
            
 
 def _minxspan(array, yspan, flip = False):

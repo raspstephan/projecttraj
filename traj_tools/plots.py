@@ -41,15 +41,17 @@ def draw_vs_t(dataname, fileloc, fileid, savename = None, sigma = None):
     rootgrp = nc.Dataset(fileloc, 'r')
     if dataname == 'z_CD':
         array = rootgrp.variables['z'][:, fileid]
+        
+        array = np.gradient(array, 5)
         if sigma != None:
             array = ndi.filters.gaussian_filter(array, sigma)
-        array = np.gradient(array)
     else:
         array = rootgrp.variables[dataname][:, fileid]
         if sigma != None:
             array = ndi.filters.gaussian_filter(array, sigma)
     plt.plot(array)
     if savename != None:
+        print 'Save figure as', savename
         plt.savefig(savename)
         plt.close('all')
 
@@ -658,10 +660,10 @@ def single_trj(lonarray, latarray, parray, linewidth = 0.7, carray = 'P'):
         cmap = plt.get_cmap('Reds')
         norm = plt.Normalize(0, 2)
     elif carray == 'z':   #NOTE: Temporary solution
-        cmap = clr.ListedColormap(['b', 'cornflowerblue', 'lightblue', 
-                                       'lightblue', 'lightsalmon', 'lightsalmon',
-                                       'tomato', 'r'])
-        norm = plt.Normalize(-100, 100)
+        cmap = clr.ListedColormap(['lime', 'aqua', 'darkblue', 
+                                       'lightblue', 'lightsalmon', 
+                                       'r', 'violet', 'purple'])
+        norm = plt.Normalize(-200, 200)
     else:
         cmap = plt.get_cmap('Spectral')
         norm = plt.Normalize(0, 1000)
