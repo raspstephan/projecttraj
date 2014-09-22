@@ -124,10 +124,28 @@ def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None,
 
 def draw_avg(dataname, loclist, idlist, idtext = '', savename = None):
     """
-    TODO
+    Draws average of data over all given trajectories.
+    
+    Parameters
+    ---------
+    dataname : string
+      Tracer to be averaged
+    loclist : list
+      List of unique file locations
+    idlist : list
+      List of list of trajectory IDs 
+    idtext : string
+      Text to be displayed on top right of picture
+    savename : string
+      Full path of file to be saved 
+    
     """
     fig = plt.figure()
     newmat = []
+    
+    # Add idtext
+    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
+             fontsize = 6)
     
     for i in range(len(loclist)):
         print 'Plotting file', i+1, 'of', len(loclist)

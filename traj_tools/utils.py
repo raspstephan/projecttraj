@@ -340,7 +340,27 @@ def _write2netcdf(conmat, tstart, savebase, fcount):
 
 def _loc_filter(filelist, xmin, xmax, ymin, ymax):
     """
-    TODO
+    Returns a boolian array of all trajecories in filelist, indicating if the
+    given rectangle was passed or not.
+    
+    Parameters
+    ----------
+    filelist : lists
+      List of saved NetDCF file locations
+    xmin : float
+      Lower x boundary
+    xmax : float
+      Upper x boundary
+    ymin : float
+      Lower y boundary
+    ymax : float
+      Upper y boundary
+    
+    Returns
+    -------
+    boollist : np.array
+      Boolian array 
+        
     """
     boollist = []
     for f in filelist:
@@ -531,7 +551,29 @@ def _allasct(filelist, yspan, xmax, tracer, dtrj):
 
 def _allasct_cd(filelist, diff, sigma, tracer, dtrj):
     """
-    TODO
+    Returns all areas if given trajectories where d/dt (per minute) is smaller 
+    than givven criterion diff. The area is previously smoothed and a centered 
+    difference approximation of the rate of change is used. 
+    
+    Parameters
+    ----------
+    filelist : list
+      List of saved NetDCF file locations
+    diff : float
+      Criterion for rate of change
+    sigma : float
+      Smoothing parameter for Gaussian smoothing
+    tracer : string
+      Name of parameter to be examined
+    dtrj : float
+      trajectory output time step in minutes
+      
+    Returns
+    -------
+    alllist : np.array with type object
+      Contains following information for all seperate areas for all trjs
+      [file index in trjlist, index in file, lonstart, lonstop, latstart, 
+      latstop, startt, stopt in mins after modelstart, startval, stopval]
     """
     
     # Initialize list
@@ -563,7 +605,7 @@ def _allasct_cd(filelist, diff, sigma, tracer, dtrj):
             array = ndi.filters.gaussian_filter(array, sigma)
 
             # Get slices 
-            mask = np.ma.masked_where(array > (diff * 5), array)
+            mask = np.ma.masked_where(array > (diff * dtrj), array)
             slices = np.ma.notmasked_contiguous(mask)
             
             # Create lists

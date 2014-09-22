@@ -315,87 +315,22 @@ class TrjObj(object):
         print code, 'has been added.'
         
         
-    def new_allasct2(self, diff, sigma, tracer = 'z'):
-        """
-        Creats new array in data, with informations about trajectory ascent 
-        positions. Filtered by velocities after Gaussian smoothing
-        
-        Parameters
-        ----------
-        diff : float
-          threshold difference in one time 
-        sigma : float
-          sigma for gaussian smoothing
-        tracer : string
-          COSMO name of y-axis variable
-          
-        """
-        # Initialize list
-        alllist = []
-        
-        if tracer == 'P':
-            flip = True
-        else:
-            flip = False
-        fi = 0
-        
-        for f in self.trjfiles:
-            print 'Opening file:', f
-            rootgrp = nc.Dataset(f, 'r')
-            mat = rootgrp.variables[tracer][:, :]
-            lon = rootgrp.variables['longitude'][:, :]
-            lat = rootgrp.variables['latitude'][:, :]            
-            trjstart = int(rootgrp.variables['time'][0] / 60)
-            
-            for j in range(mat.shape[1]):
-                alllist.append([])
-                #tuplist = _allxspan(mat[:, j], yspan, xmax, flip)
-                # Smooth and get CD
-                array = ndi.filters.gaussian_filter(mat[:, j], sigma)
-                array = np.gradient(array)
-                
-                # Get slices 
-                mask = np.ma.masked_where(array > diff, array)
-                slices = np.ma.notmasked_contiguous(mask)
-                
-                # Create lists
-                tuplist = []
-                
-                # Loop
-                if slices == None:
-                    return ()
-                else:
-                    for s in slices:
-                        istart = s.start
-                        istop = s.stop
-                        tuplist.append( (istart, istop, array[istart], 
-                                        array[istop - 1]) )
-                for tup in tuplist:
-                    xstart = lon[tup[0], j]
-                    xstop = lon[tup[1] -1, j]
-                    ystart = lat[tup[0], j]
-                    ystop = lat[tup[1] - 1, j]
-                    alllist[-1].append( (fi, j, xstart, xstop, ystart, ystop) + 
-                                    (tup[0] * self.dtrj + trjstart, 
-                                    tup[1] * self.dtrj + trjstart, tup[2], tup[3]) )
-            fi +=1
-        
-        allmat = np.array(alllist)
-        print allmat.shape
-        
-        # Update dictionary
-        code = tracer + str(diff / self.dtrj) + 'per_min'
-        self.datadict[code] = len(self.data)
-        
-        self.data.append(allmat)
-        print code, 'has been added.'
-        
     
     def new_loc_filter(self, xmin, xmax, ymin, ymax):
         """
-        TODO
+        Adds a boolian array indicating if respective trajectories passed 
+        through the given rectangle. 
         
-        NOTE: For now in rotated coords
+        NOTE: For now in rotated coords.
+        
+        xmin : float
+          Lower x boundary
+        xmax : float
+          Upper x boundary
+        ymin : float
+          Lower y boundary
+        ymax : float
+          Upper y boundary
         """
         
         boolarr = utils._loc_filter(self.trjfiles, xmin, xmax, ymin, ymax)
@@ -719,12 +654,29 @@ class TrjObj(object):
     
     def draw_avg(self, dataname, filtername, idtext = '', savebase = None):
         """
-        TODO
+        Draws the average of a certain paramters over all arrays in filter.
+        NOTE: For now only works with arrays of same start time. Also, no 
+        zero filter.
+        
+        Parameters
+        ----------
+        dataname : string
+          Name of parameter
+        filtername : string
+          Name of filter to be applied
+        idtext : string
+          Text to be displayed in plot
+        savebase : string
+          Path to output directory
         """
         
         loclist, idlist = self._mask_iter(filtername)
         
-        plots.draw_avg(dataname, loclist, idlist, idtext, savebase)
+        # Create savename
+        savename = (savebase + 'avg_' + dataname + '_' + filtername + '_' + 
+                    idtext)
+        
+        plots.draw_avg(dataname, loclist, idlist, idtext, savename)
     
     
         
