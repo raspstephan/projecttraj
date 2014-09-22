@@ -125,6 +125,10 @@ class TrjObj(object):
         self.pfiles = sorted(pfiles)
         self.rfiles = [x for x in rfiles if x not in pfiles]
         self.cfile = glob.glob(self.datadir + '*00c*')[0]
+        tmpcfiles = glob.glob(self.datadir + '*00c*')
+        afiles = sorted(glob.glob(self.datadir + "lfff*"))
+        self.afiles = [x for x in afiles 
+                       if x not in (self.rfiles + self.pfiles + tmpcfiles)]
         if len(glob.glob(self.datadir + '*00c*')) != 1:
             print 'More than one c file detected, take first one!'
             self.cfile = sorted(glob.glob(self.datadir + '*00c*'))[0]
@@ -148,6 +152,7 @@ class TrjObj(object):
                                 tmprg.ref_day, tmprg.ref_hour)
         self.dtrj = int(tmprg.output_timestep_in_sec / 60)   # Minutes
         self.dcosmo = 5
+        self.dafiles = 60
 
         # Setting up lists and dictionaries
         self.datadict = dict(trjid = 0, startt = 1)
@@ -578,6 +583,41 @@ class TrjObj(object):
         
         thetalist = utils.calc_theta(self.trjfiles)
         self.trjfiles = thetalist
+    
+    
+    def interpolate_value(self, totind, time, trjtracer, cosmotracer):
+        """
+        TODO
+        """
+        
+        # Get correct time indices
+        aind = int(time / self.dafiles)
+        trjstart = self.data[1][totind]
+        trjind = int((time - trjstart) / self.dtrj)
+        
+        
+        # Get values from trajectory
+        rootgrp = nc.Dataset(self.filename[totind], 'r')
+        trjval = rootgrp.variables[trjtracer][trjind, self.data[0][totind]]
+        lon = rootgrp.variables['longitude'][trjind, self.data[0][totind]]
+        lat = rootgrp.variables['latitude'][trjind, self.data[0][totind]]
+        z = rootgrp.variables['z'][trjind, self.data[0][totind]]
+        
+        print 'Trajectory value is: ', trjval
+        
+        # Get COSMO indices (closest to trj pos, no interpolation)
+        fobj = pwg.getfobj(self.cfile, 'HH_S')
+        lons = fobj.rlons[0, :]
+        lats = fobj.rlats[:, 0]
+        xind = np.argmin(np.abs(lons - lon))
+        yind = np.argmin(np.abs(lats - lat))
+        hh = pwg.getfield(self.cfile, "HH")
+        zind = np.argmin(np.abs(hh[:, xind, yind] - z))
+        
+        # Get COSMO value
+        cval = pwg.getfield(self.afiles[aind], cosmotracer)[zind, xind, yind]
+        
+        print 'COSMO value is: ', cval
         
         
     ######################
@@ -652,7 +692,8 @@ class TrjObj(object):
                            savename)
         
     
-    def draw_avg(self, dataname, filtername, idtext = '', savebase = None):
+    def draw_avg(self, dataname, filtername, idtext = '', centdiff = False, 
+                 savebase = None):
         """
         Draws the average of a certain paramters over all arrays in filter.
         NOTE: For now only works with arrays of same start time. Also, no 
@@ -661,11 +702,13 @@ class TrjObj(object):
         Parameters
         ----------
         dataname : string
-          Name of parameter
+          Name of parameter. 
         filtername : string
           Name of filter to be applied
         idtext : string
           Text to be displayed in plot
+        centdiff : bool
+          If true centered difference of tracer will be plotted
         savebase : string
           Path to output directory
         """
@@ -673,10 +716,14 @@ class TrjObj(object):
         loclist, idlist = self._mask_iter(filtername)
         
         # Create savename
-        savename = (savebase + 'avg_' + dataname + '_' + filtername + '_' + 
-                    idtext)
+        if centdiff:
+            cdtext = '_cd'
+        else:
+            cdtext = ''
+        savename = (savebase + 'avg_' + dataname + cdtext + '_' + filtername + 
+                    '_' + idtext)
         
-        plots.draw_avg(dataname, loclist, idlist, idtext, savename)
+        plots.draw_avg(dataname, loclist, idlist, idtext, centdiff, savename)
     
     
         

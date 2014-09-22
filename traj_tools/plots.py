@@ -28,6 +28,7 @@ import matplotlib.collections as col
 from mpl_toolkits.basemap import Basemap
 import cosmo_utils.pywgrib as pwg
 import scipy.ndimage as ndi
+from scipy.stats import nanmean
 from datetime import datetime, timedelta
 import netCDF4 as nc
 
@@ -42,7 +43,7 @@ def draw_vs_t(dataname, fileloc, fileid, savename = None, sigma = None):
     if dataname == 'z_CD':
         array = rootgrp.variables['z'][:, fileid]
         
-        array = np.gradient(array, 5)
+        array = np.gradient(array)
         if sigma != None:
             array = ndi.filters.gaussian_filter(array, sigma)
     else:
@@ -122,7 +123,8 @@ def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None,
         plt.close('all')
 
 
-def draw_avg(dataname, loclist, idlist, idtext = '', savename = None):
+def draw_avg(dataname, loclist, idlist, idtext = '', centdiff = False, 
+             savename = None):
     """
     Draws average of data over all given trajectories.
     
@@ -136,6 +138,8 @@ def draw_avg(dataname, loclist, idlist, idtext = '', savename = None):
       List of list of trajectory IDs 
     idtext : string
       Text to be displayed on top right of picture
+    centdiff : bool
+      If true centered difference of tracer will be plotted
     savename : string
       Full path of file to be saved 
     
@@ -151,14 +155,25 @@ def draw_avg(dataname, loclist, idlist, idtext = '', savename = None):
         print 'Plotting file', i+1, 'of', len(loclist)
         rootgrp = nc.Dataset(loclist[i], 'r')
         mat = rootgrp.variables[dataname][:, :]
+        time = rootgrp.variables['time'][:] / 60 / 60   # in hrs
         for j in idlist[i]:
-            newmat.append(mat[:, j])
-            plt.plot(mat[:, j], 'grey')
+            array = mat[:, j]
+            # Convert zeros to nan
+            array[array == 0] = np.nan
+            if centdiff:
+                array = np.gradient(array)
+                array = ndi.filters.gaussian_filter(array, 5)
+                array = array / 5   # Convert to Minutes
+            newmat.append(array)
+            plt.plot(time, array, 'grey')
     newmat = np.array(newmat)
-    avg = np.average(newmat, axis = 0)
-    plt.plot(avg, 'r')
+    avg = nanmean(newmat, axis = 0)
+    plt.plot(time, avg, 'r')
     
-    plt.savefig(savename)
+    if savename != None:
+        print 'Save figure as', savename
+        plt.savefig(savename)
+        plt.close('all')
         
 
 
