@@ -62,7 +62,8 @@ class TrjObj(object):
     trjid : np.array
       Sorted array containing the unique ID for each trajectory
     data : list
-      List containing data in np.arrays
+      List containing data in np.arrays. data[0] contains trajectory id within
+      savefile. data[1] contains starttime[mins].
     datadict : dictionary
       Dictionary containing data names and matching IDs in data
     filtlist : list
@@ -496,12 +497,12 @@ class TrjObj(object):
             for m in addmask:
                 mask &= m
         
-        uniqueloc = np.unique(self.filename[mask])
+        uniqueloc= np.unique(self.filename[mask])
         idlist = []
         for i in range(len(uniqueloc)):
             locmask = (self.filename == uniqueloc[i])
             idlist.append(list((self.data[0][locmask & mask])))
-
+        
         return list(uniqueloc), idlist
     
     
@@ -625,12 +626,20 @@ class TrjObj(object):
     ######################
     
     
-    def draw_vs_t(self, dataname, totind, savename = None, sigma = None):
+    def draw_vs_t(self, tracer, filtername, savename = None, sigma = None):
         """
-        """
-        plots.draw_vs_t(dataname, self.filename[totind], self.data[0][totind],
-                        savename = savename, sigma = sigma)
+        Draws tracer of trajectories in filter against time.
         
+        """
+        
+        # Get iterable lists
+        loclist, idlist = self._mask_iter(filtername)
+        
+        
+        plots.draw_vs_t(self, tracer, loclist, idlist,
+                        savename = savename, sigma = sigma)
+ 
+    
     def draw_scatter(self, dataname1, dataname2, factor1 = 1, factor2 = 1, 
                      carray = None, filtername = None, idtext = '', 
                      savebase = None):
@@ -876,43 +885,53 @@ class TrjObj(object):
                         linewidth = linewidth, carray = carray,
                         centdiff = centdiff, sigma = sigma)
         
-    def draw_trj_evo(self, varlist, tafter = None, interval = None, 
-                     filtername = None, savebase = None, trjstart = None):
+    def draw_trj_evo(self, varlist, filtername = None, tafter = None, 
+                     interval = None, idtext = '', savebase = None):
         """
         Draws trajectories at certain times after trajectory start 
-        with correct background plots
+        with correct background plots. If several starting times are given in 
+        filter, trajecoties are drawn at correct times.
+        
+        Parameters
+        ----------
+        varlist : list
+          List of variables to be plotted. E.g. ["PMSL", "TOT_PREC_S"]
+          'CUM_PREC' for cumulative precipitation
+        filtername : string
+          Identiefier of wanted filter
+        tafter : int
+          Plotting time after simulation start (if interval: first plot time)
+        idtext : string
+          Text to be displayed in plot
+        interval : int
+          If given, plots several figures, seperated by interval time
+        
+        
         """
-        
-        # if trjstart is None, check if all trajectories start at same time
-        # TODO
-        
+
+        # Get plotting times [mins after simulation start]
         if interval == None:
             tlist = [tafter]
         else:
-            tlist = range(0, self.maxmins, interval)
-            
-        # if trjstart is given, create temporary mask
-        tmpmask = None
-        if not trjstart == None:
-            tmpmask = self.data[self.datadict['startt']] == trjstart
-            
-        loclist, idlist = self._mask_iter(filtername, addmask = tmpmask)
+            if tafter == None:
+                tlist = range(0, self.maxmins, interval)
+            else: 
+                tlist = range(tafter, self.maxmins, interval)
         
-        for t in tlist:
-            
+        # Get indeces of savefiles and trjids to be plotted
+        loclist, idlist= self._mask_iter(filtername)       
+        
+        # Plot for each time
+        for tplot in tlist: 
+            # Create savename
             if savebase != None:  
-                # TODO Change name
                 savename = (savebase + 'xy_' + filtername + '_' + 
-                            str(t).zfill(4) + '.png')
+                            str(tplot).zfill(4) + '.png')
             else:
                 savename = savebase
 
-            plots.draw_trj_evo(varlist, loclist, idlist, t, self.cfile, 
-                            self.rfiles, self.pfiles, savename = savename, 
-                            pollon = self.pollon, pollat = self.pollat, 
-                            xlim = self.xlim, ylim = self.ylim, 
-                            dtrj = self.dtrj, dcosmo = self.dcosmo)
-        
+            plots.draw_trj_evo(self, varlist, loclist, idlist, tplot, 
+                               idtext = idtext, savename = savename)
     
     def draw_trj_dot(self, varlist, tplus = None, interval = None, 
                      filtername = None, savebase = None, trjstart = None,

@@ -6,6 +6,8 @@
 
 # Imports
 import numpy as np
+import matplotlib
+#matplotlib.use('Qt4Agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 

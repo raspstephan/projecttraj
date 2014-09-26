@@ -9,7 +9,7 @@ QLabel=ceu
 
 #Define directories
 indir=/home/scratch/users/stephan.rasp/Case1_20070720/d1euin
-outdir=/home/scratch/users/stephan.rasp/Case1_20070720/d2euout
+outdir=/home/scratch/users/stephan.rasp/Case1_20070720/d2euout_v2
 
 #Define time properties
 date=2007071900
@@ -22,7 +22,7 @@ startlon=-19.0; startlat=-17.0; ie=609; je=545
 pollon=-170.0; pollat=40.0
 
 #Define parallelization
-NPX=8
+NPX=6
 NPY=4
 NPIO=0
 
@@ -78,7 +78,7 @@ cat > INPUT_ORG << end_input_org
   lreorder   = .FALSE.,  lreproduce    = .TRUE.,   itype_timing = 4,
   ldatatypes = .FALSE.,  ltime_barrier = .FALSE.,  ncomm_type=3,
   nboundlines=3, idbg_level = 100, lartif_data=.FALSE,
-  ldfi=.FALSE.,
+  ldfi=.FALSE., ltraj=.TRUE.,
  /
  &TUNING
   c_soil   =   1.0,
@@ -113,7 +113,7 @@ end_input_sat
 
 cat > INPUT_IO  << end_input_io
  &IOCTL
-  lasync_io=.FALSE., l_ke_in_gds=.TRUE., ngribout=1, yform_read='apix',
+  lasync_io=.FALSE., l_ke_in_gds=.TRUE., ngribout=3, yform_read='apix',
   nhour_restart=1,1,1, ydir_restart='$outdir',
  /
  &DATABASE
@@ -130,34 +130,49 @@ cat > INPUT_IO  << end_input_io
   ydirbd='$indir',
  /
  &GRIBOUT
-    hcomb=0,$hstop,3., lanalysis=.false., lcheck=.true.,
-    lwrite_const=.true., l_fi_filter=.true.,
+    hcomb=0,$hstop,1., lanalysis=.false., lcheck=.true.,
+    lwrite_const=.true., l_p_filter=.TRUE., l_z_filter=.TRUE.,
     ydir='$outdir', yform_write='api1',
     yvarml='U         ','V         ','W         ','T         ',
-	   'QV        ','QC        ','QI        ','P         ',
-	   'TKE       ','CLC       ','QR        ','QS        ',
-	   'PS        ','T_SNOW    ','T_S       ','W_SNOW    ',
-	   'QV_S      ','W_I       ','RAIN_GSP  ','SNOW_GSP  ',
-	   'RAIN_CON  ','SNOW_CON  ','U_10M     ','V_10M     ',
-	   'T_2M      ','TD_2M     ','TMIN_2M   ','TMAX_2M   ',
-	   'VMAX_10M  ','TCM       ','TCH       ','CLCT      ',
-	   'CLCH      ','CLCM      ','CLCL      ','ALB_RAD   ',
-	   'ASOB_S    ','ATHB_S    ','ASOB_T    ','ATHB_T    ',
-	   'APAB_S    ','ASWDIR_S  ','ASWDIFD_S ','ASWDIFU_S ',
-	   'TOT_PREC  ','Z0        ','AUMFL_S   ','AVMFL_S   ',
-	   'ASHFL_S   ','ALHFL_S   ','BAS_CON   ','TOP_CON   ',
-	   'HTOP_DC   ','RUNOFF_S  ','RUNOFF_G  ','PMSL      ',
-	   'T_G       ','HTOP_CON  ','HBAS_CON  ','HZEROCL   ',
-	   'CLCT_MOD  ','CLDEPTH   ','TDIV_HUM  ','TWATER    ',
-	   'AEVAP_S   ','CAPE_CON  ','TQI       ','TQC       ',
-	   'TQV       ','TQR       ','TQS       ','T_SO      ',
-	   'W_SO      ','W_SO_ICE  ','FRESHSNW  ',
-	   'SNOWLMT   ','RHO_SNOW  ','H_SNOW    ',
-	   'RELHUM_2M ','ZHD       ','ZTD       ','ZWD       ',
-	   'CAPE_ML   ','CIN_ML    ',
-	   'T_MNW_LK  ','T_WML_LK  ','T_BOT_LK  ','C_T_LK    ',
-	   'H_ML_LK   ','T_ICE     ','H_ICE     ',
-/
+       'QV        ','QC        ','QI        ','P         ',
+       'TKE       ','CLC       ','QR        ','QS        ',
+       'PS        ','T_SNOW    ','T_S       ','W_SNOW    ',
+       'QV_S      ','W_I       ','RAIN_GSP  ','SNOW_GSP  ',
+       'RAIN_CON  ','SNOW_CON  ','U_10M     ','V_10M     ',
+       'T_2M      ','TD_2M     ','TMIN_2M   ','TMAX_2M   ',
+       'VMAX_10M  ','TCM       ','TCH       ','CLCT      ',
+       'CLCH      ','CLCM      ','CLCL      ','ALB_RAD   ',
+       'ASOB_S    ','ATHB_S    ','ASOB_T    ','ATHB_T    ',
+       'APAB_S    ','ASWDIR_S  ','ASWDIFD_S ','ASWDIFU_S ',
+       'TOT_PREC  ','Z0        ','AUMFL_S   ','AVMFL_S   ',
+       'ASHFL_S   ','ALHFL_S   ','BAS_CON   ','TOP_CON   ',
+       'HTOP_DC   ','RUNOFF_S  ','RUNOFF_G  ','PMSL      ',
+       'T_G       ','HTOP_CON  ','HBAS_CON  ','HZEROCL   ',
+       'CLCT_MOD  ','CLDEPTH   ','TDIV_HUM  ','TWATER    ',
+       'AEVAP_S   ','CAPE_CON  ','TQI       ','TQC       ',
+       'TQV       ','TQR       ','TQS       ','T_SO      ',
+       'W_SO      ','W_SO_ICE  ','FRESHSNW  ',
+       'SNOWLMT   ','RHO_SNOW  ','H_SNOW    ',
+       'RELHUM_2M ','ZHD       ','ZTD       ','ZWD       ',
+       'CAPE_ML   ','CIN_ML    ','POT_VORTIC',
+       'T_MNW_LK  ','T_WML_LK  ','T_BOT_LK  ','C_T_LK    ',
+       'H_ML_LK   ','T_ICE     ','H_ICE     ',
+  /
+  &GRIBOUT
+    hcomb=0,$hstop,0.5,lcheck=.FALSE., lwrite_const=.FALSE., l_p_filter=.TRUE., nunit_of_time=1,
+    ysuffix='_30m', ydir='$outdir', yform_write='api1', l_z_filter=.TRUE.,
+    yvarml='POT_VORTIC','T         ','QV        ','P         '  
+  /
+ &GRIBOUT
+  ncomb=0,7200,5, lcheck=.FALSE., lwrite_const=.FALSE., l_p_filter=.TRUE., 
+  nunit_of_time=1, ysuffix='_5m', ydir='$outdir', yform_write='api1',
+  l_z_filter=.TRUE.,
+  yvarml='TOT_PREC  ','CLCT      ','CAPE_ML   ','CIN_ML    ',
+     'PMSL      ',
+  yvarpl='U         ','V         ','OMEGA     ','FI        ',
+     'T         ',
+  plev=500.0,850.0
+ /
 end_input_io
 
 cat > INPUT_DYN << end_input_dyn
@@ -267,6 +282,20 @@ cat > INPUT_ASS << end_input_ass
  /
 end_input_ass
 
+cat > INPUT_TRAJ << end_input_traj
+  &TRAJCTL
+     istart_mode_traj=2,
+     hstop_traj=102.0,
+     hcomb_start_traj=6, 66, 3, 
+     ydir_traj='$outdir',
+     
+startfile_traj=
+'/usr/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case1_20070720/c1v2.sf',
+     ninc_out_traj = 10,
+     tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM', 'U', 'V', 'W'
+  /
+end_input_traj
+
 #################################################
 # jobfile-file und execution
 #################################################
@@ -282,7 +311,7 @@ echo "#$ -pe mpich $NP" >> batchjob
 echo "#$ -V" >> batchjob
 echo "#$ -j y" >> batchjob
 echo "#$ -R y" >> batchjob
-echo "#$ -q eight">>batchjob
+echo "#$ -q cosmo">>batchjob
 echo "#$ -M s.rasp@physik.uni-muenchen.de" >> batchjob
 echo "#$ -m n" >> batchjob
 echo "#$ -o $outdir/cosmo.out" >> batchjob

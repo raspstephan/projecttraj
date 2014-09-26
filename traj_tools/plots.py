@@ -7,13 +7,15 @@ To make movie use from command line.
 
 ffmpeg -r 2 -pattern_type glob -i '*.png' -c:v libx264 movie.mkv
 
+mencoder mf://*.png -mf w=1000:fps=2:type=png -ovc lavc 
+  -lavcopts vcodec=mpeg4:mbd=2:trell -oac copy -o output_fast.avi
 """
 
 
 import numpy as np
 import matplotlib
 import os
-# taken from cosmo_utils:
+# taken from cosmo_utils, does not work
 try:
     os.environ["DISPLAY"]
     print "X-Server detected, using tkagg backend for plotting"
@@ -22,6 +24,7 @@ except KeyError:
         matplotlib.use("Agg") 
         # interface "Agg" can plot without x-server connection
     print "No X-Server detected, using agg backend for plotting"
+# matplotlib.use('Qt4Agg')   # Use at your own risk
 import matplotlib.pyplot as plt
 import matplotlib.colors as clr
 import matplotlib.collections as col
@@ -35,22 +38,38 @@ import netCDF4 as nc
 
 
 
-def draw_vs_t(dataname, fileloc, fileid, savename = None, sigma = None):
+def draw_vs_t(obj, tracer, loclist, idlist, savename = None, sigma = None):
     """
     TODO
     """
-    rootgrp = nc.Dataset(fileloc, 'r')
-    if dataname == 'z_CD':
-        array = rootgrp.variables['z'][:, fileid]
+    
+    
+    # 
+    for i in range(len(loclist)):
+        print 'Plotting file', i+1, 'of', len(loclist)
+        rootgrp = nc.Dataset(loclist[i], 'r')
         
-        array = np.gradient(array)
-        if sigma != None:
-            array = ndi.filters.gaussian_filter(array, sigma)
-    else:
-        array = rootgrp.variables[dataname][:, fileid]
-        if sigma != None:
-            array = ndi.filters.gaussian_filter(array, sigma)
-    plt.plot(array)
+    #if dataname == 'z_CD':
+        #array = rootgrp.variables['z'][:, fileid]
+        
+        #array = np.gradient(array)
+        #if sigma != None:
+            #array = ndi.filters.gaussian_filter(array, sigma)
+    #else:
+        #array = rootgrp.variables[dataname][:, fileid]
+        #if sigma != None:
+            #array = ndi.filters.gaussian_filter(array, sigma)
+            
+        tracerarray = rootgrp.variables[tracer][:, :]
+        tarray = rootgrp.variables['time'][:] / 60   # Convert to minutes
+        
+        # Convert zeros to nans
+        tracerarray[tracerarray == 0] = np.nan
+        
+        # Plot trajectories in idlist
+        plt.plot(tarray, tracerarray[:, idlist[i]], 'gray')
+            
+            
     if savename != None:
         print 'Save figure as', savename
         plt.savefig(savename)
@@ -227,6 +246,8 @@ def draw_contour(obj, varlist, time, idtext, savename = None):
       List of variables to be plotted
     time : int
       Time in minutes after simulation start
+    idtext : string
+          Text to be displayed in plot
     savename : string
       Full path to file to be saved
       
@@ -377,72 +398,65 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
         plt.clf()
 
 
-def draw_trj_evo(varlist, loclist, idlist, tplus, cfile, rfiles, 
-                 pfiles, savename = None, pollon = None, pollat = None, 
-                 xlim = None, ylim = None, dtrj = None, dcosmo = None):
+def draw_trj_evo(obj, varlist, loclist, idlist, tplot, 
+                 idtext = '', savename = None):
     """
-    TODO
+    obj : TrjObj object
+      self object
+    varlist : list
+      List of contours to be plotted
+    filelist : list
+      List of unique file locations
+    idlist : list
+      List of list of trajectory IDs 
+    tplot : int 
+      Time to be plotted in mins after simulation start
+    idtext : string
+      Text to be displayed in plot
+    savename : string
+      Name of save location
+      
     """
     
-    # Setting up indices
-    rootgrp = nc.Dataset(loclist[0], 'r')
-    off = int(rootgrp.variables['time'][0] / 60) # also trjstart time
-    cosmoind = (off + tplus) / dcosmo
-    trjind = tplus / dtrj   
-    
-    # Set up figure
-    fig = plt.figure(figsize = (12,8))
-    ax = plt.gca()   
-    ax.set_aspect('equal')
-    basemap(cfile, xlim, ylim)
-    
-    
-    # Plotting all contour fields
-    for i in range(len(varlist)):   # Plotting all contour fields
-        if varlist[i] == 'CUM_PREC':
-            contour(rfiles, varlist[i], cosmoind, xlim, ylim, 
-                    trjstart = trjstart)
-        elif varlist[i] in pwg.get_fieldtable(rfiles[cosmoind]).fieldnames:
-            contour(rfiles, varlist[i], cosmoind, xlim, ylim)
-        elif varlist[i] in pwg.get_fieldtable(pfiles[cosmoind]).fieldnames:
-            contour(pfiles, varlist[i], cosmoind, xlim, ylim)
-        else:
-            raise Exception('Variable' + varlist[i] + 'not available!')
+    # Plot contours
+    draw_contour(obj, varlist, tplot, idtext = idtext)
     
     # Plot trajectories
-    
     for i in range(len(loclist)):
         print 'Plotting file', i+1, 'of', len(loclist)
+        # Retrieve starting time
         rootgrp = nc.Dataset(loclist[i], 'r')
-        lonmat = rootgrp.variables['longitude'][:trjind, :]
-        latmat = rootgrp.variables['latitude'][:trjind, :]
-        pmat = rootgrp.variables['P'][:trjind, :]
-    
-        lonmat[:, :] += (180 - pollon)   # Convert to real coordinates
-        latmat[:, :] += (90 - pollat)
-        
-        for j in idlist[i]:
-            # Filter out zero values!
-            
-            parray = pmat[:, j][pmat[:, j] != 0]
-            lonarray = lonmat[:, j][pmat[:, j] != 0]
-            latarray = latmat[:, j][pmat[:, j] != 0]
-            
-            single_trj(lonarray, latarray, parray)
-    
-    # Set plot properties
-    if xlim != None:
-        plt.xlim(xlim)
-    if ylim != None:
-        plt.ylim(ylim)
+        startt = rootgrp.variables['time'][0] / 60   # Convert to minutes
 
-    cb = fig.colorbar(lc, shrink = 0.7)
+        # Only plot if trajectories start before tplot
+        if startt <= tplot:
+            
+            # Get trjind for end of arrays
+            trjind = int((tplot - startt) / obj.dtrj)
+
+            # Retrieve arrays
+            lonmat = rootgrp.variables['longitude'][:trjind, :]
+            latmat = rootgrp.variables['latitude'][:trjind, :]
+            pmat = rootgrp.variables['P'][:trjind, :]
+            
+            lonmat[:, :] += (180 - obj.pollon)   # Convert to real coordinates
+            latmat[:, :] += (90 - obj.pollat)
+            
+            for j in idlist[i]:
+                # Filter out zero values!
+                parray = pmat[:, j][pmat[:, j] != 0]
+                lonarray = lonmat[:, j][pmat[:, j] != 0]
+                latarray = latmat[:, j][pmat[:, j] != 0]
+                
+                single_trj(lonarray, latarray, parray)
+    
+    cb = plt.colorbar(lc, shrink = 0.7)
     cb.set_label('p')
     cb.ax.invert_yaxis()
     plt.tight_layout()
     
     # Save Plot
-    if savename != False:
+    if savename != None:
         print "Saving figure as", savename
         plt.savefig(savename, dpi = 400)
         plt.close('all')

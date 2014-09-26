@@ -102,9 +102,10 @@ def create_startfile(lonmin, lonmax, dlon,
         for lat in latlist:
             if zfilter:
                 # Interpolate to closest x and y indices
-                xind = (np.abs(hh.lons - lon)).argmin()
-                yind = (np.abs(hh.lats - lat)).argmin()
+                xind = (np.abs(hh.rlons[0, :] - lon)).argmin()
+                yind = (np.abs(hh.rlats[:, 0] - lat)).argmin()
                 
+
                 # Get nearest z value
                 hhint = hh.data[-1, yind, xind]
                 
@@ -318,6 +319,12 @@ def _write2netcdf(conmat, tstart, savebase, fcount):
     t = rootgrp.createVariable('T', 'f4', ('time', 'id', ))
     z = rootgrp.createVariable('z', 'f4', ('time', 'id', ))
     p = rootgrp.createVariable('P', 'f4', ('time', 'id', ))
+    qv = rootgrp.createVariable('QV', 'f4', ('time', 'id', ))
+    rh = rootgrp.createVariable('RH', 'f4', ('time', 'id', ))
+    q1 = rootgrp.createVariable('Q1', 'f4', ('time', 'id', ))
+    q2 = rootgrp.createVariable('Q2', 'f4', ('time', 'id', ))
+    q3 = rootgrp.createVariable('Q3', 'f4', ('time', 'id', ))
+    
     # Fill variables
     times[:] = tarray
     lon[:, :] = conmat[:, 0, :]
@@ -328,6 +335,11 @@ def _write2netcdf(conmat, tstart, savebase, fcount):
     w[:, :] = conmat[:, 5, :]
     t[:, :] = conmat[:, 6, :]
     p[:, :] = conmat[:, 7, :]
+    qv[:, :] = conmat[:, 8, :]
+    rh[:, :] = conmat[:, 9, :]
+    q1[:, :] = conmat[:, 10, :]
+    q2[:, :] = conmat[:, 11, :]
+    q3[:, :] = conmat[:, 12, :]
     
     rootgrp.close()
         

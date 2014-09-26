@@ -14,7 +14,7 @@ outdir=/home/scratch/users/stephan.rasp/Case0_20121013_v2/d2euout
 #Define time properties
 date=2012101300
 hstart=0
-hstop=144
+hstop=120
 hincbound=6
 
 #Define grid
@@ -22,7 +22,7 @@ startlon=-20; startlat=-20; ie=641; je=641
 pollon=-150.0; pollat=25.0
 
 #Define parallelization
-NPX=2
+NPX=4
 NPY=2
 NPIO=0
 
@@ -114,7 +114,7 @@ end_input_sat
 
 cat > INPUT_IO  << end_input_io
  &IOCTL
-  lasync_io=.FALSE., l_ke_in_gds=.TRUE., ngribout=2, yform_read='apix',
+  lasync_io=.FALSE., l_ke_in_gds=.TRUE., ngribout=3, yform_read='apix',
  /
  &DATABASE
  /
@@ -151,32 +151,29 @@ cat > INPUT_IO  << end_input_io
        'CLCT_MOD  ','CLDEPTH   ','TDIV_HUM  ','TWATER    ',
        'AEVAP_S   ','CAPE_CON  ','TQI       ','TQC       ',
        'TQV       ','TQR       ','TQS       ','T_SO      ',
-       'W_SO      ','W_SO_ICE  ','FRESHSNW  ','EPOT      ',
-       'SNOWLMT   ','RHO_SNOW  ','H_SNOW    ','POT       ',
+       'W_SO      ','W_SO_ICE  ','FRESHSNW  ',
+       'SNOWLMT   ','RHO_SNOW  ','H_SNOW    ',
        'RELHUM_2M ','ZHD       ','ZTD       ','ZWD       ',
        'CAPE_ML   ','CIN_ML    ','POT_VORTIC',
        'T_MNW_LK  ','T_WML_LK  ','T_BOT_LK  ','C_T_LK    ',
        'H_ML_LK   ','T_ICE     ','H_ICE     ',
   /
   &GRIBOUT
-    ncomb=0,21600,5,lcheck=.FALSE., lwrite_const=.FALSE., l_p_filter=.TRUE., nunit_of_time=1,
-    ysuffix='_5m', ydir='$outdir', yform_write='api1',
-    yvarml='TOT_PREC  ','RAIN_GSP  ','SNOW_GSP  ','RAIN_CON  ',
-           'SNOW_CON  ','CLCT      ','CAPE_ML   ','CIN_ML    ',
-           'PMSL      ',
-    yvarpl='U         ','V         ','OMEGA     ','FI        ',
-           'T         ',
-    plev=500.0,
+    hcomb=0,$hstop,0.5,lcheck=.FALSE., lwrite_const=.FALSE., l_p_filter=.TRUE., nunit_of_time=1,
+    ysuffix='_30m', ydir='$outdir', yform_write='api1', l_z_filter=.TRUE.,
+    yvarml='POT_VORTIC','T         ','QV        ','P         '  
   /
-  &GRIBOUT
-    ncomb=0,21600,5,lcheck=.FALSE., lwrite_const=.FALSE., l_p_filter=.TRUE., nunit_of_time=1,
-    ysuffix='_5m', ydir='$outdir', yform_write='api1',
-    yvarml='TOT_PREC  ','RAIN_GSP  ','SNOW_GSP  ','RAIN_CON  ',
-           'SNOW_CON  ','CLCT      ','CAPE_ML   ','CIN_ML    ',
-           'PMSL      ',
-    yvarpl='U         ','V         ','OMEGA     ','FI        ',
-           'T         ',
-    plev=850.0,
+
+   &GRIBOUT
+  ncomb=0,7200,5, lcheck=.FALSE., lwrite_const=.FALSE., l_z_filter=.TRUE.,
+  nunit_of_time=1, ysuffix='_5m', ydir='$outdir', yform_write='api1',l_p_filter=.TRUE.,
+  yvarml='TOT_PREC  ','CLCT      ','CAPE_ML   ','CIN_ML    ',
+     'PMSL      ',
+  yvarpl='U         ','V         ','OMEGA     ','FI        ',
+     'T         ',
+  plev=500.0,850.0
+ /
+
 end_input_io
 
 cat > INPUT_DYN << end_input_dyn
@@ -289,42 +286,43 @@ end_input_ass
 cat > INPUT_TRAJ << end_input_traj
   &TRAJCTL
      istart_mode_traj=2,
-     hstop_traj=102.0,
-     hcomb_start_traj=6, 66, 3, 
+     hstop_traj=$hstop,
+     hcomb_start_traj=6, 106, 3, 
      ydir_traj='$outdir',
      
 startfile_traj=
-'/usr/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case1_20070720/coarse.sf',
+'/usr/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case0_20121013/coarse.sf',
      ninc_out_traj = 10,
-     tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM'
+     tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM', 'U', 'V', 'W'
   /
 end_input_traj
 
 #################################################
 # jobfile-file und execution
 #################################################
+rm -f batchjob
+rm -f YU* M_* l* cosmo.out 
 
-# rm -f batchjob
-# rm -f YU* M_* l* cosmo.out 
-# 
-# #batchjob-file generieren
-# echo "#$ -S /bin/ksh" >> batchjob
-# echo "#$ -cwd" >> batchjob
-# echo "#$ -N $QLabel" >> batchjob
+#batchjob-file generieren
+echo "#$ -S /bin/ksh" >> batchjob
+echo "#$ -cwd" >> batchjob
+echo "#$ -N $QLabel" >> batchjob
 # echo "#$ -pe mpich $NP" >> batchjob
-# echo "#$ -V" >> batchjob
-# echo "#$ -j y" >> batchjob
-# echo "#$ -R y" >> batchjob
-# echo "#$ -q eight@lx019">>batchjob
-# echo "#$ -M tobias.selz@lmu.de" >> batchjob
-# echo "#$ -m n" >> batchjob
-# echo "#$ -o $outdir/cosmo.out" >> batchjob
-# echo /home/opt/openmpi-1.4.1/bin/mpirun -np $NP $COSMOEXE >> batchjob
-# 
-# #execute
-# chmod u+x batchjob
-# qsub batchjob
-# rm -f batchjob
+#Infiniband
+echo "#$ -pe mpiib $NP" >> batchjob
+echo "#$ -V" >> batchjob
+echo "#$ -j y" >> batchjob
+echo "#$ -R y" >> batchjob
+echo "#$ -q eight">>batchjob
+echo "#$ -M s.rasp@physik.uni-muenchen.de" >> batchjob
+echo "#$ -m n" >> batchjob
+echo "#$ -o $outdir/cosmo.out" >> batchjob
+echo /home/opt/openmpi-1.6.4/bin/mpirun -mca btl self,tcp -np $NP $COSMOEXE >> batchjob
 
-/home/opt/openmpi-1.6.4/bin/mpirun -np $NP $COSMOEXE
+#execute
+chmod u+x batchjob
+qsub batchjob
+rm -f batchjob
+
+# /home/opt/openmpi-1.6.4/bin/mpirun -np $NP $COSMOEXE
 

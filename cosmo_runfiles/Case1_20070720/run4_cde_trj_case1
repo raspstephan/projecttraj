@@ -11,7 +11,7 @@ QLabel=cde
 
 #Define directories
 indir=/home/scratch/users/stephan.rasp/Case1_20070720/d3dein
-outdir=/home/scratch/users/stephan.rasp/Case1_20070720/d4deout_eight
+outdir=/home/scratch/users/stephan.rasp/Case1_20070720/d4deout_v2
 
 #Define time properties
 date=2007071918
@@ -78,7 +78,7 @@ end_input_org
 
 cat > INPUT_IO  << end_input_io
  &IOCTL
-  lasync_io=.FALSE, ngribout=2, yform_read='apix',
+  lasync_io=.FALSE, ngribout=3, yform_read='apix',
  /
  &DATABASE
  /
@@ -93,7 +93,7 @@ cat > INPUT_IO  << end_input_io
  /
  &GRIBOUT
     hcomb=0,$hstop,1., lanalysis=.false., lcheck=.true.,
-    lwrite_const=.true.,
+    lwrite_const=.true., l_p_filter=.TRUE., l_z_filter=.TRUE.,
     ydir='$outdir', yform_write='api1',
     yvarml='U         ','V         ','W         ','T         ',
 	   'QV        ','QC        ','QI        ','P         ',
@@ -120,14 +120,20 @@ cat > INPUT_IO  << end_input_io
 	   'T_MNW_LK  ','T_WML_LK  ','T_BOT_LK  ','C_T_LK    ',
 	   'H_ML_LK   ','T_ICE     ','H_ICE     ',
   /
+  &GRIBOUT
+    hcomb=0,$hstop,0.5,lcheck=.FALSE., lwrite_const=.FALSE., l_p_filter=.TRUE., nunit_of_time=1,
+    ysuffix='_30m', ydir='$outdir', yform_write='api1', l_z_filter=.TRUE.,
+    yvarml='POT_VORTIC','T         ','QV        ','P         '  
+  /
  &GRIBOUT
-  ncomb=0,12240,10, lcheck=.FALSE., lwrite_const=.FALSE., 
+  ncomb=0,12240,10, lcheck=.FALSE., lwrite_const=.FALSE., l_p_filter=.TRUE., 
   nunit_of_time=1, ysuffix='_5m', ydir='$outdir', yform_write='api1',
+  l_z_filter=.TRUE.,
   yvarml='TOT_PREC  ','CLCT      ','CAPE_ML   ','CIN_ML    ',
-	 'PMSL      ',
+     'PMSL      ',
   yvarpl='U         ','V         ','OMEGA     ','FI        ',
-	 'T         ',
-  plev=500.0,
+     'T         ',
+  plev=500.0,850.0
  /
  
 end_input_io
@@ -176,9 +182,9 @@ cat > INPUT_TRAJ << end_input_traj
      ydir_traj='$outdir',
      
 startfile_traj=
-'/usr/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case1_20070720/coarse.sf',
+'/usr/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case1_20070720/c1v2.sf',
      ninc_out_traj = 10,
-     tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM','POT_VORTIC'
+     tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM', 'U', 'V', 'W'
   /
 end_input_traj
 
