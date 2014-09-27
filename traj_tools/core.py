@@ -886,7 +886,8 @@ class TrjObj(object):
                         centdiff = centdiff, sigma = sigma)
         
     def draw_trj_evo(self, varlist, filtername = None, tafter = None, 
-                     interval = None, idtext = '', savebase = None):
+                     interval = None, idtext = '', onlyasc = None, 
+                     savebase = None):
         """
         Draws trajectories at certain times after trajectory start 
         with correct background plots. If several starting times are given in 
@@ -901,11 +902,15 @@ class TrjObj(object):
           Identiefier of wanted filter
         tafter : int
           Plotting time after simulation start (if interval: first plot time)
-        idtext : string
-          Text to be displayed in plot
         interval : int
           If given, plots several figures, seperated by interval time
-        
+        idtext : string
+          Text to be displayed in plot
+        onlyasc : str
+          If name of ascent property given, plots trajectories only during
+          ascen time. E.g. 'P600'
+        savebase : string
+          Path to output directory
         
         """
 
@@ -919,7 +924,22 @@ class TrjObj(object):
                 tlist = range(tafter, self.maxmins, interval)
         
         # Get indeces of savefiles and trjids to be plotted
-        loclist, idlist= self._mask_iter(filtername)       
+        loclist, idlist= self._mask_iter(filtername)  
+        
+        # Get stop and start arrays if onlyasc
+        if onlyasc != None:
+            starttarray = self._mask_array(filtername, 'startt')
+            startarray = (self._mask_array(filtername, onlyasc + '_start') - 
+                          starttarray) / self.dtrj
+            stoparray = (self._mask_array(filtername, onlyasc + '_stop') - 
+                          starttarray) / self.dtrj
+
+            onlybool = True
+        else:
+            startarray = None
+            stoparray = None
+            onlybool = False
+        
         
         # Plot for each time
         for tplot in tlist: 
@@ -931,7 +951,9 @@ class TrjObj(object):
                 savename = savebase
 
             plots.draw_trj_evo(self, varlist, loclist, idlist, tplot, 
-                               idtext = idtext, savename = savename)
+                               idtext = idtext, onlybool = onlybool, 
+                               startarray = startarray, stoparray = stoparray, 
+                               savename = savename)
     
     def draw_trj_dot(self, varlist, tplus = None, interval = None, 
                      filtername = None, savebase = None, trjstart = None,

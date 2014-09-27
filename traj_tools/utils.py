@@ -139,6 +139,7 @@ def calc_theta(files):
     """
     Adds Potential Temperature as a Variable to given netCDF files. 
     The new variable is called 'THETA'.
+    New: Also Theta e : 'THETAE'
     
     Parameters
     ----------
@@ -153,6 +154,7 @@ def calc_theta(files):
     P0 = 1.e5   # reference pressure [Pa]
     R = 287.    # specific gas constant dry air [J K-1 kg-1]
     CP = 1004.  # specific heat at constant pressure [J K-1 kg-1]
+    LV = 2.25e6 # latent heat of condensation [J kg-1]
     
     
     # Checking if filelist needs to be created
@@ -181,10 +183,15 @@ def calc_theta(files):
         # Read file arrays needed for calculation
         pmat = rootgrp.variables['P'][:, :] * 100.   # Convert to SI Units
         tmat = rootgrp.variables['T'][:, :]
+        qvmat = rootgrp.variables['QV'][:, :]
 
         # Add new array to netCDF file
         theta = rootgrp.createVariable('THETA', 'f4', ('time', 'id'))
+        thetae = rootgrp.createVariable('THETAE', 'f4', ('time', 'id'))
         theta[:, :] = tmat * ((P0 / pmat) ** (R / CP))
+        mix = qvmat / (1 - qvmat)
+        thetae[:, :] = theta[:, :] * np.exp(LV / CP * mix / tmat)
+        
         rootgrp.close()
         
         

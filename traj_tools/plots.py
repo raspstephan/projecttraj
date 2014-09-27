@@ -7,8 +7,7 @@ To make movie use from command line.
 
 ffmpeg -r 2 -pattern_type glob -i '*.png' -c:v libx264 movie.mkv
 
-mencoder mf://*.png -mf w=1000:fps=2:type=png -ovc lavc 
-  -lavcopts vcodec=mpeg4:mbd=2:trell -oac copy -o output_fast.avi
+mencoder mf://*.png -mf w=1000:fps=2:type=png -ovc lavc -lavcopts vcodec=mpeg4:mbd=2:trell -oac copy -o output_fast.avi
 """
 
 
@@ -67,7 +66,7 @@ def draw_vs_t(obj, tracer, loclist, idlist, savename = None, sigma = None):
         tracerarray[tracerarray == 0] = np.nan
         
         # Plot trajectories in idlist
-        plt.plot(tarray, tracerarray[:, idlist[i]], 'gray')
+        plt.plot(tarray, tracerarray[:, idlist[i]])
             
             
     if savename != None:
@@ -399,7 +398,8 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
 
 
 def draw_trj_evo(obj, varlist, loclist, idlist, tplot, 
-                 idtext = '', savename = None):
+                 idtext = '', onlybool = False, startarray = None, 
+                 stoparray  = None, savename = None):
     """
     obj : TrjObj object
       self object
@@ -421,6 +421,7 @@ def draw_trj_evo(obj, varlist, loclist, idlist, tplot,
     # Plot contours
     draw_contour(obj, varlist, tplot, idtext = idtext)
     
+    cnt = 0   # continuous counter for startarray and stoparray
     # Plot trajectories
     for i in range(len(loclist)):
         print 'Plotting file', i+1, 'of', len(loclist)
@@ -444,10 +445,17 @@ def draw_trj_evo(obj, varlist, loclist, idlist, tplot,
             
             for j in idlist[i]:
                 # Filter out zero values!
-                parray = pmat[:, j][pmat[:, j] != 0]
-                lonarray = lonmat[:, j][pmat[:, j] != 0]
-                latarray = latmat[:, j][pmat[:, j] != 0]
-                
+                if onlybool:
+                    stop = min(stoparray[cnt], pmat.shape[0] - 1)
+                    parray = pmat[startarray[cnt]:stop, j]
+                    lonarray = lonmat[startarray[cnt]:stop, j]
+                    latarray = latmat[startarray[cnt]:stop, j]
+                    cnt += 1
+                else:
+                    parray = pmat[:, j][pmat[:, j] != 0]
+                    lonarray = lonmat[:, j][pmat[:, j] != 0]
+                    latarray = latmat[:, j][pmat[:, j] != 0]
+                    
                 single_trj(lonarray, latarray, parray)
     
     cb = plt.colorbar(lc, shrink = 0.7)
