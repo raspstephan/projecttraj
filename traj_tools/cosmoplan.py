@@ -71,6 +71,11 @@ def cosmo2geo(pollon, pollat, lonlim, latlim, savename = None):
     glon = np.rad2deg(glon)   
     glat = np.rad2deg(glat)
     
+    print 'Edges in geographical coordinates'
+    print glon[0], glat[ns / 2]
+    print glon[ns - 1], glat[ns - 1]
+    print glon[ns * 2 - 1], glat[ns * 2 - 1]
+    print glon[ns * 3 - 1], glat[ns * 3 - 1]
     
     
     # Draw basemap

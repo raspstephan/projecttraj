@@ -783,7 +783,7 @@ class TrjObj(object):
                 if filtername != None:
                     array = self._mask_array(filtername, data)
                 else:
-                    array = self.data[self.datadict[dataname]]
+                    array = self.data[self.datadict[data]]
                 # Create savename and label names
                 savename = (savebase + '/hist_' + data 
                             + '_' + str(filtername) + '_' + str(idtext))

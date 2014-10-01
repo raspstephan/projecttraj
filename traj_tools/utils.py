@@ -477,7 +477,7 @@ def _minasct(filelist, yspan, tracer, dtrj, interpolate = False):
     ascstartval = []
     ascstopval = []
     
-    if tracer == 'P':
+    if tracer in ('P', 'QV'):
         flip = True
     else:
         flip = False
