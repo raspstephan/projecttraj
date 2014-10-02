@@ -133,6 +133,11 @@ def create_startfile(lonmin, lonmax, dlon,
     
     f.close() 
                     
+
+def iterpol():
+    pass
+
+
                 
 
 def calc_theta(files):

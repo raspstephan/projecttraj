@@ -17,6 +17,7 @@ import cosmo_utils.pywgrib as pwg
 import datetime as dt
 import re
 import scipy.ndimage as ndi
+from scipy.interpolate import griddata
 
 
 class TrjObj(object):
@@ -584,6 +585,59 @@ class TrjObj(object):
         
         thetalist = utils.calc_theta(self.trjfiles)
         self.trjfiles = thetalist
+    
+    
+    def interpolate_2d(self, varname):
+        """
+        Adds a surface variable as a tracer to trajectory files.
+        
+        NOTE: For now take CAPE, with dcosmo 5min
+        
+        Parameters
+        ----------
+        varname : string
+          Name of surface variable
+          
+        """
+        
+        # Get rotated lon/lat and height fields for interpolation
+        hhobj = pwg.getfobj(self.cfile, 'HH')
+        lons = fobj.rlons[0, :]
+        lats = fobj.rlats[:, 0]
+        hhfield = hhobj.data
+        
+        for trjfn in self.trjfiles:
+        
+            # Open trajectory file
+            rootgrp = nc.Dataset(self.filename[totind], 'a')
+            
+            # Read position matrices
+            lon = rootgrp.variables['longitude'][:, :]
+            lat = rootgrp.variables['latitude'][:, :]
+            #z = rootgrp.variables['z'][:, :]
+            
+            # Allocate new netCDF array
+            newvar = rootgrp.createVariable(varname, 'f4', ('time', 'id'))
+            
+            # Retrieve trajectory start time
+            trjstart = rootgrp.variables['time'] / 60   # In mins       
+            
+            # Iterate over trj times
+            for itrj in range(lon.shape[0]):
+                
+                # Get cosmo index
+                icosmo = (itrj * self.dtrj + trjstart) / self.dcosmo
+                field = pwg.getfield(self.rfiles[icosmo], varname)
+                
+                # Get 1D arrays
+                lonarray = lon[itrj, :]
+                latarray = lat[itrj, :]
+                #lzarray = z[itrj, :]
+                
+                # Interpolate with griddata
+                
+            
+        
     
     
     def interpolate_value(self, totind, time, trjtracer, cosmotracer):
