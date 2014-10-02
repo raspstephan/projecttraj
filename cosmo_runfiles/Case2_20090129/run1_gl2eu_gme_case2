@@ -16,20 +16,20 @@
 QLabel=gl2eu
 
 #Define directories
-indir=/home/cosmo/tobias.selz/cosmo_data/caseWCB/d0glout_gme
-outdir=/home/cosmo/tobias.selz/cosmo_data/caseWCB/d1euin_gme_new
-extdir=/home/data/raid_linux/tobias.selz/cosmo_ext
+indir=/home/scratch/users/stephan.rasp/Case2_20090129/d0glout
+outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d1euin_gme
+extdir=/home/scratch/users/stephan.rasp/Case2_20090129/d0glout
 
 #Define time properties
-date=2012101300
-hstart=0; hstop=3; hincbound=3
+date=2009012900
+hstart=0; hstop=12; hincbound=12
 
 #Define output-grid (rotated)
-startlon=-36; startlat=-28; ie=1153; je=897
-pollon=-165.0; pollat=35.0
+startlon=-25.0; startlat=-28.0; ie=801; je=897
+pollat=35; pollon=170.0
 
 #Define input grid
-istartlon=-180; istartlat=20; iie=1440; ije=281
+istartlon=-90; istartlat=20; iie=721; ije=281
 
 #Define parallelization
 NPX=1
@@ -37,7 +37,7 @@ NPY=1
 NPIO=0
 
 #Define executable
-INTLMEXE=$HOME/int2lm_131101_2.00/int2lmexe
+INTLMEXE=/home/opt/int2lm_131101_2.00/int2lmexe
 
 #################################################
 # script
@@ -64,11 +64,11 @@ cat > INPUT << end_input
   ydate_ini='$date', ydate_bd='$date', hstart=$hstart, hstop=$hstop, hincbound=$hincbound, linitial=.TRUE.,  lboundaries =.TRUE.,
   nprocx=$NPX, nprocy=$NPY, nprocio=0, lreorder=.FALSE., yinput_model='GME', ltime_mean=.TRUE., lfilter_oro=.TRUE., eps_filter=0.1,
   ilow_pass_oro=1, ilow_pass_xso=0, rxso_mask=0.0, lfilter_pp=.FALSE., lbalance_pp=.FALSE., norder_filter=5, luvcor=.TRUE., 
-  lmulti_layer_in=.TRUE., lmulti_layer_lm=.TRUE., l_smi=.FALSE., lprog_qi=.TRUE., lprog_rho_snow=.TRUE., lprog_qr_qs=.TRUE.,
+  lmulti_layer_in=.TRUE., lmulti_layer_lm=.TRUE., l_smi=.FALSE., lprog_qi=.TRUE., lprog_rho_snow=.TRUE., lprog_qr_qs=.FALSE.,
   lsso=.TRUE., lforest=.TRUE., lbdclim=.FALSE., lt_cl_corr=.TRUE., itype_ndvi=0, idbg_level=100, lseaice=.TRUE.,
  /
  &GRID_IN
-   ni_gme=384, i3e_gme=60, kcontrol_fi=15,
+   ni_gme=192, i3e_gme=40, kcontrol_fi=15,
  /
  &LMGRID
   startlat_tot  = $startlat, startlon_tot  = $startlon, dlon=0.0625, dlat=0.0625, 
@@ -83,9 +83,9 @@ cat > INPUT << end_input
  &DATABASE
  /
  &DATA
-  ie_ext=1281, je_ext=961, ylmext_lfn='lm_dx_55N15E_07000_1281x961', ylmext_cat='$extdir', yinext_lfn='invar.i384a',
+  ie_ext=961, je_ext=961, ylmext_lfn='extpar_eu.grb', ylmext_cat='$extdir', yinext_lfn='invar.i192a',
   yinext_form_read='grb1', yinext_cat='$indir', yin_cat='$indir', ylmext_form_read='grb1',
-  yin_form_read='grb1', ylm_cat='$outdir', yinput_type='forecast', ylm_form_write='api1',
+  yin_form_read='grb1', ylm_cat='$outdir', yinput_type='analysis', ylm_form_write='api1',
   nprocess_ini = 131, nprocess_bd = 132, nl_soil_in=2, nl_soil_lm=2,
  /
  &PRICTR
@@ -95,28 +95,28 @@ end_input
 #################################################
 # jobfile-file und execution
 ################################################
-rm -f batchjob YU* OUTPUT INPUT_* l* cosmo.out
+# rm -f batchjob YU* OUTPUT INPUT_* l* cosmo.out
+# 
+# #batchjob-file generieren
+# echo "#$ -S /bin/ksh" >> batchjob
+# echo "#$ -cwd" >> batchjob
+# echo "#$ -N $QLabel" >> batchjob
+# echo "#$ -pe mpich $NP" >> batchjob
+# echo "#$ -V" >> batchjob
+# echo "#$ -j y" >> batchjob
+# echo "#$ -R y" >> batchjob
+# echo "#$ -q eight">>batchjob
+# echo "#$ -M tobias.selz@lmu.de" >> batchjob
+# echo "#$ -m e" >> batchjob
+# echo "#$ -o $outdir/cosmo.out" >> batchjob
+# echo /home/opt/openmpi-1.4.1/bin/mpirun -np $NP $INTLMEXE >> batchjob
+# 
+# echo "rm -f INPUT_* ">> batchjob
+# 
+# #execute
+# chmod u+x batchjob
+# qsub $outdir/batchjob
+# rm -f batchjob
+# 
 
-#batchjob-file generieren
-echo "#$ -S /bin/ksh" >> batchjob
-echo "#$ -cwd" >> batchjob
-echo "#$ -N $QLabel" >> batchjob
-echo "#$ -pe mpich $NP" >> batchjob
-echo "#$ -V" >> batchjob
-echo "#$ -j y" >> batchjob
-echo "#$ -R y" >> batchjob
-echo "#$ -q eight">>batchjob
-echo "#$ -M tobias.selz@lmu.de" >> batchjob
-echo "#$ -m e" >> batchjob
-echo "#$ -o $outdir/cosmo.out" >> batchjob
-echo /home/opt/openmpi-1.4.1/bin/mpirun -np $NP $INTLMEXE >> batchjob
-
-echo "rm -f INPUT_* ">> batchjob
-
-#execute
-chmod u+x batchjob
-qsub $outdir/batchjob
-rm -f batchjob
-
-
-
+/home/opt/openmpi-1.6.4/bin/mpirun -np $NP $INTLMEXE
