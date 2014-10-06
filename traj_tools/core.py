@@ -91,7 +91,7 @@ class TrjObj(object):
     ---------------
     TrajPack object
     ---------------
-    File directory =        /home/scratch/users/stephan.rasp/Case1_20070720/d4deout_eight///
+    File directory =/home/scratch/users/stephan.rasp/Case1_20070720/d4deout_eight///
     Contains the following:
     Data arrays =   ['P400', 'startt', 'P600', 'P300']
     Filters =       ['WCB_360', 'WCB']
@@ -121,16 +121,23 @@ class TrjObj(object):
         # Extracting data from output directory
         rsuff = "_5m"
         psuff = "p_5m"
+        self.dprcosmo = 5   # Cosmo output interval for p and r files
+        halfsuff = '_30m'
+        self.dhalfcosmo = 30   # Interval for half hour files
         rfiles = glob.glob(self.datadir + "*" + rsuff)
         rfiles = sorted(rfiles)
         pfiles = glob.glob(self.datadir + "*" + psuff)
         self.pfiles = sorted(pfiles)
         self.rfiles = [x for x in rfiles if x not in pfiles]
         self.cfile = glob.glob(self.datadir + '*00c*')[0]
+        halffiles = glob.glob(self.datadir + "*" + halfsuff)
+        self.halffiles = sorted(halffiles)
         tmpcfiles = glob.glob(self.datadir + '*00c*')
         afiles = sorted(glob.glob(self.datadir + "lfff*"))
         self.afiles = [x for x in afiles 
-                       if x not in (self.rfiles + self.pfiles + tmpcfiles)]
+                       if x not in (self.rfiles + self.pfiles + tmpcfiles + 
+                                    halffiles)]
+        self.dacosmo = 60   # Interval for a(ll) files
         if len(glob.glob(self.datadir + '*00c*')) != 1:
             print 'More than one c file detected, take first one!'
             self.cfile = sorted(glob.glob(self.datadir + '*00c*'))[0]
@@ -148,13 +155,15 @@ class TrjObj(object):
         self.ylim = self._nrot2rot(ylim, 'lat')     
         
         # Set COSMO and trajectory output interval
-        # Open temporary trj file to read information
-        tmprg = nc.Dataset(trjfiles[0])
-        self.date = dt.datetime(tmprg.ref_year, tmprg.ref_month, 
-                                tmprg.ref_day, tmprg.ref_hour)
-        self.dtrj = int(tmprg.output_timestep_in_sec / 60)   # Minutes
-        self.dcosmo = 5
-        self.dafiles = 60
+        # Open temporary trj file to read information, if trjs present
+        try:
+            tmprg = nc.Dataset(trjfiles[0])
+            self.date = dt.datetime(tmprg.ref_year, tmprg.ref_month, 
+                                    tmprg.ref_day, tmprg.ref_hour)
+            self.dtrj = int(tmprg.output_timestep_in_sec / 60)   # Minutes
+        except IndexError:
+            print 'No trajectory files found. Set date to default'
+            self.date = dt.datetime(2000, 01, 01, 00)
 
         # Setting up lists and dictionaries
         self.datadict = dict(trjid = 0, startt = 1)
@@ -163,7 +172,7 @@ class TrjObj(object):
         self.filtdict = dict()
         self.filtlist = []
         
-        self.maxmins = (len(self.pfiles) - 1) * self.dcosmo
+        self.maxmins = (len(self.pfiles) - 1) * self.dprcosmo
         
         
         # Looping over all files, initializing lists instead of np.arrays
@@ -537,7 +546,48 @@ class TrjObj(object):
         data = self.data[dataid]
         
         return data[mask]
+    
+    
+    def _get_index(self, varname, mins):
+        """
+        Returns the index and filelist of Cosmofile containing the variable at 
+        time: mins after model start. If variable appears in more than one 
+        file type, take the one with smallest output interval. 
         
+        Parameters
+        ----------
+        varname : string
+          Name of variable
+        mins : float
+          Time in mins after model start
+          
+        Returns
+        -------
+        cosmoind : integer
+          Index for correct cosmofile
+        filelist : lists
+          Filelist containing variable
+          
+        """
+        
+        if varname in pwg.get_fieldtable(self.rfiles[0]).fieldnames:
+            cosmoind = int(mins / self.dprcosmo)
+            filelist = self.rfiles
+        elif varname in pwg.get_fieldtable(self.pfiles[0]).fieldnames:
+            cosmoind = int(mins / self.dprcosmo)
+            filelist = self.pfiles
+        elif varname in pwg.get_fieldtable(self.halffiles[0]).fieldnames:
+            cosmoind = int(mins / self.dhalfcosmo)
+            filelist = self.halffiles
+        elif varname in pwg.get_fieldtable(self.afiles[0]).fieldnames:
+            cosmoind = int(mins / self.dacosmo)
+            filelist = self.afiles
+        else:
+            raise Exception (varname, 'not found!')
+        return cosmoind, filelist
+        
+        
+    
     
     def saveme(self, savename):
         """
@@ -1129,7 +1179,7 @@ class TrjObj(object):
         varlist : list
           List of variables to be plotted. E.g. ["PMSL", "TOT_PREC_S"]
         time : integer
-          In steps after model start
+          In minutes after model start
         savebase : string
           Path to output directory
         Interval : integer
@@ -1139,7 +1189,7 @@ class TrjObj(object):
           
         """
         if savebase != None:    
-            savename = savebase + 'contour_' + str(time) + '.jpeg'
+            savename = savebase + 'contour_' + str(time) 
         else:
             savename = savebase
         
@@ -1149,7 +1199,7 @@ class TrjObj(object):
             timelist = range(time, self.maxmins, interval)
         for time in timelist:
             if savebase != None:    
-                savename = savebase + 'contour_' + str(time).zfill(5) + '.jpeg'
+                savename = savebase + 'contour_' + str(time).zfill(5)
             else:
                 savename = savebase
             print 'Plotting for time:', time

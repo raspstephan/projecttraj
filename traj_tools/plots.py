@@ -252,9 +252,6 @@ def draw_contour(obj, varlist, time, idtext, savename = None):
       
     """
     
-    # Getting index for COSMO files
-    cosmoind = int(time / obj.dcosmo)
-    
     # Setting up figure
     fig = plt.figure(figsize = (12,8))
     ax = plt.gca()   
@@ -264,19 +261,16 @@ def draw_contour(obj, varlist, time, idtext, savename = None):
     basemap(obj.cfile, obj.xlim, obj.ylim)
     
     # Plotting all contour fields
-    for i in range(len(varlist)):   
+    for var in varlist:   
         # NOTE: 'CUM_PREC' not implemented right now
         #if varlist[i] == 'CUM_PREC':
             #contour(rfiles, varlist[i], cosmoind, xlim, ylim, 
                     #trjstart = trjstart)
-        # Check if variable is in rfiles
-        if varlist[i] in pwg.get_fieldtable(obj.rfiles[cosmoind]).fieldnames:
-            contour(obj.rfiles, varlist[i], cosmoind, obj.xlim, obj.ylim)
-        # Check if variable is in pfiles
-        elif varlist[i] in pwg.get_fieldtable(obj.pfiles[cosmoind]).fieldnames:
-            contour(obj.pfiles, varlist[i], cosmoind, obj.xlim, obj.ylim)
-        else:
-            raise Exception('Variable' + varlist[i] + 'not available!')
+                    
+        # Get index and filelist
+        cosmoind, filelist = obj._get_index(var, time)
+        contour(filelist, var, cosmoind, obj.xlim, obj.ylim)
+
         
     # Set plot properties
     plt.xlim(obj.xlim)
