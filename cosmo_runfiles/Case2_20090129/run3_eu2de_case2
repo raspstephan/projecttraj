@@ -15,24 +15,24 @@
 QLabel=eu2de
 
 #Define directories
-indir=/home/scratch/users/stephan.rasp/Case1_20070720/d2euout
-outdir=/home/scratch/users/stephan.rasp/Case1_20070720/d3dein
-extdir=/home/data/raid_linux/tobias.selz/cosmo_ext
+indir=/home/scratch/users/stephan.rasp/Case2_20090129/d2euout
+outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d3dein
+extdir=/home/scratch/users/stephan.rasp/Case2_20090129/d0glout
 
 #Define time properties
-dedate=2007071918
-eudate=2007071900
-hstart=0; hstop=102; hincbound=3
+dedate=2009012900
+eudate=2009012900
+hstart=0; hstop=120; hincbound=3
 
 #Define output-grid (rotated)
-startlon=-14.0; startlat=-12.0; ie=1121; je=961
-pollon=-170.0; pollat=40.0
+startlon=-20; startlat=-23; ie=1601; je=1841
+pollon=170.0; pollat=35
 
 #Define input grid
-istartlon=-19.0; istartlat=-17.0; iie=609; ije=545
+istartlon=-25.0; istartlat=-28.0; iie=801; ije=897
 
 #Define parallelization
-NPX=4
+NPX=2
 NPY=2
 NPIO=0
 
@@ -74,11 +74,11 @@ cat > INPUT << end_input
   eps_filter=0.1, norder_filter=5,
   ilow_pass_oro=4, ilow_pass_xso=5,
   lasync_io=.false., lreorder=.false., lroutine=.false., ltime_mean=.true.,
-  lmulti_layer_in=.true., lmulti_layer_lm=.true., lseaice=.FALSE.,
-  lprog_qi=.true., lprog_qr_qs=.FALSE., lprog_rho_snow=.FALSE.,
+  lmulti_layer_in=.true., lmulti_layer_lm=.true., lseaice=.TRUE.,
+  lprog_qi=.true., lprog_qr_qs=.FALSE., lprog_rho_snow=.TRUE.,
   lforest=.true., lt_cl_corr=.false., luvcor=.true.,
   lvertwind_ini=.true., lvertwind_bd=.true., lprog_qg=.FALSE.,
-  rxso_mask=625.0,
+  rxso_mask=625.0, 
   idbg_level=2,
  /
  &GRID_IN
@@ -106,11 +106,11 @@ cat > INPUT << end_input
   idbg_level=2,
  /
  &DATA
-  ie_ext=3201, je_ext=2001,
-  ylmext_lfn='lm_dx_02800_3201x2001',
+  ie_ext=1921, je_ext=1921,
+  ylmext_lfn='extpar_de.grb',
   ylmext_cat='$extdir',
   yinext_lfn='lfff00000000c',
-  yinext_form_read='apix',
+  yinext_form_read='grb1',
   yinext_cat='$indir',
   yin_cat='$indir',
   yin_form_read='apix',

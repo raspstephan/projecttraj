@@ -705,7 +705,7 @@ def contour(filelist, variable, cosmoind, xlim, ylim, trjstart = None):
         cbar.set_label('CAPE [J/kg]', rotation = 90)
         
     else:   # All other fields, unformatted
-        plt.contour(X, Y, field)
+        plt.contourf(X, Y, field)
         #plt.colorbar()
     del field
     
