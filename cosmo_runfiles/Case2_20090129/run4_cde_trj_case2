@@ -10,21 +10,21 @@
 QLabel=cde
 
 #Define directories
-indir=/home/scratch/users/stephan.rasp/Case1_20070720/d3dein
-outdir=/home/scratch/users/stephan.rasp/Case1_20070720/d4deout_v2
+indir=/home/scratch/users/stephan.rasp/Case2_20090129/d3dein
+outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d4deout
 
 #Define time properties
-date=2007071918
+date=2009012906
 hstart=0
-hstop=102
+hstop=114
 hincbound=3
 
 #Define grid
-startlon=-14; startlat=-12; ie=1121; je=961
-pollon=-170.0; pollat=40.0
+startlon=-20; startlat=-23; ie=1601; je=1841
+pollon=170.0; pollat=35
 
 #Define parallelization
-NPX=8
+NPX=4
 NPY=8
 NPIO=0
 
@@ -85,9 +85,9 @@ cat > INPUT_IO  << end_input_io
  &GRIBIN
   lan_t_so0=.TRUE., lan_t_cl=.TRUE., lan_w_cl=.TRUE., lan_vio3=.TRUE., 
   lan_hmo3=.TRUE., lan_plcov=.TRUE., lan_lai=.TRUE., lan_rootdp=.TRUE.,
-  lan_t_snow=.TRUE., lan_w_i=.TRUE., lan_w_snow=.TRUE., lan_rho_snow=.FALSE., 
+  lan_t_snow=.TRUE., lan_w_i=.TRUE., lan_w_snow=.TRUE., lan_rho_snow=.TRUE., 
   hincbound=$hincbound, lchkini=.TRUE., lchkbd=.TRUE., lbdana=.FALSE.,
-  lana_qi=.TRUE., llb_qi=.TRUE., lana_rho_snow=.FALSE., lana_qr_qs=.FALSE., 
+  lana_qi=.TRUE., llb_qi=.TRUE., lana_rho_snow=.True., lana_qr_qs=.FALSE., 
   llb_qr_qs=.FALSE., lana_qg=.FALSE., llb_qg=.FALSE., lan_w_so=.TRUE.,
   ydirini='$indir', ydirbd='$indir',
  /
@@ -96,29 +96,29 @@ cat > INPUT_IO  << end_input_io
     lwrite_const=.true., l_p_filter=.TRUE., l_z_filter=.TRUE.,
     ydir='$outdir', yform_write='api1',
     yvarml='U         ','V         ','W         ','T         ',
-	   'QV        ','QC        ','QI        ','P         ',
-	   'TKE       ','CLC       ','QR        ','QS        ',
-	   'PS        ','T_SNOW    ','T_S       ','W_SNOW    ',
-	   'QV_S      ','W_I       ','RAIN_GSP  ','SNOW_GSP  ',
-	   'RAIN_CON  ','SNOW_CON  ','U_10M     ','V_10M     ',
-	   'T_2M      ','TD_2M     ','TMIN_2M   ','TMAX_2M   ',
-	   'VMAX_10M  ','TCM       ','TCH       ','CLCT      ',
-	   'CLCH      ','CLCM      ','CLCL      ','ALB_RAD   ',
-	   'ASOB_S    ','ATHB_S    ','ASOB_T    ','ATHB_T    ',
-	   'APAB_S    ','ASWDIR_S  ','ASWDIFD_S ','ASWDIFU_S ',
-	   'TOT_PREC  ','Z0        ','AUMFL_S   ','AVMFL_S   ',
-	   'ASHFL_S   ','ALHFL_S   ','BAS_CON   ','TOP_CON   ',
-	   'HTOP_DC   ','RUNOFF_S  ','RUNOFF_G  ','PMSL      ',
-	   'T_G       ','HTOP_CON  ','HBAS_CON  ','HZEROCL   ',
-	   'CLCT_MOD  ','CLDEPTH   ','TDIV_HUM  ','TWATER    ',
-	   'AEVAP_S   ','CAPE_CON  ','TQI       ','TQC       ',
-	   'TQV       ','TQR       ','TQS       ','T_SO      ',
-	   'W_SO      ','W_SO_ICE  ','FRESHSNW  ',
-	   'SNOWLMT   ','RHO_SNOW  ','H_SNOW    ',
-	   'RELHUM_2M ','ZHD       ','ZTD       ','ZWD       ',
-	   'CAPE_ML   ','CIN_ML    ','POT_VORTIC',
-	   'T_MNW_LK  ','T_WML_LK  ','T_BOT_LK  ','C_T_LK    ',
-	   'H_ML_LK   ','T_ICE     ','H_ICE     ',
+       'QV        ','QC        ','QI        ','P         ',
+       'TKE       ','CLC       ','QR        ','QS        ',
+       'PS        ','T_SNOW    ','T_S       ','W_SNOW    ',
+       'QV_S      ','W_I       ','RAIN_GSP  ','SNOW_GSP  ',
+       'RAIN_CON  ','SNOW_CON  ','U_10M     ','V_10M     ',
+       'T_2M      ','TD_2M     ','TMIN_2M   ','TMAX_2M   ',
+       'VMAX_10M  ','TCM       ','TCH       ','CLCT      ',
+       'CLCH      ','CLCM      ','CLCL      ','ALB_RAD   ',
+       'ASOB_S    ','ATHB_S    ','ASOB_T    ','ATHB_T    ',
+       'APAB_S    ','ASWDIR_S  ','ASWDIFD_S ','ASWDIFU_S ',
+       'TOT_PREC  ','Z0        ','AUMFL_S   ','AVMFL_S   ',
+       'ASHFL_S   ','ALHFL_S   ','BAS_CON   ','TOP_CON   ',
+       'HTOP_DC   ','RUNOFF_S  ','RUNOFF_G  ','PMSL      ',
+       'T_G       ','HTOP_CON  ','HBAS_CON  ','HZEROCL   ',
+       'CLCT_MOD  ','CLDEPTH   ','TDIV_HUM  ','TWATER    ',
+       'AEVAP_S   ','CAPE_CON  ','TQI       ','TQC       ',
+       'TQV       ','TQR       ','TQS       ','T_SO      ',
+       'W_SO      ','W_SO_ICE  ','FRESHSNW  ','TINC_LH   ',
+       'SNOWLMT   ','RHO_SNOW  ','H_SNOW    ','LCN_ML    ',
+       'RELHUM_2M ','ZHD       ','ZTD       ','ZWD       ',
+       'CAPE_ML   ','CIN_ML    ','POT_VORTIC','LFC_ML    ',
+       'T_MNW_LK  ','T_WML_LK  ','T_BOT_LK  ','C_T_LK    ',
+       'H_ML_LK   ','T_ICE     ','H_ICE     ',
   /
   &GRIBOUT
     hcomb=0,$hstop,0.5,lcheck=.FALSE., lwrite_const=.FALSE., l_p_filter=.TRUE., nunit_of_time=1,
@@ -126,7 +126,7 @@ cat > INPUT_IO  << end_input_io
     yvarml='POT_VORTIC','T         ','QV        ','P         '  
   /
  &GRIBOUT
-  ncomb=0,12240,10, lcheck=.FALSE., lwrite_const=.FALSE., l_p_filter=.TRUE., 
+  ncomb=0,13680,10, lcheck=.FALSE., lwrite_const=.FALSE., l_p_filter=.TRUE., 
   nunit_of_time=1, ysuffix='_5m', ydir='$outdir', yform_write='api1',
   l_z_filter=.TRUE.,
   yvarml='TOT_PREC  ','CLCT      ','CAPE_ML   ','CIN_ML    ',
@@ -164,7 +164,7 @@ cat > INPUT_PHY << end_input_phy
     czml_soil = 0.005, 0.02, 0.06, 0.18, 0.54, 1.62, 4.86, 14.58,
     lconv=.FALSE., lcape=.FALSE., lconf_avg=.TRUE., lconv_inst=.TRUE., 
     itype_conv=3, nincconv=10,
-    lsso=.FALSE., lseaice=.FALSE.,
+    lsso=.FALSE., lseaice=.TRUE.,
  /
 end_input_phy
 
@@ -177,12 +177,12 @@ end_input_dia
 cat > INPUT_TRAJ << end_input_traj
   &TRAJCTL
      istart_mode_traj=2,
-     hstop_traj=102.0,
-     hcomb_start_traj=6, 66, 3, 
+     hstop_traj=114.0,
+     hcomb_start_traj=3, 66, 3, 
      ydir_traj='$outdir',
      
 startfile_traj=
-'/usr/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case1_20070720/c1v2.sf',
+'/home/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case2_20090129/c2_de.sf',
      ninc_out_traj = 10,
      tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM', 'U', 'V', 'W'
   /

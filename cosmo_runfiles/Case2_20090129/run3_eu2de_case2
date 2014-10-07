@@ -20,7 +20,7 @@ outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d3dein
 extdir=/home/scratch/users/stephan.rasp/Case2_20090129/d0glout
 
 #Define time properties
-dedate=2009012900
+dedate=2009012906
 eudate=2009012900
 hstart=0; hstop=120; hincbound=3
 
