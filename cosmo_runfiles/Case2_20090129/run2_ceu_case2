@@ -11,7 +11,7 @@ QLabel=ceu
 
 #Define directories
 indir=/home/scratch/users/stephan.rasp/Case2_20090129/d1euin
-outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d2euout
+outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d2euout_v2
 
 #Define time properties
 date=2009012900
@@ -80,7 +80,7 @@ cat > INPUT_ORG << end_input_org
   lreorder   = .FALSE.,  lreproduce    = .TRUE.,   itype_timing = 4,
   ldatatypes = .FALSE.,  ltime_barrier = .FALSE.,  ncomm_type=3,
   nboundlines=3, idbg_level = 100, lartif_data=.FALSE,
-  ldfi=.FALSE., ltraj=.FALSE.,
+  ldfi=.FALSE., ltraj=.TRUE.,
  /
  &TUNING
   c_soil   =   1.0,
