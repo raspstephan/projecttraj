@@ -32,8 +32,8 @@ pollon=170.0; pollat=35
 istartlon=-25.0; istartlat=-28.0; iie=801; ije=897
 
 #Define parallelization
-NPX=2
-NPY=2
+NPX=4
+NPY=4
 NPIO=0
 
 #Define executable
@@ -132,25 +132,25 @@ end_input
 ################################################
 rm -f batchjob YU* OUTPUT INPUT_* l* cosmo.out
 
-# #batchjob-file generieren
-# echo "#$ -S /bin/ksh" >> batchjob
-# echo "#$ -cwd" >> batchjob
-# echo "#$ -N $QLabel" >> batchjob
-# echo "#$ -pe mpich $NP" >> batchjob
-# echo "#$ -V" >> batchjob
-# echo "#$ -j y" >> batchjob
-# echo "#$ -R y" >> batchjob
-# echo "#$ -q eight">>batchjob
-# echo "#$ -M s.rasp@physik.uni-muenchen.de" >> batchjob
-# echo "#$ -m e" >> batchjob
-# echo "#$ -o $outdir/cosmo.out" >> batchjob
-# echo /home/opt/openmpi-1.6.4/bin/mpirun -np $NP $INTLMEXE >> batchjob
-# 
-# echo "rm -f INPUT_* ">> batchjob
-# 
-# # execute
-# chmod u+x batchjob
-# qsub $outdir/batchjob
-# rm -f batchjob
+#batchjob-file generieren
+echo "#$ -S /bin/ksh" >> batchjob
+echo "#$ -cwd" >> batchjob
+echo "#$ -N $QLabel" >> batchjob
+echo "#$ -pe mpich $NP" >> batchjob
+echo "#$ -V" >> batchjob
+echo "#$ -j y" >> batchjob
+echo "#$ -R y" >> batchjob
+echo "#$ -q eight">>batchjob
+echo "#$ -M s.rasp@physik.uni-muenchen.de" >> batchjob
+echo "#$ -m e" >> batchjob
+echo "#$ -o $outdir/cosmo.out" >> batchjob
+echo /home/opt/openmpi-1.6.4/bin/mpirun -np $NP $INTLMEXE >> batchjob
 
-/home/opt/openmpi-1.6.4/bin/mpirun -np $NP $INTLMEXE 
+echo "rm -f INPUT_* ">> batchjob
+
+# execute
+chmod u+x batchjob
+qsub $outdir/batchjob
+rm -f batchjob
+
+# /home/opt/openmpi-1.6.4/bin/mpirun -np $NP $INTLMEXE 
