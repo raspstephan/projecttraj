@@ -16,6 +16,7 @@ import utils
 import cosmo_utils.pywgrib as pwg
 import datetime as dt
 import re
+import os
 import scipy.ndimage as ndi
 from scipy.interpolate import RegularGridInterpolator
 
@@ -142,9 +143,9 @@ class TrjObj(object):
             print 'More than one c file detected, take first one!'
             self.cfile = sorted(glob.glob(self.datadir + '*00c*'))[0]
         trjfiles = glob.glob(self.datadir + 'traj_*')
-        if 'theta' in ''.join(trjfiles):
-            for i in range(len(trjfiles)):
-                trjfiles = [x for x in trjfiles if 'theta' in x]
+        # Take longest files (most added variables)
+        maxlen = len(max(trjfiles, key=len))  # Get longest file
+        trjfiles = [x for x in trjfiles if len(x) == maxlen]
         self.trjfiles = sorted(trjfiles)
         
         # Getting xlim, ylim from COSMO data
@@ -641,7 +642,7 @@ class TrjObj(object):
         """
         Adds a surface variable as a tracer to trajectory files.
         
-        NOTE: For now take CAPE, with dcosmo 5min
+        NOTE: For now only variables in rfiles!!!
         
         Parameters
         ----------
@@ -654,14 +655,22 @@ class TrjObj(object):
         hhobj = pwg.getfobj(self.cfile, 'HH')
         lons = hhobj.rlons[0, :]
         lats = hhobj.rlats[:, 0]
-        hhfield = hhobj.data
-        print len(lons), len(lats)
+        # hhfield = hhobj.data
+        del hhobj
         
+        # Create new filelist
+        newlist = []
         for trjfn in self.trjfiles:
-            print 'Opening file:', trjfn
-        
+            newfn = trjfn.rstrip('.nc') + '_' + varname + '.nc'
+            newlist.append(newfn)
+            os.system('cp ' + trjfn + ' ' + newfn)
+            
+        # Start iteration over trajectory files
+        for fn in newlist:
+            print 'Opening file:', fn
+            
             # Open trajectory file
-            rootgrp = nc.Dataset(trjfn, 'a')
+            rootgrp = nc.Dataset(fn, 'a')
             
             # Read position matrices
             lon = rootgrp.variables['longitude'][:, :]
@@ -695,6 +704,8 @@ class TrjObj(object):
             
             # Clean up 
             rootgrp.close()
+        
+        self.trjfiles = newlist
                 
                 
             
