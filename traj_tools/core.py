@@ -17,7 +17,7 @@ import cosmo_utils.pywgrib as pwg
 import datetime as dt
 import re
 import scipy.ndimage as ndi
-from scipy.interpolate import griddata
+from scipy.interpolate import RegularGridInterpolator
 
 
 class TrjObj(object):
@@ -652,14 +652,16 @@ class TrjObj(object):
         
         # Get rotated lon/lat and height fields for interpolation
         hhobj = pwg.getfobj(self.cfile, 'HH')
-        lons = fobj.rlons[0, :]
-        lats = fobj.rlats[:, 0]
+        lons = hhobj.rlons[0, :]
+        lats = hhobj.rlats[:, 0]
         hhfield = hhobj.data
+        print len(lons), len(lats)
         
         for trjfn in self.trjfiles:
+            print 'Opening file:', trjfn
         
             # Open trajectory file
-            rootgrp = nc.Dataset(self.filename[totind], 'a')
+            rootgrp = nc.Dataset(trjfn, 'a')
             
             # Read position matrices
             lon = rootgrp.variables['longitude'][:, :]
@@ -670,21 +672,30 @@ class TrjObj(object):
             newvar = rootgrp.createVariable(varname, 'f4', ('time', 'id'))
             
             # Retrieve trajectory start time
-            trjstart = rootgrp.variables['time'] / 60   # In mins       
+            trjstart = rootgrp.variables['time'][0] / 60   # In mins       
             
             # Iterate over trj times
             for itrj in range(lon.shape[0]):
+                if itrj % 100 == 0:
+                    print 'Interpolating time step', itrj, 'of', lon.shape[0]
                 
                 # Get cosmo index
-                icosmo = (itrj * self.dtrj + trjstart) / self.dcosmo
+                icosmo = int((itrj * self.dtrj + trjstart) / self.dprcosmo)
                 field = pwg.getfield(self.rfiles[icosmo], varname)
+                field = np.transpose(field)   # flip x and y values
                 
-                # Get 1D arrays
-                lonarray = lon[itrj, :]
-                latarray = lat[itrj, :]
-                #lzarray = z[itrj, :]
+                # Get 2D position array
+                lonlattrj = np.array([lon[itrj, :], lat[itrj, :]]) 
+                lonlattrj = np.transpose(lonlattrj)
                 
-                # Interpolate with griddata
+                # Interpolate with scipy.interpolate
+                intobj = RegularGridInterpolator((lons, lats), field, 
+                                                 fill_value = None)
+                newvar[itrj, :] = intobj(lonlattrj)
+            
+            # Clean up 
+            rootgrp.close()
+                
                 
             
         
