@@ -140,7 +140,7 @@ echo "#$ -pe mpich $NP" >> batchjob
 echo "#$ -V" >> batchjob
 echo "#$ -j y" >> batchjob
 echo "#$ -R y" >> batchjob
-echo "#$ -q eight">>batchjob
+echo "#$ -q four">>batchjob
 echo "#$ -M s.rasp@physik.uni-muenchen.de" >> batchjob
 echo "#$ -m e" >> batchjob
 echo "#$ -o $outdir/cosmo.out" >> batchjob

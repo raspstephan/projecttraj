@@ -11,16 +11,16 @@ QLabel=cde
 
 #Define directories
 indir=/home/scratch/users/stephan.rasp/Case2_20090129/d3dein
-outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d4deout
+outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d4deout_short
 
 #Define time properties
 date=2009012906
 hstart=0
-hstop=114
+hstop=24
 hincbound=3
 
 #Define grid
-startlon=-20; startlat=-23; ie=1601; je=1841
+startlon=-20; startlat=-23; ie=801; je=921
 pollon=170.0; pollat=35
 
 #Define parallelization
@@ -177,8 +177,8 @@ end_input_dia
 cat > INPUT_TRAJ << end_input_traj
   &TRAJCTL
      istart_mode_traj=2,
-     hstop_traj=114.0,
-     hcomb_start_traj=3, 66, 3, 
+     hstop_traj24,
+     hcomb_start_traj=3, 21, 3, 
      ydir_traj='$outdir',
      
 startfile_traj=
