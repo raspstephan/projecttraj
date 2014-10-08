@@ -16,16 +16,16 @@ QLabel=eu2de
 
 #Define directories
 indir=/home/scratch/users/stephan.rasp/Case2_20090129/d2euout
-outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d3dein
+outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d3dein_small
 extdir=/home/scratch/users/stephan.rasp/Case2_20090129/d0glout
 
 #Define time properties
 dedate=2009012906
 eudate=2009012900
-hstart=0; hstop=120; hincbound=3
+hstart=0; hstop=24; hincbound=3
 
 #Define output-grid (rotated)
-startlon=-20; startlat=-23; ie=1601; je=1841
+startlon=-20; startlat=-23; ie=801; je=921
 pollon=170.0; pollat=35
 
 #Define input grid
