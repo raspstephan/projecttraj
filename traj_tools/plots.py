@@ -17,7 +17,8 @@ import os
 # taken from cosmo_utils, does not work
 try:
     os.environ["DISPLAY"]
-    print "X-Server detected, using tkagg backend for plotting"
+    matplotlib.use('Qt4Agg')
+    print "X-Server detected, using Qt4Agg backend for plotting"
 except KeyError:
     if matplotlib.get_backend() in matplotlib.rcsetup.interactive_bk:
         matplotlib.use("Agg") 

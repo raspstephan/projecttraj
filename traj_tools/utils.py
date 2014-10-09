@@ -428,7 +428,9 @@ def _delta(filelist, tracer):
         trcmat = nc.Dataset(f, 'r').variables[tracer][:, :]
         for j in range(pmat.shape[1]):
             parray = pmat[:, j][np.isfinite(pmat[:, j])]
+            parray = parray[parray != 0]
             trcarray = trcmat[:, j][np.isfinite(trcmat[:, j])]
+            parray = trcarray[trcarray != 0]
             minind = parray.argmin()
             maxind = parray.argmax()
             if minind < maxind:

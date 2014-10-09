@@ -900,8 +900,11 @@ class TrjObj(object):
                     startval = self.data[self.datadict[dataname + '_start_val']]
                     stopval = self.data[self.datadict[dataname + '_stop_val']]
                 array = (startval + stopval) / 2
-                savename = (savebase + '/hist_' + dataname + '_loc' 
-                            + '_' + str(filtername) + '_' + str(idtext))
+                if savebase != None:
+                    savename = (savebase + '/hist_' + dataname + '_loc' 
+                                + '_' + str(filtername) + '_' + str(idtext))
+                else:
+                    savename = savebase
                 xlabel = ('Location [hPa] of fastest ' + dataname + ' ascent')
             
             # Regular histogram of given array
@@ -911,8 +914,11 @@ class TrjObj(object):
                 else:
                     array = self.data[self.datadict[data]]
                 # Create savename and label names
-                savename = (savebase + '/hist_' + data 
-                            + '_' + str(filtername) + '_' + str(idtext))
+                if savebase != None:
+                    savename = (savebase + '/hist_' + data 
+                                + '_' + str(filtername) + '_' + str(idtext))
+                else:
+                    savename = savebase
                 xlabel = data
                     
         # Histogram of ratio of two arrays            

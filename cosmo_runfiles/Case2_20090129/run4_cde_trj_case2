@@ -177,7 +177,7 @@ end_input_dia
 cat > INPUT_TRAJ << end_input_traj
   &TRAJCTL
      istart_mode_traj=2,
-     hstop_traj=24,
+     hstop_traj=24.0,
      hcomb_start_traj=3, 21, 3, 
      ydir_traj='$outdir',
      
