@@ -10,22 +10,22 @@
 QLabel=cde
 
 #Define directories
-indir=/home/scratch/users/stephan.rasp/Case1_20070720/d3dein
-outdir=/home/scratch/users/stephan.rasp/Case1_20070720/d4deout_v2
+indir=/home/scratch/users/stephan.rasp/Case1_20070720/d3dein_small
+outdir=/home/scratch/users/stephan.rasp/Case1_20070720/d4deout_small
 
 #Define time properties
 date=2007071918
 hstart=0
-hstop=102
+hstop=24
 hincbound=3
 
 #Define grid
-startlon=-14; startlat=-12; ie=1121; je=961
+startlon=-14; startlat=-12; ie=561; je=481
 pollon=-170.0; pollat=40.0
 
 #Define parallelization
 NPX=8
-NPY=8
+NPY=4
 NPIO=0
 
 #Define executable
@@ -113,10 +113,10 @@ cat > INPUT_IO  << end_input_io
 	   'CLCT_MOD  ','CLDEPTH   ','TDIV_HUM  ','TWATER    ',
 	   'AEVAP_S   ','CAPE_CON  ','TQI       ','TQC       ',
 	   'TQV       ','TQR       ','TQS       ','T_SO      ',
-	   'W_SO      ','W_SO_ICE  ','FRESHSNW  ',
-	   'SNOWLMT   ','RHO_SNOW  ','H_SNOW    ',
+	   'W_SO      ','W_SO_ICE  ','FRESHSNW  ','TINC_LH   ',
+	   'SNOWLMT   ','RHO_SNOW  ','H_SNOW    ','LCN_ML    ',
 	   'RELHUM_2M ','ZHD       ','ZTD       ','ZWD       ',
-	   'CAPE_ML   ','CIN_ML    ','POT_VORTIC',
+	   'CAPE_ML   ','CIN_ML    ','POT_VORTIC','LFC_ML    ',
 	   'T_MNW_LK  ','T_WML_LK  ','T_BOT_LK  ','C_T_LK    ',
 	   'H_ML_LK   ','T_ICE     ','H_ICE     ',
   /
@@ -177,12 +177,12 @@ end_input_dia
 cat > INPUT_TRAJ << end_input_traj
   &TRAJCTL
      istart_mode_traj=2,
-     hstop_traj=102.0,
-     hcomb_start_traj=6, 66, 3, 
+     hstop_traj=24.0,
+     hcomb_start_traj=3, 21, 3, 
      ydir_traj='$outdir',
      
 startfile_traj=
-'/usr/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case1_20070720/c1v2.sf',
+'/usr/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case1_20070720/c1_de_small.sf',
      ninc_out_traj = 10,
      tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM', 'U', 'V', 'W'
   /

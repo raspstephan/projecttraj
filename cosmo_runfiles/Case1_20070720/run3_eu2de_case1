@@ -16,24 +16,24 @@ QLabel=eu2de
 
 #Define directories
 indir=/home/scratch/users/stephan.rasp/Case1_20070720/d2euout
-outdir=/home/scratch/users/stephan.rasp/Case1_20070720/d3dein
+outdir=/home/scratch/users/stephan.rasp/Case1_20070720/d3dein_small
 extdir=/home/data/raid_linux/tobias.selz/cosmo_ext
 
 #Define time properties
 dedate=2007071918
 eudate=2007071900
-hstart=0; hstop=102; hincbound=3
+hstart=0; hstop=24; hincbound=3
 
 #Define output-grid (rotated)
-startlon=-14.0; startlat=-12.0; ie=1121; je=961
+startlon=-14.0; startlat=-12.0; ie=561; je=481
 pollon=-170.0; pollat=40.0
 
 #Define input grid
 istartlon=-19.0; istartlat=-17.0; iie=609; ije=545
 
 #Define parallelization
-NPX=4
-NPY=2
+NPX=6
+NPY=4
 NPIO=0
 
 #Define executable
@@ -132,25 +132,25 @@ end_input
 ################################################
 rm -f batchjob YU* OUTPUT INPUT_* l* cosmo.out
 
-# #batchjob-file generieren
-# echo "#$ -S /bin/ksh" >> batchjob
-# echo "#$ -cwd" >> batchjob
-# echo "#$ -N $QLabel" >> batchjob
-# echo "#$ -pe mpich $NP" >> batchjob
-# echo "#$ -V" >> batchjob
-# echo "#$ -j y" >> batchjob
-# echo "#$ -R y" >> batchjob
-# echo "#$ -q eight">>batchjob
-# echo "#$ -M s.rasp@physik.uni-muenchen.de" >> batchjob
-# echo "#$ -m e" >> batchjob
-# echo "#$ -o $outdir/cosmo.out" >> batchjob
-# echo /home/opt/openmpi-1.6.4/bin/mpirun -np $NP $INTLMEXE >> batchjob
-# 
-# echo "rm -f INPUT_* ">> batchjob
-# 
-# # execute
-# chmod u+x batchjob
-# qsub $outdir/batchjob
-# rm -f batchjob
+#batchjob-file generieren
+echo "#$ -S /bin/ksh" >> batchjob
+echo "#$ -cwd" >> batchjob
+echo "#$ -N $QLabel" >> batchjob
+echo "#$ -pe mpich $NP" >> batchjob
+echo "#$ -V" >> batchjob
+echo "#$ -j y" >> batchjob
+echo "#$ -R y" >> batchjob
+echo "#$ -q six">>batchjob
+echo "#$ -M s.rasp@physik.uni-muenchen.de" >> batchjob
+echo "#$ -m e" >> batchjob
+echo "#$ -o $outdir/cosmo.out" >> batchjob
+echo /home/opt/openmpi-1.6.4/bin/mpirun -np $NP $INTLMEXE >> batchjob
 
-/home/opt/openmpi-1.6.4/bin/mpirun -np $NP $INTLMEXE 
+echo "rm -f INPUT_* ">> batchjob
+
+# execute
+chmod u+x batchjob
+qsub $outdir/batchjob
+rm -f batchjob
+
+# /home/opt/openmpi-1.6.4/bin/mpirun -np $NP $INTLMEXE 
