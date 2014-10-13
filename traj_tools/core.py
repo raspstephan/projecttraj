@@ -951,6 +951,36 @@ class TrjObj(object):
 
         # Pass parameters to plots function
         plots.draw_hist(array, idtext, xlabel, savename, log = log)
+        
+    
+    def draw_hist_2d(self, varlist, time, tracerange = None, 
+                     idtext = '', savebase = None):
+        """
+        Draws a 2D histogram of trajectories over a contour map.
+        
+        Parameters
+        ----------
+        varlist : list
+          List of variables to be plotted. E.g. ["PMSL", "TOT_PREC_S"]
+          'CUM_PREC' for cumulative precipitation
+        time : float
+          Time in minutes after model start
+        tracerange : tuple
+          Tuple eg ('P', 700, 1000), only consider trajectories within this 
+          range.
+        idtext : string
+          Text to be displayed in plot
+        savebase : string
+          Path to output directory
+          
+        """
+        
+        if savebase != None:    
+            savename = savebase + 'hist2d_' + str(time).zfill(4) + '.png'
+        else:
+            savename = savebase
+            
+        plots.draw_hist_2d(self, varlist, time, tracerange, idtext, savename)
 
         
      

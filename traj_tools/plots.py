@@ -232,6 +232,58 @@ def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False):
         plt.savefig(savename)
         plt.close('all')
         plt.clf()
+
+
+def draw_hist_2d(obj, varlist, tplot, tracerange = None, 
+                 idtext = '', savename = None):
+    """
+    TODO
+    """
+    
+    # Draw contour maps
+    draw_contour(obj, varlist, tplot, idtext = idtext)
+    
+    # Get arrays for histogram
+    filelist = list(np.unique(obj.filename[obj.data[1] < tplot]))
+    lonlist = []
+    latlist = []
+    tracelist = []
+    for fn in filelist:
+        rootgrp = nc.Dataset(fn, 'r')
+        startt = rootgrp.variables['time'][0] / 60   # Convert to minutes
+        trjind = int((tplot - startt) / obj.dtrj)
+        lonlist.append(rootgrp.variables['longitude'][trjind, :])
+        latlist.append(rootgrp.variables['latitude'][trjind, :])
+        if not tracerange == None:
+            tracelist.append(rootgrp.variables[tracerange[0]][trjind, :])
+        rootgrp.close()
+    lonlist = np.concatenate(lonlist)
+    latlist = np.concatenate(latlist)
+    
+    if not tracerange == None:
+        tracelist = np.concatenate(tracelist)
+        mask = (tracelist > tracerange[1]) & (tracelist < tracerange[2])
+        lonlist = lonlist[mask]
+        latlist = latlist[mask]
+
+    # Plot 2D Histogram
+    norm = plt.Normalize(0, 500)
+    cmap = clr.ListedColormap(['khaki'] + ['yellow'] * 2 + 
+                              ['greenyellow'] * 3 + ['darksage'] * 4 + 
+                              ['darkolivegreen'])
+    dbin = 1   # degrees
+    x_edges = np.arange(obj.xlim[0], obj.xlim[1] + dbin, dbin)
+    y_edges = np.arange(obj.ylim[0], obj.ylim[1] + dbin, dbin)
+    plt.hist2d(lonlist, latlist, alpha = 0.5, zorder = 10, cmin = 1, 
+               range = [obj.xlim, obj.ylim], norm = norm, cmap = cmap, 
+               bins = [x_edges, y_edges])
+    plt.colorbar(shrink = 0.7, extend = 'max')
+    
+    if savename != None:
+        print 'Save figure as', savename
+        plt.savefig(savename)
+        plt.close('all')
+        plt.clf()
         
 
 def draw_contour(obj, varlist, time, idtext, savename = None):
