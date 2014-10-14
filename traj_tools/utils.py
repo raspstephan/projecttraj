@@ -401,7 +401,7 @@ def _loc_filter(filelist, xmin, xmax, ymin, ymax):
     return np.array(boollist)
 
 
-def _delta(filelist, tracer):
+def _delta(filelist, tracer, mode = 'minmax'):
     """
     Calculate difference of given tracer between min und max 'P' values
     
@@ -413,6 +413,12 @@ def _delta(filelist, tracer):
       Ascent criterion in y-direction
     tracer : str 
       COSMO name of y-axis variable
+    mode : string
+      Type of delta calculation
+      'minmax' = diff between minimum and maximum
+      'climb' = cumulative climbed value
+      'climb_r' = reverse of climb
+      'lifespan' = life span of the individual trajectories
       
     Returns
     -------
@@ -427,20 +433,45 @@ def _delta(filelist, tracer):
         pmat = nc.Dataset(f, 'r').variables['P'][:, :]
         trcmat = nc.Dataset(f, 'r').variables[tracer][:, :]
         for j in range(pmat.shape[1]):
-            parray = pmat[:, j][np.isfinite(pmat[:, j])]
-            parray = parray[parray != 0]
-            trcarray = trcmat[:, j][np.isfinite(trcmat[:, j])]
-            parray = trcarray[trcarray != 0]
-            minind = parray.argmin()
-            maxind = parray.argmax()
-            if minind < maxind:
-                delta = trcarray[maxind] - trcarray[minind]
+            
+            if mode == 'minmax':
+                parray = pmat[:, j][np.isfinite(pmat[:, j])]
+                parray = parray[parray != 0]
+                trcarray = trcmat[:, j][np.isfinite(trcmat[:, j])]
+                parray = trcarray[trcarray != 0]
+                minind = parray.argmin()
+                maxind = parray.argmax()
+                if minind < maxind:
+                    delta = trcarray[maxind] - trcarray[minind]
+                else:
+                    delta = trcarray[minind] - trcarray[maxind]
+                if tracer == 'POT_VORTIC' and delta > 0.00005:
+                    delta = np.nan
+                    print 'Detected irregulat PV value, set to NaN!'
+                deltaarray.append(delta)
+            
+            elif mode in ['climb', 'climb_r']:
+                trcarray = trcmat[:, j][np.isfinite(trcmat[:, j])]
+                trcarray = trcarray[trcarray != 0]
+                
+                grad = np.gradient(trcarray)
+                
+                if mode == 'climb':
+                    totdelta = np.sum(grad[grad > 0])
+                else:
+                    totdelta = np.sum(grad[grad < 0])
+                deltaarray.append(totdelta)
+            
+            elif mode == 'lifespan':
+                trcarray = trcmat[:, j][np.isfinite(trcmat[:, j])]
+                trcarray = trcarray[trcarray != 0]
+                
+                span = trcarray.shape[0]
+                deltaarray.append(span)
+                
+                
             else:
-                delta = trcarray[minind] - trcarray[maxind]
-            if tracer == 'POT_VORTIC' and delta > 0.00005:
-                delta = np.nan
-                print 'Detected irregulat PV value, set to NaN!'
-            deltaarray.append(delta)
+                raise Exception('Mode is not valide')
 
     return np.array(deltaarray)
             

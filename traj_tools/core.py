@@ -359,7 +359,7 @@ class TrjObj(object):
         print code, 'has been added.'
         
     
-    def new_delta(self, tracer):
+    def new_delta(self, tracer, mode = 'minmax'):
         """
         Adds a new delta array to data.
         
@@ -367,16 +367,25 @@ class TrjObj(object):
         ----------
         tracer : str (default = 'P')
           COSMO name of y-axis variable
+        mode : string
+          Type of delta calculation
+          'minmax' = diff between minimum and maximum
+          'climb' = cumulative climbed value
+          'climb_r' = reverse of climb
+          'lifespan' = life span of the individual trajectories (tracer does not 
+                       matter)
           
         """
 
-        deltaarray = utils._delta(self.trjfiles, tracer)
+        deltaarray = utils._delta(self.trjfiles, tracer, mode = mode)
         
-        code = 'delta' + tracer
+        code = 'delta' + tracer + mode
         self.datadict[code] = len(self.data)
         
         assert (deltaarray.shape[0] == self.ntrj), \
                 'Array shapes do not match. Look for error in source code.'
+        if mode == 'lifespan':
+            deltaarray *= self.dtrj
         self.data.append(deltaarray)
         print code, 'has been added.'
         
