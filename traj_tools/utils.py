@@ -434,7 +434,7 @@ def _delta(filelist, tracer, mode = 'minmax'):
         trcmat = nc.Dataset(f, 'r').variables[tracer][:, :]
         for j in range(pmat.shape[1]):
             
-            if mode == 'minmax':
+            if mode == 'minmax_abs':
                 parray = pmat[:, j][np.isfinite(pmat[:, j])]
                 parray = parray[parray != 0]
                 trcarray = trcmat[:, j][np.isfinite(trcmat[:, j])]
@@ -445,10 +445,30 @@ def _delta(filelist, tracer, mode = 'minmax'):
                     delta = trcarray[maxind] - trcarray[minind]
                 else:
                     delta = trcarray[minind] - trcarray[maxind]
-                if tracer == 'POT_VORTIC' and delta > 0.00005:
-                    delta = np.nan
-                    print 'Detected irregulat PV value, set to NaN!'
                 deltaarray.append(delta)
+            
+            elif mode in ['mintomax', 'mintomax_r']:
+                # NOTE: This algorithm is an approximation!!!
+                trcarray = trcmat[:, j][np.isfinite(trcmat[:, j])]
+                trcarray = trcarray[trcarray != 0]
+                
+                if mode == 'mintomax_r':
+                    trcarray = -trcarray
+                
+                minind = trcarray.argmin()
+                maxind = trcarray.argmax()
+                
+                if minind < maxind:
+                    delta = trcarray[maxind] - trcarray[minind]
+                else:
+                    predelta = trcarray[:minind].max() - trcarray[0]
+                    postdelta = trcarray[minind:].max() - trcarray[minind]
+                    delta = max(predelta, postdelta)
+                if mode == 'mintomax_r':
+                    delta = -delta
+                deltaarray.append(delta)
+                
+                
             
             elif mode in ['climb', 'climb_r']:
                 trcarray = trcmat[:, j][np.isfinite(trcmat[:, j])]

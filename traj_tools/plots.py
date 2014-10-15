@@ -196,7 +196,8 @@ def draw_avg(dataname, loclist, idlist, idtext = '', centdiff = False,
         
 
 
-def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False):
+def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False,
+              **kwargs):
     """
     Returns/Saves a histogram of given array
     
@@ -215,10 +216,11 @@ def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False):
     
     # Plot histogram, remove nans
     if log:
-        plt.hist(array[np.isfinite(array)], bins = np.logspace(-1, 3, 144))
+        plt.hist(array[np.isfinite(array)], bins = np.logspace(-1, 3, 144), 
+                 **kwargs)
         plt.gca().set_xscale('log')
     else:
-        plt.hist(array[np.isfinite(array)], bins = 144)
+        plt.hist(array[np.isfinite(array)], bins = 144, **kwargs)
         
     
     # Add labels and text
