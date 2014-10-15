@@ -10,8 +10,8 @@
 QLabel=ceu
 
 #Define directories
-indir=/home/scratch/users/stephan.rasp/Case2_20090129/d1euin
-outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d2euout_v2
+indir=/home/scratch/users/stephan.rasp/Case2_20090129/d1euin_seaice
+outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d2euout_v4
 
 #Define time properties
 date=2009012900
@@ -287,7 +287,7 @@ cat > INPUT_TRAJ << end_input_traj
   &TRAJCTL
      istart_mode_traj=2,
      hstop_traj=120.0,
-     hcomb_start_traj=0, 111, 3, 
+     hcomb_start_traj=3, 48, 3, 
      ydir_traj='$outdir',
      
 startfile_traj=
