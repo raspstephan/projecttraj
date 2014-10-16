@@ -962,7 +962,7 @@ class TrjObj(object):
         plots.draw_hist(array, idtext, xlabel, savename, log = log, **kwargs)
         
     
-    def draw_hist_2d(self, varlist, time, tracerange = None, 
+    def draw_hist_2d(self, varlist, time, filtername = None, tracerange = None, 
                      idtext = '', savebase = None):
         """
         Draws a 2D histogram of trajectories over a contour map.
@@ -974,6 +974,8 @@ class TrjObj(object):
           'CUM_PREC' for cumulative precipitation
         time : float
           Time in minutes after model start
+        filtername : string
+          Identiefier of wanted filter
         tracerange : tuple
           Tuple eg ('P', 700, 1000), only consider trajectories within this 
           range.

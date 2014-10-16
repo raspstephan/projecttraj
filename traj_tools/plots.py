@@ -72,7 +72,7 @@ def draw_vs_t(obj, tracer, loclist, idlist, savename = None, sigma = None):
             
     if savename != None:
         print 'Save figure as', savename
-        plt.savefig(savename)
+        plt.savefig(savename, bbox_inches = 'tight')
         plt.close('all')
 
 def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None, 
@@ -138,7 +138,7 @@ def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None,
     
     if savename != None:
         print 'Save figure as', savename
-        plt.savefig(savename)
+        plt.savefig(savename, bbox_inches = 'tight')
         plt.close('all')
 
 
@@ -191,7 +191,7 @@ def draw_avg(dataname, loclist, idlist, idtext = '', centdiff = False,
     
     if savename != None:
         print 'Save figure as', savename
-        plt.savefig(savename)
+        plt.savefig(savename, bbox_inches = 'tight')
         plt.close('all')
         
 
@@ -231,7 +231,7 @@ def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False,
     
     if savename != None:
         print 'Save figure as', savename
-        plt.savefig(savename)
+        plt.savefig(savename, bbox_inches = 'tight')
         plt.close('all')
         plt.clf()
 
@@ -283,7 +283,7 @@ def draw_hist_2d(obj, varlist, tplot, tracerange = None,
     
     if savename != None:
         print 'Save figure as', savename
-        plt.savefig(savename)
+        plt.savefig(savename, bbox_inches = 'tight')
         plt.close('all')
         plt.clf()
         
@@ -743,7 +743,7 @@ def contour(filelist, variable, cosmoind, xlim, ylim, trjstart = None):
         levels = [0.1, 0.3, 1, 3, 10, 100]
         plt.contourf(X, Y, field, levels, colors=cmPrec, extend='max', 
                      alpha = 0.8, zorder = 1)
-        cbar = plt.colorbar(shrink = 0.7)
+        cbar = plt.colorbar(shrink = 0.7, pad = 0)
         cbar.set_label('Precipitation [cm/h]', rotation = 90)
     elif variable == "PMSL":   # Surface pressure
         field = smoothfield(field, 8)/100
