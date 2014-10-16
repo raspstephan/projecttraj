@@ -236,7 +236,7 @@ def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False,
         plt.clf()
 
 
-def draw_hist_2d(obj, varlist, tplot, tracerange = None, 
+def draw_hist_2d(obj, varlist, filelist, idlist, tplot, tracerange = None, 
                  idtext = '', savename = None):
     """
     TODO
@@ -246,18 +246,18 @@ def draw_hist_2d(obj, varlist, tplot, tracerange = None,
     draw_contour(obj, varlist, tplot, idtext = idtext)
     
     # Get arrays for histogram
-    filelist = list(np.unique(obj.filename[obj.data[1] < tplot]))
     lonlist = []
     latlist = []
     tracelist = []
-    for fn in filelist:
-        rootgrp = nc.Dataset(fn, 'r')
+    for i in range(len(filelist)):
+        rootgrp = nc.Dataset(filelist[i], 'r')
         startt = rootgrp.variables['time'][0] / 60   # Convert to minutes
         trjind = int((tplot - startt) / obj.dtrj)
-        lonlist.append(rootgrp.variables['longitude'][trjind, :])
-        latlist.append(rootgrp.variables['latitude'][trjind, :])
+        lonlist.append(rootgrp.variables['longitude'][trjind, idlist[i]])
+        latlist.append(rootgrp.variables['latitude'][trjind, idlist[i]])
         if not tracerange == None:
-            tracelist.append(rootgrp.variables[tracerange[0]][trjind, :])
+            tracelist.append(rootgrp.variables[tracerange[0]][trjind, 
+                                                              idlist[i]])
         rootgrp.close()
     lonlist = np.concatenate(lonlist)
     latlist = np.concatenate(latlist)

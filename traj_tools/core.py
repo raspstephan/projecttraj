@@ -508,8 +508,11 @@ class TrjObj(object):
           Use as second iterator.
           
         """
-        maskid = self.filtdict[filtername]
-        mask = np.array(self.filtlist[maskid], copy = True)
+        if filtername == None:
+            mask = np.array([True] * self.ntrj)  # New mask
+        else:
+            maskid = self.filtdict[filtername]
+            mask = np.array(self.filtlist[maskid], copy = True)
         
         if type(addmask) == np.ndarray:
             mask &= addmask
@@ -986,12 +989,17 @@ class TrjObj(object):
           
         """
         
+        tmask = self.data[1] < time
+        filelist, idlist = self._mask_iter(filtername, addmask = tmask)
+        
+        
         if savebase != None:    
             savename = savebase + 'hist2d_' + str(time).zfill(4) + '.png'
         else:
             savename = savebase
             
-        plots.draw_hist_2d(self, varlist, time, tracerange, idtext, savename)
+        plots.draw_hist_2d(self, varlist, filelist, idlist, time, tracerange, 
+                           idtext, savename)
 
         
      
