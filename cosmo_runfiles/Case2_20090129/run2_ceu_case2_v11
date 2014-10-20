@@ -7,11 +7,11 @@
 # Runfile. Cosmo-EU for Case2
 
 #Define Label for queue
-QLabel=ceu_v9
+QLabel=ceu_c2_v11
 
 #Define directories
-indir=/home/scratch/users/stephan.rasp/Case2_20090129/d1euin_v2
-outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d2euout_v9
+indir=/home/scratch/users/stephan.rasp/Case2_20090129/d1euin_seaice_v2
+outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d2euout_v11
 
 #Define time properties
 date=2009012900
@@ -122,10 +122,10 @@ cat > INPUT_IO  << end_input_io
  &GRIBIN
   lan_t_so0=.TRUE., lan_t_cl=.TRUE., lan_w_cl=.TRUE., lan_vio3=.TRUE.,
   lan_hmo3=.TRUE., lan_plcov=.TRUE., lan_lai=.TRUE., lan_rootdp=.TRUE.,
-  lan_t_snow=.TRUE., lan_w_i=.TRUE., lan_w_snow=.TRUE., lan_rho_snow=.FALSE.,
+  lan_t_snow=.TRUE., lan_w_i=.TRUE., lan_w_snow=.TRUE., lan_rho_snow=.TRUE.,
   hincbound=$hincbound, lan_w_so=.TRUE.,
   lchkini=.TRUE.,    lchkbd =.TRUE., lbdana=.FALSE.,
-  lana_qi=.FALSE.,    llb_qi=.FALSE.,  lana_rho_snow=.FALSE., 
+  lana_qi=.FALSE.,    llb_qi=.FALSE.,  lana_rho_snow=.TRUE., 
   lana_qr_qs=.FALSE., llb_qr_qs=.FALSE.,
   ydirini='$indir',
   ydirbd='$indir',
@@ -246,7 +246,7 @@ cat > INPUT_PHY << end_input_phy
       ke_soil = 7,
       czml_soil = 0.005, 0.02, 0.06, 0.18, 0.54, 1.62, 4.86, 14.58,
     llake=.FALSE.,
-    lseaice=.FALSE.,
+    lseaice=.TRUE.,
     lconv=.TRUE.,
       nincconv=4,
       itype_conv=0,

@@ -7,11 +7,11 @@
 # Runfile. Cosmo-EU for Case2
 
 #Define Label for queue
-QLabel=ceu_v9
+QLabel=ceu_c2_mb
 
 #Define directories
-indir=/home/scratch/users/stephan.rasp/Case2_20090129/d1euin_v2
-outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d2euout_v9
+indir=/home/scratch/users/stephan.rasp/Case2_20090129/d1euin_medbig
+outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d2euout_medbig
 
 #Define time properties
 date=2009012900
@@ -20,7 +20,7 @@ hstop=24
 hincbound=6
 
 #Define grid
-startlon=-25.0; startlat=-28.0; ie=801; je=897
+startlon=-25.0; startlat=-28.0; ie=693; je=771
 pollat=35; pollon=170.0
 
 #Define parallelization
@@ -287,7 +287,7 @@ cat > INPUT_TRAJ << end_input_traj
   &TRAJCTL
      istart_mode_traj=2,
      hstop_traj=24.0,
-     hcomb_start_traj=3, 21, 6, 
+     hcomb_start_traj=3, 21, 3 
      ydir_traj='$outdir',
      
 startfile_traj=

@@ -7,11 +7,11 @@
 # Runfile. Cosmo-EU for Case2
 
 #Define Label for queue
-QLabel=ceu_v9
+QLabel=ceu_c2_v10
 
 #Define directories
 indir=/home/scratch/users/stephan.rasp/Case2_20090129/d1euin_v2
-outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d2euout_v9
+outdir=/home/scratch/users/stephan.rasp/Case2_20090129/d2euout_v10
 
 #Define time properties
 date=2009012900
@@ -291,7 +291,7 @@ cat > INPUT_TRAJ << end_input_traj
      ydir_traj='$outdir',
      
 startfile_traj=
-'/home/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case2_20090129/c2_de.sf',
+'/home/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case2_20090129/c2_eu.sf',
      ninc_out_traj = 10,
      tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM', 'U', 'V', 'W'
   /
