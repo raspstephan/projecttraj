@@ -280,6 +280,20 @@ class TrjObj(object):
         print code, 'has been added.'
     
     
+    def new_max_diff(self, tracer, flip = False):
+        """
+        TODO
+        """
+        
+        diffarray = utils._max_diff(self, tracer, flip)
+        
+        code = tracer + '_max_diff'
+        self.datadict[code] = len(self.data)
+        
+        self.data.append(diffarray)
+        print code, 'has been added.'
+    
+    
     def new_allasct(self, yspan, xmax, tracer = 'P'):
         """
         Creats new array in data, with informations about trajectory ascent 
@@ -829,8 +843,11 @@ class TrjObj(object):
             carray = (startval + stopval) / 2
         
         # Create savename and label names
-        savename = (savebase + '/scatter_' + dataname1 + '_' + dataname2 + '_' +
-                    str(filtername) + '_' + str(idtext))
+        if savebase != None:
+            savename = (savebase + '/scatter_' + dataname1 + '_' + dataname2 
+                        + '_' + str(filtername) + '_' + str(idtext))
+        else: 
+            savename = savebase
         xlabel = 'Time x ' + str(factor1) +' for ' + str(dataname1) + ' [hrs]'
         ylabel = 'Time x ' + str(factor2) +' for ' + str(dataname2) + ' [hrs]'
         

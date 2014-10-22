@@ -362,6 +362,29 @@ def _write2netcdf(conmat, tstart, savebase, fcount):
 # Functions used in core
 ####################################################
 
+def _max_diff(obj, tracer, flip = False):
+    """
+    TODO
+    """
+    
+    difflist = []
+    for fn in obj.trjfiles:
+        print 'Opening ', fn
+        rootgrp = nc.Dataset(fn, 'r')
+        mat = rootgrp.variables[tracer][:, :]
+        
+        for i in range(mat.shape[1]):
+            array = mat[:, i][mat[:,i] != 0]
+            if flip:
+                max_diff = np.gradient(array).min()
+            else:
+                max_diff = np.gradient(array).max()
+            difflist.append(max_diff)
+    return np.array(difflist) / obj.dtrj / 60   # in s^-1
+    
+
+
+
 def _loc_filter(filelist, xmin, xmax, ymin, ymax):
     """
     Returns a boolian array of all trajecories in filelist, indicating if the
