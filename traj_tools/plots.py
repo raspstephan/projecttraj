@@ -105,36 +105,36 @@ def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None,
     ax = plt.gca()   
     #ax.set_aspect('equal')
     if carray == None:
-        carray = 'b'   # Set to default
+        carray = 'blue'   # Set to default
         
     # Convert to hours
     array1 = array1 / 60
-    array2 = array2 / 60
-    
+    #array2 = array2 / 60
+    #plt.scatter(array1, array2)
     # Plot scatter plot, add labels
-    sca = ax.scatter(array1, array2, c = carray, s = 8,
-                     cmap=plt.get_cmap('Spectral'), 
-                     norm=plt.Normalize(100, 1000), linewidths = 0)
+    sca = ax.scatter(array1, array2) #c = carray, s = 8,
+                     #cmap=plt.get_cmap('Spectral'), 
+                     #norm=plt.Normalize(100, 1000), linewidths = 0)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     
     # Set limits, plot diagnonal line, set ticks
-    xmx = np.amax(array1)
-    ymx = np.amax(array2)
+    xmx = np.amax(array1[np.isfinite(array1)])
+    ymx = np.amax(array2[np.isfinite(array2)])
     mx = max(xmx, ymx)
-    plt.xlim(0, xmx)
-    plt.ylim(0, ymx+1)
-    plt.plot([0, mx], [0, mx])
-    plt.xticks(np.arange(0, xmx+3, 3))
-    plt.yticks(np.arange(0, ymx+3, 3))
+    plt.xlim(0, xmx+0.1*xmx)
+    plt.ylim(0, ymx+0.1*ymx)
+    #plt.plot([0, mx], [0, mx])
+    #plt.xticks(np.arange(0, xmx+3, 3))
+    #plt.yticks(np.arange(0, ymx+3, 3))
     
     # Add idtext
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
              fontsize = 6)
-    cb = fig.colorbar(sca, shrink = 0.7)
-    cb.set_label('p')
-    cb.ax.invert_yaxis()
-    ax.set_axis_bgcolor('grey')
+    ##cb = fig.colorbar(sca, shrink = 0.7)
+    ##cb.set_label('p')
+    ##cb.ax.invert_yaxis()
+    ##ax.set_axis_bgcolor('grey')
     
     if savename != None:
         print 'Save figure as', savename
@@ -234,6 +234,35 @@ def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False,
         plt.savefig(savename, bbox_inches = 'tight')
         plt.close('all')
         plt.clf()
+
+
+
+def draw_mult_hist(arrays, idtext = '', xlabel = '', savename = None, **kwargs):
+    """
+    TODO
+    """
+    
+    # Set up figure
+    fig = plt.figure()
+    print arrays
+    # Loop through arrays and plot
+    for array in arrays:
+        array = array[np.isfinite(array)]
+        plt.hist(array, histtype = 'step', bins = 100, normed  = True, 
+                 **kwargs)
+    
+    # Add labels and text
+    plt.ylabel("Number of trajectories")
+    plt.xlabel(xlabel)
+    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
+             fontsize = 6)
+    
+    if savename != None:
+        print 'Save figure as', savename
+        plt.savefig(savename, bbox_inches = 'tight')
+        plt.close('all')
+        plt.clf()
+    
 
 
 def draw_hist_2d(obj, varlist, filelist, idlist, tplot, tracerange = None, 

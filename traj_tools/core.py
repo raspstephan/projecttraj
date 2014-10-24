@@ -563,8 +563,11 @@ class TrjObj(object):
         
         """
         
-        maskid = self.filtdict[filtername]
-        mask = np.array(self.filtlist[maskid], copy = True)
+        if filtername == None:
+            mask = np.array([True] * self.ntrj)  # New mask
+        else:
+            maskid = self.filtdict[filtername]
+            mask = np.array(self.filtlist[maskid], copy = True)
         
         if addmask != None:
             mask &= addmask
@@ -734,7 +737,23 @@ class TrjObj(object):
         self.trjfiles = newlist
                 
                 
-            
+    def get_val_start(self, ascname, tracer):
+        """
+        TODO
+        """
+        
+        starttarray = self._mask_array(None, 'startt')
+        startarray = (self._mask_array(None, ascname + '_start') - 
+                        starttarray) / self.dtrj
+        
+        
+        valarray = utils._get_val_start(self, startarray, tracer)
+        
+        code = tracer + '_at_' + ascname
+        self.datadict[code] = len(self.data)
+        
+        self.data.append(valarray)
+        print code, 'has been added.'
         
     
     
@@ -848,8 +867,11 @@ class TrjObj(object):
                         + '_' + str(filtername) + '_' + str(idtext))
         else: 
             savename = savebase
-        xlabel = 'Time x ' + str(factor1) +' for ' + str(dataname1) + ' [hrs]'
-        ylabel = 'Time x ' + str(factor2) +' for ' + str(dataname2) + ' [hrs]'
+        #xlabel = 'Time x ' + str(factor1) +' for ' + str(dataname1) + ' [hrs]'
+        #ylabel = 'Time x ' + str(factor2) +' for ' + str(dataname2) + ' [hrs]'
+        
+        xlabel = dataname1
+        ylabel = dataname2
         
         # Pass parameters to plots function
         plots.draw_scatter(array1, array2, carray, idtext, xlabel, ylabel, 
@@ -980,8 +1002,32 @@ class TrjObj(object):
 
         # Pass parameters to plots function
         plots.draw_hist(array, idtext, xlabel, savename, log = log, **kwargs)
-        
+
     
+    def draw_mult_hist(self, dataname, objs, filtername = None, idtext = '', 
+                       savebase = None, xlabel = '', **kwargs):
+        """
+        TODO
+        """
+        
+        # Apply filters to arrays and package them
+        arraylist = [self._mask_array(filtername, dataname)]
+        
+        if type(objs) in [list, tuple]:
+            for obj in objs:
+                arraylist.append(obj._mask_iter(filtername, dataname))
+        else:
+            arraylist.append(objs._mask_iter(filtername, dataname))
+        
+        if savebase != None:    
+            savename = savebase + 'multi_hist_' + dataname + '.png'
+        else:
+            savename = savebase
+
+        plots.draw_mult_hist(arraylist, idtext, xlabel, savename, **kwargs)
+        
+
+
     def draw_hist_2d(self, varlist, time, filtername = None, tracerange = None, 
                      idtext = '', savebase = None):
         """

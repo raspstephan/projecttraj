@@ -383,7 +383,32 @@ def _max_diff(obj, tracer, flip = False):
     return np.array(difflist) / obj.dtrj / 60   # in s^-1
     
 
-
+def _get_val_start(obj, ascstart, tracer, span = 2):
+    """
+    TODO
+    """
+    
+    counter = 0
+    vallist = []
+    for fn in obj.trjfiles:
+        print 'Opening ', fn
+        rootgrp = nc.Dataset(fn, 'r')
+        mat = rootgrp.variables[tracer][:, :]
+        for i in range(mat.shape[1]):
+            if np.isfinite(ascstart[counter]):
+                val = mat[ascstart[counter]-span:ascstart[counter]+span, i]
+                val = np.average(val)
+            else:
+                val = np.nan
+            vallist.append(val)
+            counter += 1
+    
+    return np.array(vallist)
+                 
+        
+                   
+                   
+                   
 
 def _loc_filter(filelist, xmin, xmax, ymin, ymax):
     """
