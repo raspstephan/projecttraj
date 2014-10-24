@@ -315,6 +315,118 @@ def draw_hist_2d(obj, varlist, filelist, idlist, tplot, tracerange = None,
         plt.savefig(savename, bbox_inches = 'tight')
         plt.close('all')
         plt.clf()
+
+
+def draw_intersect_hor(obj, filelist, idlist, level, leveltype = 'P', 
+                       idtext = '', savename = None):
+    """
+    TODO
+    """
+    
+    # Draw contour maps
+    draw_contour(obj, [], 0, idtext = idtext)
+    
+    # Initialize plotlists
+    lonplot = []
+    latplot = []
+    velplot = []
+    # Go through trajectory files
+    for i in range(len(filelist)):
+        print 'Calculating intersections for', filelist[i]
+        rootgrp = nc.Dataset(filelist[i], 'r')
+        p = rootgrp.variables['P'][:, :]
+        lons = rootgrp.variables['longitude'][:, :]
+        lats = rootgrp.variables['latitude'][:, :]
+        z = rootgrp.variables['z'][:, :]
+        
+        for j in idlist[i]:
+            if leveltype == 'P':
+                array = p[:, j]
+            elif leveltype == 'z':
+                array = z[:, j]
+            else:
+                raise Exception('Wrong leveltype')
+            
+            mask = np.ma.masked_where(array > level, array)
+            slices = np.ma.notmasked_contiguous(mask)
+            
+            if (np.any(mask.mask) == False) or (np.all(mask.mask) == True):
+                pass
+            elif type(slices) != list:
+                if slices.start != 0:
+                    start = slices.start - 1
+                    stop = slices.start
+                    w1 = np.abs(array[start]) / np.abs(array[start] 
+                                                       - array[stop])
+                    w2 = 1. - w1
+                    lonplot.append(w1 * lons[start, j] + 
+                                   w2 * lons[stop, j])
+                    latplot.append(w1 * lats[start, j] + 
+                                   w2 * lats[stop, j])
+                    vel = np.gradient(z[:, j])
+                    velplot.append(w1 * vel[start] + 
+                                   w2 * vel[stop])
+                if slices.stop != array.shape[0]:
+                    start = slices.stop - 1
+                    stop = slices.stop
+                    w1 = np.abs(array[start]) / np.abs(array[start] 
+                                                       - array[stop])
+                    w2 = 1. - w1
+                    lonplot.append(w1 * lons[start, j] + 
+                                   w2 * lons[stop, j])
+                    latplot.append(w1 * lats[start, j] + 
+                                   w2 * lats[stop, j])
+                    vel = np.gradient(z[:, j])
+                    velplot.append(w1 * vel[start] + 
+                                   w2 * vel[stop])
+                    
+            else:
+                for s in slices:
+                    if s.start != 0:
+                        start = s.start - 1
+                        stop = s.start
+                        w1 = np.abs(array[start]) / np.abs(array[start] 
+                                                        - array[stop])
+                        w2 = 1. - w1
+                        lonplot.append(w1 * lons[start, j] + 
+                                    w2 * lons[stop, j])
+                        latplot.append(w1 * lats[start, j] + 
+                                    w2 * lats[stop, j])
+                        vel = np.gradient(z[:, j])
+                        velplot.append(w1 * vel[start] + 
+                                    w2 * vel[stop])
+                    if s.stop != array.shape[0]:
+                        start = s.stop - 1
+                        stop = s.stop
+                        w1 = np.abs(array[start]) / np.abs(array[start] 
+                                                        - array[stop])
+                        w2 = 1. - w1
+                        lonplot.append(w1 * lons[start, j] + 
+                                    w2 * lons[stop, j])
+                        latplot.append(w1 * lats[start, j] + 
+                                    w2 * lats[stop, j])
+                        vel = np.gradient(z[:, j])
+                        velplot.append(w1 * vel[start] + 
+                                    w2 * vel[stop])
+            
+           
+    velplot = list(np.array(velplot) / obj.dtrj / 60)    
+    plt.scatter(lonplot, latplot, c = velplot, 
+                cmap = plt.get_cmap('Spectral'), norm = plt.Normalize(-100, 100),
+                linewidth = 0.1, s = 10)
+    plt.colorbar()
+                    
+    # Save Plot
+    if savename != None:
+        print "Saving figure as", savename
+        plt.savefig(savename, dpi = 400)
+        plt.close('all')
+        plt.clf()
+
+                
+            
+        
+    
         
 
 def draw_contour(obj, varlist, time, idtext, savename = None):

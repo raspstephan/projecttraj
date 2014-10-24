@@ -1064,7 +1064,23 @@ class TrjObj(object):
         plots.draw_hist_2d(self, varlist, filelist, idlist, time, tracerange, 
                            idtext, savename)
 
+    def draw_intersect_hor(self, level, leveltype = 'P', idtext = '', 
+                           filtername = None, savebase = None):
+        """
+        TODO
+        """
         
+        filelist, idlist = self._mask_iter(filtername)
+        
+        if savebase != None:    
+            savename = savebase + 'intersect_hor_' + str(level) + '.png'
+        else:
+            savename = savebase
+        
+        plots.draw_intersect_hor(self, filelist, idlist, level, leveltype, 
+                                 idtext, savename)
+    
+    
      
     def draw_trj_all(self, varlist, filtername = None, savebase = None, 
                      starts = False, onlyasc = None, trjstart = None, 
