@@ -1073,12 +1073,15 @@ class TrjObj(object):
         filelist, idlist = self._mask_iter(filtername)
         
         if savebase != None:    
-            savename = savebase + 'intersect_hor_' + str(level) + '.png'
+            savename = (savebase + 'intersect_hor_' + str(level) + 
+                        '_' + idtext + '.png')
         else:
             savename = savebase
         
-        plots.draw_intersect_hor(self, filelist, idlist, level, leveltype, 
-                                 idtext, savename)
+        velarray = plots.draw_intersect_hor(self, filelist, idlist, level, 
+                                            leveltype, idtext, savename)
+        return velarray
+        
     
     
      

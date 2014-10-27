@@ -214,6 +214,9 @@ def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False,
     # Set up figure
     fig = plt.figure()
     
+    # Convert to np array
+    array = np.array(array)
+    
     # Plot histogram, remove nans
     if log:
         plt.hist(array[np.isfinite(array)], bins = np.logspace(-1, 3, 144), 
@@ -224,6 +227,7 @@ def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False,
         
     
     # Add labels and text
+    plt.title('Total Number of trajectories: ' + str( array.shape[0]))
     plt.ylabel("Number of trajectories")
     plt.xlabel(xlabel)
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
@@ -346,82 +350,76 @@ def draw_intersect_hor(obj, filelist, idlist, level, leveltype = 'P',
                 array = z[:, j]
             else:
                 raise Exception('Wrong leveltype')
+            # Filter for zeros and nans
+            array = array[np.isfinite(array)]
+            array = array[array != 0]
             
             mask = np.ma.masked_where(array > level, array)
             slices = np.ma.notmasked_contiguous(mask)
-            
+
             if (np.any(mask.mask) == False) or (np.all(mask.mask) == True):
                 pass
             elif type(slices) != list:
                 if slices.start != 0:
                     start = slices.start - 1
                     stop = slices.start
-                    w1 = np.abs(array[start]) / np.abs(array[start] 
-                                                       - array[stop])
-                    w2 = 1. - w1
-                    lonplot.append(w1 * lons[start, j] + 
-                                   w2 * lons[stop, j])
-                    latplot.append(w1 * lats[start, j] + 
-                                   w2 * lats[stop, j])
-                    vel = np.gradient(z[:, j])
-                    velplot.append(w1 * vel[start] + 
-                                   w2 * vel[stop])
+                    velplot, lonplot, latplot = interp_vert_vel(j,
+                            array, z, lons, lats, start, stop, velplot, 
+                            lonplot, latplot, level)
                 if slices.stop != array.shape[0]:
                     start = slices.stop - 1
                     stop = slices.stop
-                    w1 = np.abs(array[start]) / np.abs(array[start] 
-                                                       - array[stop])
-                    w2 = 1. - w1
-                    lonplot.append(w1 * lons[start, j] + 
-                                   w2 * lons[stop, j])
-                    latplot.append(w1 * lats[start, j] + 
-                                   w2 * lats[stop, j])
-                    vel = np.gradient(z[:, j])
-                    velplot.append(w1 * vel[start] + 
-                                   w2 * vel[stop])
+                    velplot, lonplot, latplot = interp_vert_vel(j,
+                            array, z, lons, lats, start, stop, velplot, 
+                            lonplot, latplot, level)
                     
             else:
                 for s in slices:
                     if s.start != 0:
                         start = s.start - 1
                         stop = s.start
-                        w1 = np.abs(array[start]) / np.abs(array[start] 
-                                                        - array[stop])
-                        w2 = 1. - w1
-                        lonplot.append(w1 * lons[start, j] + 
-                                    w2 * lons[stop, j])
-                        latplot.append(w1 * lats[start, j] + 
-                                    w2 * lats[stop, j])
-                        vel = np.gradient(z[:, j])
-                        velplot.append(w1 * vel[start] + 
-                                    w2 * vel[stop])
+                        velplot, lonplot, latplot = interp_vert_vel(j,
+                            array, z, lons, lats, start, stop, velplot, 
+                            lonplot, latplot, level)
                     if s.stop != array.shape[0]:
                         start = s.stop - 1
                         stop = s.stop
-                        w1 = np.abs(array[start]) / np.abs(array[start] 
-                                                        - array[stop])
-                        w2 = 1. - w1
-                        lonplot.append(w1 * lons[start, j] + 
-                                    w2 * lons[stop, j])
-                        latplot.append(w1 * lats[start, j] + 
-                                    w2 * lats[stop, j])
-                        vel = np.gradient(z[:, j])
-                        velplot.append(w1 * vel[start] + 
-                                    w2 * vel[stop])
+                        velplot, lonplot, latplot = interp_vert_vel(j,
+                            array, z, lons, lats, start, stop, velplot, 
+                            lonplot, latplot, level)
             
            
-    velplot = list(np.array(velplot) / obj.dtrj / 60)    
+    velplot = list(np.array(velplot) / obj.dtrj / 60)   # Convert to seconds   
     plt.scatter(lonplot, latplot, c = velplot, 
-                cmap = plt.get_cmap('Spectral'), norm = plt.Normalize(-100, 100),
+                cmap = plt.get_cmap('Spectral_r'), 
+                norm = plt.Normalize(-15, 15), 
                 linewidth = 0.1, s = 10)
-    plt.colorbar()
+    plt.title('Velocity at intersection with ' + leveltype + str(level))
+    cb = plt.colorbar()
+    cb.set_label('Vertical velocity [m/s]')
                     
     # Save Plot
     if savename != None:
         print "Saving figure as", savename
-        plt.savefig(savename, dpi = 400)
+        plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
         plt.close('all')
         plt.clf()
+        
+    return velplot
+        
+def interp_vert_vel(j, array, z, lons, lats, start, stop, velplot, lonplot, 
+                    latplot, level):
+    """
+    Function for use in draw_intersect_hor
+    """
+    w1 = np.abs(array[stop] - level) / np.abs(array[stop] - array[start])
+    w2 = 1. - w1
+    lonplot.append(w1 * lons[start, j] + w2 * lons[stop, j])
+    latplot.append(w1 * lats[start, j] + w2 * lats[stop, j])
+    vel = np.gradient(z[:, j])
+    velplot.append(w1 * vel[start] + w2 * vel[stop])
+    #velplot.append((z[stop, j] - z[start, j]))
+    return velplot, lonplot, latplot
 
                 
             
