@@ -389,13 +389,13 @@ def draw_intersect_hor(obj, filelist, idlist, level, leveltype = 'P',
                             lonplot, latplot, level)
             
            
-    velplot = list(np.array(velplot) / obj.dtrj / 60)   # Convert to seconds   
+    velplot = np.array(velplot) / obj.dtrj / 60   # Convert to seconds   
     plt.scatter(lonplot, latplot, c = velplot, 
-                cmap = plt.get_cmap('Spectral_r'), 
-                norm = plt.Normalize(-15, 15), 
-                linewidth = 0.1, s = 10)
+                cmap = plt.get_cmap('spectral_r'), 
+                norm = clr.LogNorm(0.01, 10), 
+                linewidth = 0.1, s = 5)
     plt.title('Velocity at intersection with ' + leveltype + str(level))
-    cb = plt.colorbar()
+    cb = plt.colorbar(extend = 'max')
     cb.set_label('Vertical velocity [m/s]')
                     
     # Save Plot
@@ -408,16 +408,26 @@ def draw_intersect_hor(obj, filelist, idlist, level, leveltype = 'P',
     return velplot
         
 def interp_vert_vel(j, array, z, lons, lats, start, stop, velplot, lonplot, 
-                    latplot, level):
+                    latplot, level, positive = True):
     """
     Function for use in draw_intersect_hor
+    
     """
     w1 = np.abs(array[stop] - level) / np.abs(array[stop] - array[start])
     w2 = 1. - w1
-    lonplot.append(w1 * lons[start, j] + w2 * lons[stop, j])
-    latplot.append(w1 * lats[start, j] + w2 * lats[stop, j])
+    
     vel = np.gradient(z[:, j])
-    velplot.append(w1 * vel[start] + w2 * vel[stop])
+    intvel = w1 * vel[start] + w2 * vel[stop]
+    if positive:
+        if intvel > 0:
+            lonplot.append(w1 * lons[start, j] + w2 * lons[stop, j])
+            latplot.append(w1 * lats[start, j] + w2 * lats[stop, j])
+            velplot.append(w1 * vel[start] + w2 * vel[stop])
+    else:
+        lonplot.append(w1 * lons[start, j] + w2 * lons[stop, j])
+        latplot.append(w1 * lats[start, j] + w2 * lats[stop, j])
+        velplot.append(w1 * vel[start] + w2 * vel[stop])
+        
     #velplot.append((z[stop, j] - z[start, j]))
     return velplot, lonplot, latplot
 
