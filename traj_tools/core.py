@@ -735,7 +735,15 @@ class TrjObj(object):
             rootgrp.close()
         
         self.trjfiles = newlist
-                
+       
+    def interpolate_3d(self, varname, outint = 60):
+        """
+        TODO
+        """
+        
+        newlist = utils._interpolate_3d(self, varname, outint)
+        self.trjfiles = newlist
+        
                 
     def get_val_start(self, ascname, tracer):
         """

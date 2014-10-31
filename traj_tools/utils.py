@@ -134,8 +134,79 @@ def create_startfile(lonmin, lonmax, dlon,
     f.close() 
                     
 
-def iterpol():
-    pass
+def _interpolate_3d(obj, varname, outint = 60):
+    """
+    TODO
+    """
+    
+    # Get rotated lon/lat and height fields for interpolation
+    hhobj = pwg.getfobj(obj.cfile, 'HH')
+    clons = hhobj.rlons[0, :]
+    clats = hhobj.rlats[:, 0]
+    chhfield = hhobj.data
+    hlevhh = []
+    for lev in range(chhfield.shape[0]-1):
+        hlevhh.append((chhfield[lev] + chhfield[lev+1]) / 2)
+    hlevhh = np.array(hlevhh)
+    
+    # Create new filelist
+    newlist = []
+    for trjfn in obj.trjfiles:
+        newfn = trjfn.rstrip('.nc') + '_' + varname + '.nc'
+        newlist.append(newfn)
+        os.system('cp ' + trjfn + ' ' + newfn)
+        
+    # Iterate over trajectory files
+    for fn in newlist:
+        print 'Opening file:', fn
+        
+        # Open Trajectory file
+        rootgrp = nc.Dataset(fn, 'a')
+        
+        # Read position matrices
+        lon = rootgrp.variables['longitude'][:, :]
+        lat = rootgrp.variables['latitude'][:, :]
+        z = rootgrp.variables['z'][:, :]
+        
+        # Allocate new netCDF array
+        newvar = rootgrp.createVariable(varname, 'f4', ('time', 'id'))
+        
+        # Retrieve trajectory start time
+        trjstart = rootgrp.variables['time'][0] / 60   # In mins       
+        
+        # Iterate over trj times
+        for itrj in range(lon.shape[0]):
+            # Only interpolate if outint
+            if (rootgrp.variables['time'][itrj] / 60) % outint == 0:
+                
+                # Get cosmo index
+                icosmo = int((itrj * obj.dtrj + trjstart) / obj.dacosmo)
+                print icosmo, itrj, rootgrp.variables['time'][itrj] / 60,obj.afiles[icosmo]
+                field = pwg.getfield(obj.afiles[icosmo], varname)
+
+                
+                # Iterate over individual trajectories
+                for trjid in range(lon.shape[1]):
+                    # NOTE: Nearest Neighbor method!
+                    ilon = lon[itrj, trjid]
+                    ilat = lat[itrj, trjid]
+                    iz = z[itrj, trjid]
+                    
+                    # Get nearest lat, lon
+                    lonid = np.abs(clons - ilon).argmin()
+                    latid = np.abs(clats - ilat).argmin()
+                    
+                    # Get closest vertical coordinate
+                    zid = np.abs(hlevhh[:, latid, lonid] - iz).argmin()
+                    # Get nearest neighbor 
+                    newvar[itrj, trjid] = field[zid, latid, lonid]
+            else:
+                newvar[itrj, :] = np.nan
+        
+        # Clean up
+        rootgrp.close()
+
+    return newlist
 
 
                 
