@@ -76,30 +76,53 @@ def draw_vs_t(obj, tracer, loclist, idlist, savename = None, sigma = None):
         plt.close('all')
 
 
-def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None):
+def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
+                       plottype = 'Std'):
     """
     TODO
     """
     istart = 0
+    matlist = []
+    # Round carray to closes value divisable by dtrj
+    carray = obj.dtrj * np.around(carray / obj.dtrj)
+    exttarray = np.arange(-obj.maxmins, obj.maxmins + obj.dtrj, obj.dtrj,
+                          dtype = 'float')
+    
     for i in range(len(loclist)):
         istop = len(idlist[i]) + istart
         print 'Plotting file', i+1, 'of', len(loclist)
         rootgrp = nc.Dataset(loclist[i], 'r')
         tarray = rootgrp.variables['time'][:] / 60   # Convert to minutes
+        
+        # Create extended matrix and tarray
+        exttracemat = np.empty((exttarray.shape[0], len(idlist[i])))
+        exttracemat.fill(np.nan)
+        
+        
+        # Get data and relative times
         tracemat = rootgrp.variables[tracer][:, idlist[i]]
         tmat = np.array([tarray] * len(idlist[i])).transpose()
-        
-        # Round carray to closes value divisable by dtrj
-        carray = obj.dtrj * np.around(carray / obj.dtrj)
         reltmat = tmat - carray[istart:istop]
         istart = istop
         
-        plt.plot(reltmat, tracemat)
-        
-        # Calculate mean array
-        newtarray = np.arange(reltmat.min(), reltmat.max() + obj.dtrj, obj.dtrj)
-        
-        
+        for j in range(len(idlist[i])):
+            ind = np.where(exttarray == reltmat[0, j])[0][0]
+            exttracemat[ind:(ind + tracemat[:, j].shape[0]), j] = tracemat[:, j]
+                    
+        matlist.append(exttracemat)
+    
+    totmat = np.hstack(matlist)    
+    meanarray = np.nanmean(totmat, axis = 1)
+    
+    plt.plot(exttarray, meanarray, 'r')
+    
+    
+    if plottype == 'All':
+        plt.plot(exttarray, totmat, 'grey')
+    elif plottype == 'Std':
+        stdarray = np.nanstd(totmat, axis = 1)
+        plt.plot(exttarray, meanarray - stdarray, 'grey')
+        plt.plot(exttarray, meanarray + stdarray, 'grey')
         
         
         

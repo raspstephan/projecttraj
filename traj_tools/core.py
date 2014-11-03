@@ -18,7 +18,10 @@ import datetime as dt
 import re
 import os
 import scipy.ndimage as ndi
-from scipy.interpolate import RegularGridInterpolator
+try:
+    from scipy.interpolate import RegularGridInterpolator
+except ImportError:
+    print "Interpolate_2d not available"
 
 
 class TrjObj(object):
