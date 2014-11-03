@@ -77,7 +77,7 @@ def draw_vs_t(obj, tracer, loclist, idlist, savename = None, sigma = None):
 
 
 def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
-                       plottype = 'Std'):
+                       plottype = 'Range'):
     """
     TODO
     NOTE: uses a lot of RAM!
@@ -124,7 +124,11 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         stdarray = np.nanstd(totmat, axis = 1)
         plt.plot(exttarray, meanarray - stdarray, 'grey')
         plt.plot(exttarray, meanarray + stdarray, 'grey')
-        
+    elif plottype == 'Range':
+        maxarray = np.nanmax(totmat, axis = 1)
+        minarray = np.nanmin(totmat, axis = 1)
+        plt.plot(exttarray, maxarray, 'grey')
+        plt.plot(exttarray, minarray, 'grey')
         
         
     
