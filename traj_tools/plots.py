@@ -75,6 +75,36 @@ def draw_vs_t(obj, tracer, loclist, idlist, savename = None, sigma = None):
         plt.savefig(savename, bbox_inches = 'tight')
         plt.close('all')
 
+
+def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None):
+    """
+    TODO
+    """
+    istart = 0
+    for i in range(len(loclist)):
+        istop = len(idlist[i]) + istart
+        print 'Plotting file', i+1, 'of', len(loclist)
+        rootgrp = nc.Dataset(loclist[i], 'r')
+        tarray = rootgrp.variables['time'][:] / 60   # Convert to minutes
+        tracemat = rootgrp.variables[tracer][:, idlist[i]]
+        tmat = np.array([tarray] * len(idlist[i])).transpose()
+        
+        # Round carray to closes value divisable by dtrj
+        carray = obj.dtrj * np.around(carray / obj.dtrj)
+        reltmat = tmat - carray[istart:istop]
+        istart = istop
+        
+        plt.plot(reltmat, tracemat)
+        
+        # Calculate mean array
+        newtarray = np.arange(reltmat.min(), reltmat.max() + obj.dtrj, obj.dtrj)
+        
+        
+        
+        
+        
+    
+
 def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None, 
                  ylabel = None, savename = None):
     """

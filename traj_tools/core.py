@@ -817,7 +817,21 @@ class TrjObj(object):
         
         plots.draw_vs_t(self, tracer, loclist, idlist,
                         savename = savename, sigma = sigma)
+  
+  
+    def draw_centered_vs_t(self, tracer, filtername, carray, 
+                           savename = None, sigma = None):
+        """
+        TODO
+        """
+        loclist, idlist = self._mask_iter(filtername)
+        startval = self._mask_array(filtername, carray + '_start')
+        stopval = self._mask_array(filtername, carray + '_stop')
+        carray = (startval + stopval) / 2
+        plots.draw_centered_vs_t(self, loclist, idlist, tracer, carray, 
+                                 savename)
  
+    
     
     def draw_scatter(self, dataname1, dataname2, factor1 = 1, factor2 = 1, 
                      carray = None, filtername = None, idtext = '', 
