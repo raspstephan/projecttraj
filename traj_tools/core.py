@@ -823,7 +823,7 @@ class TrjObj(object):
   
   
     def draw_centered_vs_t(self, tracer, filtername, carray, 
-                           savename = None, sigma = None):
+                           savename = None, sigma = None, plottype = 'Std'):
         """
         TODO
         """
@@ -831,8 +831,9 @@ class TrjObj(object):
         startval = self._mask_array(filtername, carray + '_start')
         stopval = self._mask_array(filtername, carray + '_stop')
         carray = (startval + stopval) / 2
+        
         plots.draw_centered_vs_t(self, loclist, idlist, tracer, carray, 
-                                 savename)
+                                 savename, plottype)
  
     
     

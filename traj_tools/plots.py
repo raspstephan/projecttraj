@@ -80,6 +80,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
                        plottype = 'Std'):
     """
     TODO
+    NOTE: uses a lot of RAM!
     """
     istart = 0
     matlist = []
