@@ -77,13 +77,14 @@ def draw_vs_t(obj, tracer, loclist, idlist, savename = None, sigma = None):
 
 
 def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
-                       plottype = 'Range'):
+                       plottype = 'Range', idtext = '', ylim = None, sigma = 1):
     """
     TODO
     NOTE: uses a lot of RAM!
     """
     istart = 0
     matlist = []
+
     # Round carray to closes value divisable by dtrj
     carray = obj.dtrj * np.around(carray / obj.dtrj)
     exttarray = np.arange(-obj.maxmins, obj.maxmins + obj.dtrj, obj.dtrj,
@@ -102,6 +103,14 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         
         # Get data and relative times
         tracemat = rootgrp.variables[tracer][:, idlist[i]]
+        
+        # Get P data and ser zeros to nan
+        pmat = rootgrp.variables['P'][:, idlist[i]]
+        zmask = pmat == 0
+        tracemat[zmask] = np.nan
+        
+        if tracer == 'var4':
+            tracemat = tracemat * 1e6
         tmat = np.array([tarray] * len(idlist[i])).transpose()
         reltmat = tmat - carray[istart:istop]
         istart = istop
@@ -115,22 +124,84 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
     totmat = np.hstack(matlist)    
     meanarray = np.nanmean(totmat, axis = 1)
     
-    plt.plot(exttarray, meanarray, 'r')
+    mask = np.isfinite(meanarray)
     
+    # Convert time array to hours
+    exttarray = exttarray / 60.
+    
+    # Set up figure
+    #fig = plt.figure(figsize = (12, 8))
     
     if plottype == 'All':
         plt.plot(exttarray, totmat, 'grey')
+        plt.plot(exttarray[mask], meanarray[mask], 'r')
     elif plottype == 'Std':
         stdarray = np.nanstd(totmat, axis = 1)
-        plt.plot(exttarray, meanarray - stdarray, 'grey')
-        plt.plot(exttarray, meanarray + stdarray, 'grey')
+        per5 = np.nanpercentile(totmat, 5, axis = 1)
+        per95 = np.nanpercentile(totmat, 95, axis = 1)
+        plt.plot(exttarray[mask], (meanarray - stdarray)[mask], 'grey')
+        plt.plot(exttarray[mask], (meanarray + stdarray)[mask], 'grey')
+        plt.plot(exttarray[mask], meanarray[mask], 'r')
     elif plottype == 'Range':
         maxarray = np.nanmax(totmat, axis = 1)
         minarray = np.nanmin(totmat, axis = 1)
-        plt.plot(exttarray, maxarray, 'grey')
-        plt.plot(exttarray, minarray, 'grey')
-        
-        
+        plt.plot(exttarray[mask], maxarray[mask], 'grey')
+        plt.plot(exttarray[mask], minarray[mask], 'grey')
+        plt.plot(exttarray[mask], meanarray[mask], 'r')
+    elif plottype == 'Smooth':
+        per5 = np.nanpercentile(totmat, 5, axis = 1)
+        per95 = np.nanpercentile(totmat, 95, axis = 1)
+        smoothper5 = ndi.filters.gaussian_filter(per5[mask], sigma)
+        smoothper95 = ndi.filters.gaussian_filter(per95[mask], sigma)
+        plt.plot(exttarray[mask], smoothper5, 'lightgrey')
+        plt.plot(exttarray[mask], smoothper95, 'lightgrey')
+        per25 = np.nanpercentile(totmat, 25, axis = 1)
+        per75 = np.nanpercentile(totmat, 75, axis = 1)
+        smoothper25 = ndi.filters.gaussian_filter(per25[mask], sigma)
+        smoothper75 = ndi.filters.gaussian_filter(per75[mask], sigma)
+        plt.plot(exttarray[mask], smoothper25, 'darkgrey')
+        plt.plot(exttarray[mask], smoothper75, 'darkgrey')
+        smootharray = ndi.filters.gaussian_filter(meanarray[mask], sigma)
+        plt.plot(exttarray[mask], smootharray, 'r')
+
+    # Set plot properties
+    if ylim == None:
+        ylim = (1.5 * np.nanmin(meanarray), 1.5 * np.nanmax(meanarray))
+    
+    ax = plt.gca()
+    ax.set_ylim(ylim)
+    if tracer == 'P':
+        ax.invert_yaxis()
+    ax.xaxis.set_ticks(np.arange(-120, 120, 12))
+    ax.set_xlim([exttarray[mask].min(), exttarray[mask].max()])
+    ax.grid(True)
+    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
+             fontsize = 6)
+    if tracer == 'var4':
+        tracer == 'PVU'
+    plt.ylabel(tracer)
+    plt.xlabel('Time [hrs] relative to center') 
+    plt.plot([0,0], ylim, color = 'black')
+    
+    if savename != None:
+        print 'Save figure as', savename
+        plt.savefig(savename, bbox_inches = 'tight', dpi = 300)
+        plt.close('all')
+    
+def nanpercentile(a, per):
+    """
+    TODO
+    Move to utils
+    """
+    out = np.empty(a.shape[0])
+    for i in range(a.shape[0]):
+        b = a[i][np.isfinite(a[i])]
+        if b.shape[0] == 0:
+            out[i] = np.nan
+        else:
+            out[i] = np.percentile(b[np.isfinite(b)], per)
+    return out
+
     
 
 def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None, 
