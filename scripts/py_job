@@ -1,0 +1,11 @@
+#$ -S /bin/ksh
+#$ -cwd
+#$ -N plot_trj
+#$ -V
+#$ -j y
+#$ -R y
+#$ -q four,six,eight
+#$ -M s.rasp@physik.uni-muenchen.de
+#$ -l h_rt=5:00:00
+#$ -o /usr/users/stephan.rasp/tmp/job_out.txt
+python plot_centered.py

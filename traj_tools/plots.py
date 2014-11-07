@@ -163,7 +163,9 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         plt.plot(exttarray[mask], smoothper75, 'darkgrey')
         smootharray = ndi.filters.gaussian_filter(meanarray[mask], sigma)
         plt.plot(exttarray[mask], smootharray, 'r')
-
+    
+    del totmat
+    
     # Set plot properties
     if ylim == None:
         ylim = (1.5 * np.nanmin(meanarray), 1.5 * np.nanmax(meanarray))
