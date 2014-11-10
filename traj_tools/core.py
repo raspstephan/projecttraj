@@ -670,6 +670,15 @@ class TrjObj(object):
         self.trjfiles = thetalist
     
     
+    def calc_cape(self):
+        """
+        Calculates CAPE from trajectory position.
+        """
+        newlist = utils._calc_cape(self)
+        self.trjfiles = newlist
+        
+    
+    
     def interpolate_2d(self, varname):
         """
         Adds a surface variable as a tracer to trajectory files.

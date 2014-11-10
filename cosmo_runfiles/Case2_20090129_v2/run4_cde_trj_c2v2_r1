@@ -7,7 +7,7 @@
 #################################################
 
 #Define Label for queue
-QLabel=cde_c2v2_r1
+QLabel=cde_c2_r1
 
 #Define directories
 indir=/home/scratch/users/stephan.rasp/Case2_20090129_v2/d3dein
@@ -15,7 +15,7 @@ outdir=/home/scratch/users/stephan.rasp/Case2_20090129_v2/d4deout_r1
 
 #Define time properties
 date=2009012818
-hstart=12
+hstart=18
 hstop=124
 hincbound=3
 
@@ -79,7 +79,7 @@ end_input_org
 cat > INPUT_IO  << end_input_io
  &IOCTL
   lasync_io=.FALSE, ngribout=3, yform_read='apix',
-  nhour_restart=12,124,6, ydir_restart='$outdir',
+  nhour_restart=0,124,6, ydir_restart='$indir',
  /
  &DATABASE
  /
@@ -185,7 +185,7 @@ cat > INPUT_TRAJ << end_input_traj
 startfile_traj=
 '/home/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case2_20090129_v2/c2_de_v3.sf',
      ninc_out_traj = 10,
-     tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM', 'U', 'V', 'W'
+     tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM', 'U', 'V', 'W','POT_VORTIC'
   /
 end_input_traj
 
@@ -201,17 +201,18 @@ rm -f YU* M_* l* cosmo.out
 echo "#$ -S /bin/ksh" >> batchjob
 echo "#$ -cwd" >> batchjob
 echo "#$ -N $QLabel" >> batchjob
-echo "#$ -pe mpich $NP" >> batchjob
+#echo "#$ -pe mpich $NP" >> batchjob
 #Infiniband
-#echo "#$ -pe mpiib $NP" >> batchjob
+echo "#$ -pe mpiib $NP" >> batchjob
 echo "#$ -V" >> batchjob
 echo "#$ -j y" >> batchjob
 echo "#$ -R y" >> batchjob
 echo "#$ -q eight">>batchjob
 echo "#$ -M s.rasp@physik.uni-muenchen.de" >> batchjob
 echo "#$ -m n" >> batchjob
+echo "#$ -l h_rt=432:00:00" >> batchjob
 echo "#$ -o $outdir/cosmo.out" >> batchjob
-echo /home/opt/openmpi-1.6.4/bin/mpirun -np $NP $COSMOEXE >> batchjob
+echo /home/opt/openmpi-1.6.4/bin/mpirun -mca btl self,tcp -np $NP $COSMOEXE >> batchjob
 
 #execute
 chmod u+x batchjob

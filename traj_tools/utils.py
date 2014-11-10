@@ -11,9 +11,11 @@ import os
 import numpy as np
 import netCDF4 as nc
 import cosmo_utils.pywgrib as pwg
+import cosmo_utils as cu
 import fortran.futils as futils
 import cPickle
 import scipy.ndimage as ndi
+from skewt import SkewT
 
 
 
@@ -145,6 +147,8 @@ def _interpolate_3d(obj, varname, outint = 60):
     clats = hhobj.rlats[:, 0]
     chhfield = hhobj.data
     hlevhh = []
+    
+    # Use cu.derive.hl_to_fl
     for lev in range(chhfield.shape[0]-1):
         hlevhh.append((chhfield[lev] + chhfield[lev+1]) / 2)
     hlevhh = np.array(hlevhh)
@@ -272,6 +276,125 @@ def calc_theta(files):
         
         
     return thetalist
+
+def _calc_cape(obj):
+    """
+    TODO
+    make type of Cosmo file clever!
+    """
+    
+    outint = 60
+    HH = cu.derive.hl_to_fl(pwg.getfobj(obj.cfile, 'HH').data)
+    #P0 = cosmo_ref_p(HH) / 100.   # hPa
+    
+    # Create new filelist
+    newlist = []
+    for trjfn in [obj.trjfiles[0]]:
+        newfn = trjfn.rstrip('.nc') + '_CAPE' + '.nc'
+        newlist.append(newfn)
+        os.system('cp ' + trjfn + ' ' + newfn)
+    
+    for fn in [newlist[0]]:
+        print 'Open file:', fn 
+        rootgrp = nc.Dataset(fn, 'a')
+        tarray = rootgrp.variables['time'][:]
+        lonmat = rootgrp.variables['longitude'][:, :]
+        latmat = rootgrp.variables['latitude'][:, :]
+        pmat = rootgrp.variables['P'][:, :]
+        tempmat = rootgrp.variables['T'][:, :]
+        qvmat = rootgrp.variables['QV'][:, :]
+        
+        newcape = rootgrp.createVariable('CAPE', 'f4', ('time', 'id'))
+        newcin = rootgrp.createVariable('CIN', 'f4', ('time', 'id'))
+        
+        # Retrieve trajectory start time
+        trjstart = rootgrp.variables['time'][0] / 60   # In mins
+        for t in range(tarray.shape[0]):
+            # Only interpolate if outint
+            if (rootgrp.variables['time'][t] / 60) % outint == 0:
+                # Get COSMO Index
+                icosmo = int((t * obj.dtrj + trjstart) / obj.dacosmo)
+                print obj.afiles[icosmo]
+                # Retrieve COSMO fields
+                print 'get cosmo vars'
+                T = pwg.getfobj(obj.afiles[icosmo], 'T')
+                clons = T.rlons[0, :]
+                clats = T.rlats[:, 0]
+                TC = T.data - 273.15   # Convert to Celcius
+                #try:
+                PS = pwg.getfobj(obj.afiles[icosmo], 'PS').data / 100. # hPa
+                #PP = pwg.getfobj(obj.afiles[icosmo], 'PP').data / 100.  # hPa
+                #PS = P0 + PP
+                print 'calc td'
+                QV = pwg.getfobj(obj.afiles[icosmo], 'QV')
+                e  = cu.thermodyn.MixR2VaporPress(QV.data, PS * 100.)
+                TD = cu.thermodyn.DewPoint(e)    
+                TD = np.nan_to_num(TD) # nan to zero
+                TD = np.where(TD == 0., -150., TD)  # zero to -150 C   
+                
+                # Filter COSMO fields
+                
+                for itrj in range(lonmat.shape[1]):
+                    print itrj
+                    # Get parcel variables
+                    lontrj = lonmat[t, itrj]
+                    lattrj = latmat[t, itrj]
+                    ptrj = pmat[t, itrj]
+                    temptrj = tempmat[t, itrj] - 273.15
+                    qvtrj = qvmat[t, itrj]
+                    etrj = cu.thermodyn.MixR2VaporPress(qvtrj, ptrj * 100.)
+                    tempdtrj = cu.thermodyn.DewPoint(etrj)
+                    
+                    # Get closest lat lon from cosmo
+                    lonid = np.abs(clons - lontrj).argmin()
+                    latid = np.abs(clats - lontrj).argmin()
+                    
+                    mydata = dict(zip(('hght','pres','temp','dwpt'),
+                                      (HH[:, latid, lonid], 
+                                       PS[:, latid, lonid],
+                                       TC[:, latid, lonid], 
+                                       TD[:, latid, lonid])))
+                    
+
+                    # Initialize sounding
+                    S = SkewT.Sounding(soundingdata=mydata)
+                    
+                    # calculate CAPE and CIN
+                    try:
+                        trjparcel = (ptrj, temptrj, tempdtrj, 'parcel')
+                        P_lcl, P_lfc, P_el, CAPE, CIN = S.get_cape(*trjparcel)
+                    except AssertionError:
+                        print ptrj, temptrj, tempdtrj
+                        print mydata
+                        x = breakbreak
+                    #print mydata
+                    print ptrj, temptrj, tempdtrj
+                    print P_lcl, P_lfc, P_el, CAPE, CIN
+                    
+                    # Write new value
+                    newcape[t, itrj] = CAPE
+                    newcin[t, itrj] = CIN
+                    
+            else:
+                newcape[t, :] = np.nan
+                newcin[t, :] = np.nan
+        rootgrp.close()
+    return newlist
+                    
+def cosmo_ref_p(z, psl=100000.,Tsl=288.15,beta=42.):
+    """
+    TODO
+    Taken from Tobi!
+    """
+    #Konstanten
+    Rd=287.05; g=9.80665
+    #p0 auf Halblevels berechnen (4.11)
+    p0hl=psl*np.exp(-Tsl*(1.-np.sqrt(1.-2*beta*g*z/(Rd*Tsl**2)))/beta)
+    #p0 auf Vollflaechen interpolieren (4.14)
+    p0=0.5*(p0hl[:,:,1:]+p0hl[:,:,:-1])
+    
+    return p0
+        
     
 
 def convert_pickle2netcdf(indir, outdir):
