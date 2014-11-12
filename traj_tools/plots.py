@@ -102,7 +102,19 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         
         
         # Get data and relative times
-        tracemat = rootgrp.variables[tracer][:, idlist[i]]
+        if tracer == 'CD_w':
+            zmat = rootgrp.variables['z'][:, idlist[i]]
+            if zmat.shape[1] == 1:
+                tracemat = zmat
+                grad = np.gradient(zmat[:, 0])
+                tracemat[:, 0] = grad
+            else:
+                tracemat = np.gradient(zmat)[0]
+                #print tracemat
+            tracemat = tracemat / 60. / obj.dtrj   # m/s
+            #print tracemat
+        else:
+            tracemat = rootgrp.variables[tracer][:, idlist[i]]
         
         # Get P data and ser zeros to nan
         pmat = rootgrp.variables['P'][:, idlist[i]]
@@ -110,7 +122,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         tracemat[zmask] = np.nan
         
         if tracer == 'var4':
-            tracemat = tracemat * 1e6
+            tracemat = tracemat * 1.e6   # PVU
         tmat = np.array([tarray] * len(idlist[i])).transpose()
         reltmat = tmat - carray[istart:istop]
         istart = istop
@@ -520,7 +532,7 @@ def draw_intersect_hor(obj, filelist, idlist, level, leveltype = 'P',
                             lonplot, latplot, level)
             
            
-    velplot = np.array(velplot) / obj.dtrj / 60   # Convert to seconds   
+    velplot = np.array(velplot) / obj.dtrj / 60.   # Convert to seconds   
     plt.scatter(lonplot, latplot, c = velplot, 
                 cmap = plt.get_cmap('spectral_r'), 
                 norm = clr.LogNorm(0.01, 10), 
@@ -564,8 +576,53 @@ def interp_vert_vel(j, array, z, lons, lats, start, stop, velplot, lonplot,
 
                 
             
-        
+def draw_field(obj, field, fieldname, savename = None):
+    """
+    TODO
+    """
+    # Setting up figure
+    fig = plt.figure(figsize = (12,8))
+    ax = plt.gca()   
+    ax.set_aspect('equal')
     
+    ny, nx = field.shape
+    x = np.linspace(obj.xlim[0], obj.xlim[1], nx)
+    y = np.linspace(obj.ylim[0], obj.ylim[1], ny)
+    X, Y = np.meshgrid(x, y)
+    
+    if fieldname == 'var4':
+        sigma = 0
+        field = ndi.filters.gaussian_filter(field * 1.e6, sigma)
+        
+        cdict2 = {'red':   ((0.0, 0.0, 0.0),
+                   (0.5, 0.0, 1.0),
+                   (1.0, 0.1, 1.0)),
+
+         'green': ((0.0, 0.0, 0.0),
+                   (1.0, 0.0, 0.0)),
+
+         'blue':  ((0.0, 0.0, 0.1),
+                   (0.5, 1.0, 0.0),
+                   (1.0, 0.0, 0.0))
+        }
+        clrlist = (3 * ['blue'] + ['lightblue', 'khaki'] +  
+                  ['orange', 'salmon', 'red', 'darkred', 'darkgrey', 'black'])
+        blue_red2 = clr.LinearSegmentedColormap('BlueRed2', cdict2)
+        
+        plt.contourf(X, Y, field, levels = range(-8, 16, 2), 
+                     colors = clrlist)
+        plt.colorbar()
+        plt.contour(X, Y, field, levels = [2.], colors = 'darkgreen', 
+                    extend = 'max')
+    
+    
+    
+    
+    if savename != None:
+        print "Saving figure as", savename
+        plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+        plt.close('all')
+        plt.clf()
         
 
 def draw_contour(obj, varlist, time, idtext, savename = None):
@@ -617,11 +674,12 @@ def draw_contour(obj, varlist, time, idtext, savename = None):
     plt.title(obj.date + timedelta(minutes = time))
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
              fontsize = 6)
+    plt.tight_layout()
     
         
     if savename != None:
         print "Saving figure as", savename
-        plt.savefig(savename, dpi = 400)
+        plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
         plt.close('all')
         plt.clf()
 
@@ -721,7 +779,7 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
     # Save Plot
     if savename != False:
         print "Saving figure as", savename
-        plt.savefig(savename, dpi = 400)
+        plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
         plt.close('all')
         plt.clf()
 
@@ -795,7 +853,7 @@ def draw_trj_evo(obj, varlist, loclist, idlist, tplot,
     # Save Plot
     if savename != None:
         print "Saving figure as", savename
-        plt.savefig(savename, dpi = 400)
+        plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
         plt.close('all')
         plt.clf()
 
@@ -852,7 +910,7 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
     # Save Plot
     if savename != False:
         print "Saving figure as", savename
-        plt.savefig(savename, dpi = 400)
+        plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
         plt.close('all')
         plt.clf()
 
@@ -901,7 +959,7 @@ def draw_asc_loc(obj, lon, lat, p, varlist, tplot, idtext = '', savename = None)
     # Save Plot
     if savename != False:
         print "Saving figure as", savename
-        plt.savefig(savename, dpi = 400)
+        plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
         plt.close('all')
         plt.clf()
 
@@ -1035,7 +1093,8 @@ def contour(filelist, variable, cosmoind, xlim, ylim, trjstart = None):
         field = smoothfield(field, 8)
         levels = list(np.arange(100, 3000, 100))
         plt.contourf(X, Y, field, cmap = plt.get_cmap('hot_r'), 
-                     extend = 'max', levels = levels, alpha = 0.8, zorder = 0.8)
+                     extend = 'max', levels = levels, alpha = 0.8, 
+                     zorder = 0.45)
         cbar = plt.colorbar(shrink = 0.7)
         cbar.set_label('CAPE [J/kg]', rotation = 90)
         

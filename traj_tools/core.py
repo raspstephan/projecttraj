@@ -609,9 +609,9 @@ class TrjObj(object):
         elif varname in pwg.get_fieldtable(self.pfiles[0]).fieldnames:
             cosmoind = int(mins / self.dprcosmo)
             filelist = self.pfiles
-        elif varname in pwg.get_fieldtable(self.halffiles[0]).fieldnames:
-            cosmoind = int(mins / self.dhalfcosmo)
-            filelist = self.halffiles
+        #elif varname in pwg.get_fieldtable(self.halffiles[0]).fieldnames:
+            #cosmoind = int(mins / self.dhalfcosmo)
+            #filelist = self.halffiles
         elif varname in pwg.get_fieldtable(self.afiles[0]).fieldnames:
             cosmoind = int(mins / self.dacosmo)
             filelist = self.afiles
@@ -836,6 +836,7 @@ class TrjObj(object):
                            idtext = '', ylim = None):
         """
         TODO
+        Now also allows tracer "CD_w" = Centered Difference vertical velocity
         """
         
         # Create savename and label names
@@ -1109,6 +1110,7 @@ class TrjObj(object):
             
         plots.draw_hist_2d(self, varlist, filelist, idlist, time, tracerange, 
                            idtext, savename)
+        
 
     def draw_intersect_hor(self, level, leveltype = 'P', idtext = '', 
                            filtername = None, savebase = None):
@@ -1127,8 +1129,21 @@ class TrjObj(object):
         velarray = plots.draw_intersect_hor(self, filelist, idlist, level, 
                                             leveltype, idtext, savename)
         return velarray
-        
     
+        
+    def draw_level(self, varname, level, mins, leveltype = 'PS', 
+                   savebase = None):
+        """
+        TODO
+        """
+        
+        ind, cosmofiles = self._get_index(varname, mins)
+        
+        array = utils._get_level(self, cosmofiles[ind], varname, level, 
+                                 leveltype)
+        plots.draw_field(self, array, varname, savename = savebase)
+        
+        return array
     
      
     def draw_trj_all(self, varlist, filtername = None, savebase = None, 

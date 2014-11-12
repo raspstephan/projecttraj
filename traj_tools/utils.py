@@ -249,11 +249,16 @@ def calc_theta(files):
     assert (len(filelist) > 0), 'No files selected.'
     
     # Create new files
-    thetalist = []
-    for f in filelist:
-        thetaf = f.rstrip('.nc') + '_theta.nc'
-        thetalist.append(thetaf)
-        os.system('cp ' + f + ' ' + thetaf)
+    if 'theta' in filelist[0]:
+        thetalist = filelist
+        newtheta = True
+    else:
+        thetalist = []
+        for f in filelist:
+            thetaf = f.rstrip('.nc') + '_theta.nc'
+            thetalist.append(thetaf)
+            os.system('cp ' + f + ' ' + thetaf)
+        newtheta = False
     
     # Iterate over files in filelist
     for f in thetalist:
@@ -266,9 +271,11 @@ def calc_theta(files):
         qvmat = rootgrp.variables['QV'][:, :]
 
         # Add new array to netCDF file
-        theta = rootgrp.createVariable('THETA', 'f4', ('time', 'id'))
+        if newtheta: 
+            theta = rootgrp.createVariable('THETA', 'f4', ('time', 'id'))
+            theta[:, :] = tmat * ((P0 / pmat) ** (R / CP))
+            
         thetae = rootgrp.createVariable('THETAE', 'f4', ('time', 'id'))
-        theta[:, :] = tmat * ((P0 / pmat) ** (R / CP))
         mix = qvmat / (1 - qvmat)
         thetae[:, :] = theta[:, :] * np.exp(LV / CP * mix / tmat)
         
@@ -395,6 +402,61 @@ def cosmo_ref_p(z, psl=100000.,Tsl=288.15,beta=42.):
     
     return p0
         
+
+def _get_level(obj, filename, varname, level, leveltype = 'PS'):
+    """
+    TODO
+    NOTE: For now only pressure, not height!
+    """
+    
+    # Get pressure field
+    try:
+        levmat = pwg.getfield(filename, leveltype) / 100.   # hPa
+    except:
+        print leveltype, 'not found. Try "PP"!'
+        
+        
+        ppmat = pwg.getfield(filename, 'PP') / 100.   # hPa
+        HHhl = pwg.getfield(obj.cfile, 'HH')
+        print HHhl.shape
+        HHfl = cu.derive.hl_to_fl(HHhl)
+        print HHfl.shape
+        P0 = cosmo_ref_p(HHfl) / 100.   # hPa
+        del HH
+        levmat = P0 + ppmat
+        del P0, ppmat
+        #except:
+            #print 'ERROR! Not possible to get pressure data!'
+    
+    # Get variable array
+    varmat = pwg.getfield(filename, varname)
+    
+    # Get indices
+    minmat = levmat - level
+    posinf = np.copy(minmat)
+    neginf = np.copy(minmat)
+    del minmat
+    posinf[posinf >= 0] = np.inf
+    neginf[neginf < 0] = np.inf
+    
+    negind = np.argmin(np.abs(posinf), axis = 0)
+    posind = np.argmin(np.abs(neginf), axis = 0)
+
+    negval = np.min(np.abs(posinf), axis = 0)
+    posval = np.min(np.abs(neginf), axis = 0)
+    
+    # Create new array and loop over all entries
+    array = np.zeros((varmat.shape[1:]))
+    
+    for i in range(array.shape[0]):
+        for j in range(array.shape[1]):
+            diff = negval[i, j] + posval[i, j]
+            negweight = posval[i, j] / diff
+            posweight = negval[i, j] / diff 
+            array[i, j] = (varmat[negind[i, j], i, j] * negweight + 
+                           varmat[posind[i, j], i, j] * posweight)
+    return array
+
     
 
 def convert_pickle2netcdf(indir, outdir):
