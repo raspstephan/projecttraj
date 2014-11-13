@@ -143,7 +143,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
     
     # Set up figure
     #fig = plt.figure(figsize = (12, 8))
-    
+    plt.plot([0,0], ylim, color = 'black')
     if plottype == 'All':
         plt.plot(exttarray, totmat, 'grey')
         plt.plot(exttarray[mask], meanarray[mask], 'r')
@@ -165,16 +165,16 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         per95 = nanpercentile(totmat, 95)
         smoothper5 = ndi.filters.gaussian_filter(per5[mask], sigma)
         smoothper95 = ndi.filters.gaussian_filter(per95[mask], sigma)
-        plt.plot(exttarray[mask], smoothper5, 'lightgrey')
-        plt.plot(exttarray[mask], smoothper95, 'lightgrey')
+        plt.plot(exttarray[mask], smoothper5, 'lightgrey', linewidth = 1)
+        plt.plot(exttarray[mask], smoothper95, 'lightgrey', linewidth = 1)
         per25 = nanpercentile(totmat, 25)
         per75 = nanpercentile(totmat, 75)
         smoothper25 = ndi.filters.gaussian_filter(per25[mask], sigma)
         smoothper75 = ndi.filters.gaussian_filter(per75[mask], sigma)
-        plt.plot(exttarray[mask], smoothper25, 'darkgrey')
-        plt.plot(exttarray[mask], smoothper75, 'darkgrey')
+        plt.plot(exttarray[mask], smoothper25, 'darkgrey', linewidth = 1)
+        plt.plot(exttarray[mask], smoothper75, 'darkgrey', linewidth = 1)
         smootharray = ndi.filters.gaussian_filter(meanarray[mask], sigma)
-        plt.plot(exttarray[mask], smootharray, 'r')
+        plt.plot(exttarray[mask], smootharray, 'r', linewidth = 1.5)
     
     del totmat
     
@@ -195,7 +195,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         tracer == 'PVU'
     plt.ylabel(tracer)
     plt.xlabel('Time [hrs] relative to center') 
-    plt.plot([0,0], ylim, color = 'black')
+    
     
     if savename != None:
         print 'Save figure as', savename
@@ -340,7 +340,7 @@ def draw_avg(dataname, loclist, idlist, idtext = '', centdiff = False,
 
 
 def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False,
-              **kwargs):
+              mintohrs = False, **kwargs):
     """
     Returns/Saves a histogram of given array
     
@@ -359,6 +359,9 @@ def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False,
     
     # Convert to np array
     array = np.array(array)
+    
+    if mintohrs:
+        array = array / 60.
     
     # Plot histogram, remove nans
     if log:

@@ -961,7 +961,7 @@ class TrjObj(object):
     
         
     def draw_hist(self, data, filtername = None, idtext = '', savebase = None,
-                  log = False, **kwargs):
+                  log = False, mintohrs  = False, **kwargs):
         """
         Make a histogram of the ratio of two parameters.
         dataname1 / dataname 2 adjusted by multiplication factor.
@@ -1048,7 +1048,8 @@ class TrjObj(object):
             raise Exception('Wrong input for data')
 
         # Pass parameters to plots function
-        plots.draw_hist(array, idtext, xlabel, savename, log = log, **kwargs)
+        plots.draw_hist(array, idtext, xlabel, savename, log, mintohrs, 
+                        **kwargs)
 
     
     def draw_mult_hist(self, dataname, objs, filtername = None, idtext = '', 
