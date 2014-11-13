@@ -251,14 +251,14 @@ def calc_theta(files):
     # Create new files
     if 'theta' in filelist[0]:
         thetalist = filelist
-        newtheta = True
+        newtheta = False
     else:
         thetalist = []
         for f in filelist:
             thetaf = f.rstrip('.nc') + '_theta.nc'
             thetalist.append(thetaf)
             os.system('cp ' + f + ' ' + thetaf)
-        newtheta = False
+        newtheta = True
     
     # Iterate over files in filelist
     for f in thetalist:
@@ -271,13 +271,14 @@ def calc_theta(files):
         qvmat = rootgrp.variables['QV'][:, :]
 
         # Add new array to netCDF file
+        tmptheta = tmat * ((P0 / pmat) ** (R / CP))
         if newtheta: 
             theta = rootgrp.createVariable('THETA', 'f4', ('time', 'id'))
-            theta[:, :] = tmat * ((P0 / pmat) ** (R / CP))
+            theta[:, :] = tmptheta
             
         thetae = rootgrp.createVariable('THETAE', 'f4', ('time', 'id'))
         mix = qvmat / (1 - qvmat)
-        thetae[:, :] = theta[:, :] * np.exp(LV / CP * mix / tmat)
+        thetae[:, :] = tmptheta * np.exp(LV / CP * mix / tmat)
         
         rootgrp.close()
         
