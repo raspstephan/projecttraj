@@ -276,7 +276,11 @@ def calc_theta(files):
             theta = rootgrp.createVariable('THETA', 'f4', ('time', 'id'))
             theta[:, :] = tmptheta
             
-        thetae = rootgrp.createVariable('THETAE', 'f4', ('time', 'id'))
+        try: 
+            thetae = rootgrp.createVariable('THETAE', 'f4', ('time', 'id'))
+        except RuntimeError:
+            error = raw_input('Variable name already exists. Continue?')
+            thetae = rootgrp.variables['THETAE'][:, :]
         mix = qvmat / (1 - qvmat)
         thetae[:, :] = tmptheta * np.exp(LV / CP * mix / tmat)
         
@@ -756,22 +760,26 @@ def _delta(filelist, tracer, mode = 'minmax'):
                 # NOTE: This algorithm is an approximation!!!
                 trcarray = trcmat[:, j][np.isfinite(trcmat[:, j])]
                 trcarray = trcarray[trcarray != 0]
+                if trcarray.shape[0] == 0:
+                    deltaarray.append(0)
+                    print ('File broken!')
                 
-                if mode == 'mintomax_r':
-                    trcarray = -trcarray
-                
-                minind = trcarray.argmin()
-                maxind = trcarray.argmax()
-                
-                if minind < maxind:
-                    delta = trcarray[maxind] - trcarray[minind]
                 else:
-                    predelta = trcarray[:minind].max() - trcarray[0]
-                    postdelta = trcarray[minind:].max() - trcarray[minind]
-                    delta = max(predelta, postdelta)
-                if mode == 'mintomax_r':
-                    delta = -delta
-                deltaarray.append(delta)
+                    if mode == 'mintomax_r':
+                        trcarray = -trcarray
+                    
+                    minind = trcarray.argmin()
+                    maxind = trcarray.argmax()
+                    
+                    if minind < maxind:
+                        delta = trcarray[maxind] - trcarray[minind]
+                    else:
+                        predelta = trcarray[:minind].max() - trcarray[0]
+                        postdelta = trcarray[minind:].max() - trcarray[minind]
+                        delta = max(predelta, postdelta)
+                    if mode == 'mintomax_r':
+                        delta = -delta
+                    deltaarray.append(delta)
                 
                 
             

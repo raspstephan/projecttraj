@@ -142,6 +142,11 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
     exttarray = exttarray / 60.
     
     # Set up figure
+    
+    # Set plot properties
+    if ylim == None:
+        ylim = (1.5 * np.nanmin(meanarray), 1.5 * np.nanmax(meanarray))
+    
     #fig = plt.figure(figsize = (12, 8))
     plt.plot([0,0], ylim, color = 'black')
     if plottype == 'All':
@@ -165,16 +170,16 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         per95 = nanpercentile(totmat, 95)
         smoothper5 = ndi.filters.gaussian_filter(per5[mask], sigma)
         smoothper95 = ndi.filters.gaussian_filter(per95[mask], sigma)
-        plt.plot(exttarray[mask], smoothper5, 'lightgrey', linewidth = 1)
-        plt.plot(exttarray[mask], smoothper95, 'lightgrey', linewidth = 1)
+        plt.plot(exttarray[mask], smoothper5, 'lightgrey')
+        plt.plot(exttarray[mask], smoothper95, 'lightgrey')
         per25 = nanpercentile(totmat, 25)
         per75 = nanpercentile(totmat, 75)
         smoothper25 = ndi.filters.gaussian_filter(per25[mask], sigma)
         smoothper75 = ndi.filters.gaussian_filter(per75[mask], sigma)
-        plt.plot(exttarray[mask], smoothper25, 'darkgrey', linewidth = 1)
-        plt.plot(exttarray[mask], smoothper75, 'darkgrey', linewidth = 1)
+        plt.plot(exttarray[mask], smoothper25, 'darkgrey')
+        plt.plot(exttarray[mask], smoothper75, 'darkgrey')
         smootharray = ndi.filters.gaussian_filter(meanarray[mask], sigma)
-        plt.plot(exttarray[mask], smootharray, 'r', linewidth = 1.5)
+        plt.plot(exttarray[mask], smootharray, 'r')
     
     del totmat
     
@@ -215,6 +220,45 @@ def nanpercentile(a, per):
         else:
             out[i] = np.percentile(b[np.isfinite(b)], per)
     return out
+
+
+def draw_scatter_2(obj, varname1, varname2, loclist, idlist, stoparray):
+    """
+    TODO
+    """
+    
+    varlist1 = np.array([])
+    varlist2 = np.array([])
+    
+    
+    cnt = 0   # continuous counter for startarray and stoparray
+    for i in range(len(loclist)):
+        print 'Plotting file', i+1, 'of', len(loclist)
+        rootgrp = nc.Dataset(loclist[i], 'r')
+        
+        var1 = rootgrp.variables[varname1][:, :]
+        var2 = rootgrp.variables[varname2][:, :]
+        p = rootgrp.variables['P'][:, :]
+        
+        for j in idlist[i]:
+            mask = (np.isfinite(p[:, j])) & (p[:, j] != 0)
+            mask &= (np.isfinite(var1[:, j])) & (np.isfinite(var2[:, j]))
+            if not stoparray == None:
+                mask[:stoparray[cnt]] = False
+            varlist1 = np.append(varlist1, var1[:, j][mask])
+            varlist2 = np.append(varlist2, var2[:, j][mask])
+            cnt += 1
+    
+    varlist2 *= 1.e6
+    #plt.scatter(varlist1, varlist2)
+    x_edges = np.arange(0, 1000 + 20, 20)
+    y_edges = np.arange(-20, 20 + 0.8, 0.8)
+    plt.hist2d(varlist1, varlist2, cmin = 1, 
+               norm = clr.LogNorm(1, 10000),
+               bins = [x_edges, y_edges])
+    plt.colorbar()
+    #plt.tight_layout()
+    #plt.gca().set_ylim(-10.e-6, 10.e-6)
 
     
 
@@ -438,8 +482,10 @@ def draw_hist_2d(obj, varlist, filelist, idlist, tplot, tracerange = None,
             tracelist.append(rootgrp.variables[tracerange[0]][trjind, 
                                                               idlist[i]])
         rootgrp.close()
-    lonlist = np.concatenate(lonlist)
-    latlist = np.concatenate(latlist)
+    
+    if len(lonlist) != 0:    
+        lonlist = np.concatenate(lonlist)
+        latlist = np.concatenate(latlist)
     
     if not tracerange == None:
         tracelist = np.concatenate(tracelist)
@@ -459,6 +505,7 @@ def draw_hist_2d(obj, varlist, filelist, idlist, tplot, tracerange = None,
                range = [obj.xlim, obj.ylim], norm = norm, cmap = cmap, 
                bins = [x_edges, y_edges])
     plt.colorbar(shrink = 0.7, extend = 'max')
+    plt.tight_layout()
     
     if savename != None:
         print 'Save figure as', savename
@@ -467,7 +514,7 @@ def draw_hist_2d(obj, varlist, filelist, idlist, tplot, tracerange = None,
         plt.clf()
 
 
-def draw_intersect_hor(obj, filelist, idlist, level, leveltype = 'P', 
+def draw_intersect_hor(obj, tracer, filelist, idlist, level, leveltype = 'P', 
                        idtext = '', savename = None):
     """
     TODO
@@ -479,7 +526,7 @@ def draw_intersect_hor(obj, filelist, idlist, level, leveltype = 'P',
     # Initialize plotlists
     lonplot = []
     latplot = []
-    velplot = []
+    traceplot = []
     # Go through trajectory files
     for i in range(len(filelist)):
         print 'Calculating intersections for', filelist[i]
@@ -488,6 +535,14 @@ def draw_intersect_hor(obj, filelist, idlist, level, leveltype = 'P',
         lons = rootgrp.variables['longitude'][:, :]
         lats = rootgrp.variables['latitude'][:, :]
         z = rootgrp.variables['z'][:, :]
+        if tracer == 'CD_w':
+            tracemat = np.gradient(z)[0] / obj.dtrj / 60.   # m/s
+            positive = True
+        else:
+            tracemat = rootgrp.variables[tracer][:, :]
+            if tracer in ['var4', 'POT_VORTIC']:
+                tracemat = tracemat * 1.e6   # PVU
+            positive = False
         
         for j in idlist[i]:
             if leveltype == 'P':
@@ -497,6 +552,11 @@ def draw_intersect_hor(obj, filelist, idlist, level, leveltype = 'P',
             else:
                 raise Exception('Wrong leveltype')
             # Filter for zeros and nans
+            
+            array = array[np.isfinite(tracemat[:, j])]
+            tracearray = tracemat[:, j][np.isfinite(tracemat[:, j])]
+            lonarray = lons[:, j][np.isfinite(tracemat[:, j])]
+            latarray = lats[:, j][np.isfinite(tracemat[:, j])]
             array = array[np.isfinite(array)]
             array = array[array != 0]
             
@@ -509,40 +569,39 @@ def draw_intersect_hor(obj, filelist, idlist, level, leveltype = 'P',
                 if slices.start != 0:
                     start = slices.start - 1
                     stop = slices.start
-                    velplot, lonplot, latplot = interp_vert_vel(j,
-                            array, z, lons, lats, start, stop, velplot, 
-                            lonplot, latplot, level)
+                    traceplot, lonplot, latplot = interp_vert_vel(j,
+                            array, tracearray, lonarray, latarray, start, stop, traceplot, 
+                            lonplot, latplot, level, positive)
                 if slices.stop != array.shape[0]:
                     start = slices.stop - 1
                     stop = slices.stop
-                    velplot, lonplot, latplot = interp_vert_vel(j,
-                            array, z, lons, lats, start, stop, velplot, 
-                            lonplot, latplot, level)
+                    traceplot, lonplot, latplot = interp_vert_vel(j,
+                            array, tracearray, lonarray, latarray, start, stop, traceplot, 
+                            lonplot, latplot, level, positive)
                     
             else:
                 for s in slices:
                     if s.start != 0:
                         start = s.start - 1
                         stop = s.start
-                        velplot, lonplot, latplot = interp_vert_vel(j,
-                            array, z, lons, lats, start, stop, velplot, 
-                            lonplot, latplot, level)
+                        traceplot, lonplot, latplot = interp_vert_vel(j,
+                            array, tracearray, lonarray, latarray, start, stop, traceplot, 
+                            lonplot, latplot, level, positive)
                     if s.stop != array.shape[0]:
                         start = s.stop - 1
                         stop = s.stop
-                        velplot, lonplot, latplot = interp_vert_vel(j,
-                            array, z, lons, lats, start, stop, velplot, 
-                            lonplot, latplot, level)
+                        traceplot, lonplot, latplot = interp_vert_vel(j,
+                            array, tracearray, lonarray, latarray, start, stop, traceplot, 
+                            lonplot, latplot, level, positive)
             
-           
-    velplot = np.array(velplot) / obj.dtrj / 60.   # Convert to seconds   
-    plt.scatter(lonplot, latplot, c = velplot, 
-                cmap = plt.get_cmap('spectral_r'), 
-                norm = clr.LogNorm(0.01, 10), 
-                linewidth = 0.1, s = 5)
-    plt.title('Velocity at intersection with ' + leveltype + str(level))
-    cb = plt.colorbar(extend = 'max')
-    cb.set_label('Vertical velocity [m/s]')
+            traceplot = np.array(traceplot) / obj.dtrj / 60 # Convert to seconds
+            plt.scatter(lonplot, latplot, c = traceplot,
+                        cmap = plt.get_cmap('spectral_r'),
+                        norm = clr.LogNorm(0.01, 10),
+                        linewidth = 0.1, s = 5)
+            plt.title('Velocity at intersection with ' + leveltype + str(level))
+            cb = plt.colorbar(extend = 'max')
+            cb.set_label('Vertical velocity [m/s]')
                     
     # Save Plot
     if savename != None:
@@ -551,9 +610,9 @@ def draw_intersect_hor(obj, filelist, idlist, level, leveltype = 'P',
         plt.close('all')
         plt.clf()
         
-    return velplot
+    return traceplot
         
-def interp_vert_vel(j, array, z, lons, lats, start, stop, velplot, lonplot, 
+def interp_vert_vel(j, array, tracearray, lonarray, latarray, start, stop, traceplot, lonplot, 
                     latplot, level, positive = True):
     """
     Function for use in draw_intersect_hor
@@ -561,21 +620,19 @@ def interp_vert_vel(j, array, z, lons, lats, start, stop, velplot, lonplot,
     """
     w1 = np.abs(array[stop] - level) / np.abs(array[stop] - array[start])
     w2 = 1. - w1
-    
-    vel = np.gradient(z[:, j])
-    intvel = w1 * vel[start] + w2 * vel[stop]
+    intvel = w1 * tracearray[start] + w2 * tracearray[stop]
     if positive:
         if intvel > 0:
-            lonplot.append(w1 * lons[start, j] + w2 * lons[stop, j])
-            latplot.append(w1 * lats[start, j] + w2 * lats[stop, j])
-            velplot.append(w1 * vel[start] + w2 * vel[stop])
+            lonplot.append(w1 * lonarray[start] + w2 * lonarray[stop])
+            latplot.append(w1 * latarray[start] + w2 * latarray[stop])
+            traceplot.append(w1 * tracearray[start] + w2 * tracearray[stop])
     else:
-        lonplot.append(w1 * lons[start, j] + w2 * lons[stop, j])
-        latplot.append(w1 * lats[start, j] + w2 * lats[stop, j])
-        velplot.append(w1 * vel[start] + w2 * vel[stop])
+        lonplot.append(w1 * lonarray[start] + w2 * lonarray[stop])
+        latplot.append(w1 * latarray[start] + w2 * latarray[stop])
+        traceplot.append(w1 * tracearray[start] + w2 * tracearray[stop])
         
-    #velplot.append((z[stop, j] - z[start, j]))
-    return velplot, lonplot, latplot
+    #traceplot.append((z[stop, j] - z[start, j]))
+    return traceplot, lonplot, latplot
 
                 
             
@@ -656,16 +713,21 @@ def draw_contour(obj, varlist, time, idtext, savename = None):
     basemap(obj.cfile, obj.xlim, obj.ylim)
     
     # Plotting all contour fields
-    for var in varlist:   
+    for i in range(len(varlist)):   
         # NOTE: 'CUM_PREC' not implemented right now
         #if varlist[i] == 'CUM_PREC':
             #contour(rfiles, varlist[i], cosmoind, xlim, ylim, 
                     #trjstart = trjstart)
                     
         # Get index and filelist
-        cosmoind, filelist = obj._get_index(var, time)
-        contour(filelist, var, cosmoind, obj.xlim, obj.ylim)
-
+        if type(varlist[i]) in [list, tuple]:
+            var = varlist[i][0]
+            zlevel = varlist[i][1]
+            cosmoind, filelist = obj._get_index(var, time)
+            contour(filelist, var, cosmoind, obj.xlim, obj.ylim, zlevel)
+        else: 
+            cosmoind, filelist = obj._get_index(varlist[i], time)
+            contour(filelist, varlist[i], cosmoind, obj.xlim, obj.ylim)
         
     # Set plot properties
     plt.xlim(obj.xlim)
@@ -780,7 +842,7 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
     
     
     # Save Plot
-    if savename != False:
+    if savename != None:
         print "Saving figure as", savename
         plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
         plt.close('all')
@@ -789,7 +851,8 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
 
 def draw_trj_evo(obj, varlist, loclist, idlist, tplot, 
                  idtext = '', onlybool = False, startarray = None, 
-                 stoparray  = None, savename = None):
+                 stoparray  = None, savename = None, inrange = None,
+                 linewidth = 0.7, limited = None):
     """
     obj : TrjObj object
       self object
@@ -845,8 +908,23 @@ def draw_trj_evo(obj, varlist, loclist, idlist, tplot,
                     parray = pmat[:, j][pmat[:, j] != 0]
                     lonarray = lonmat[:, j][pmat[:, j] != 0]
                     latarray = latmat[:, j][pmat[:, j] != 0]
+                
+                
+                if inrange != None:
+                    lonarray = lonarray[(parray > inrange[0]) & 
+                                        (parray < inrange[1])]
+                    latarray = latarray[(parray > inrange[0]) & 
+                                        (parray < inrange[1])]
+                    parray = parray[(parray > inrange[0]) & 
+                                        (parray < inrange[1])]
+                if limited != None:
+                    lim = limited / obj.dtrj
+
+                    lonarray = lonarray[-lim:]
+                    latarray = latarray[-lim:]
+                    parray = parray[-lim:]
                     
-                single_trj(lonarray, latarray, parray)
+                single_trj(lonarray, latarray, parray, linewidth = linewidth)
     
     cb = plt.colorbar(lc, shrink = 0.7)
     cb.set_label('p')
@@ -861,32 +939,13 @@ def draw_trj_evo(obj, varlist, loclist, idlist, tplot,
         plt.clf()
 
 def draw_trj_dot(obj, varlist, loclist, idlist, tplus, 
-                 savename = None):
+                 savename = None, idtext = '', inrange = None, cafter = None):
     """
     tplus = time after MODEL start
     """
     
-    # Setting up indices
-    cosmoind = tplus / obj.dcosmo 
-    
-    # Set up figure
-    fig = plt.figure(figsize = (12,8))
-    ax = plt.gca()   
-    ax.set_aspect('equal')
-    basemap(obj.cfile, obj.xlim, obj.ylim)
-    
-    
-    # Plotting all contour fields
-    for i in range(len(varlist)):   # Plotting all contour fields
-        if varlist[i] == 'CUM_PREC':
-            contour(obj.rfiles, varlist[i], cosmoind, obj.xlim, obj.ylim, 
-                    trjstart = trjstart)
-        elif varlist[i] in pwg.get_fieldtable(obj.rfiles[cosmoind]).fieldnames:
-            contour(obj.rfiles, varlist[i], cosmoind, obj.xlim, obj.ylim)
-        elif varlist[i] in pwg.get_fieldtable(obj.pfiles[cosmoind]).fieldnames:
-            contour(obj.pfiles, varlist[i], cosmoind, obj.xlim, obj.ylim)
-        else:
-            raise Exception('Variable' + varlist[i] + 'not available!')
+    draw_contour(obj, varlist, tplus, idtext = idtext)
+    cnt = 0   # continuous counter for startarray and stoparray
     
     # Plot trajectories
     for i in range(len(loclist)):
@@ -894,28 +953,55 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
         rootgrp = nc.Dataset(loclist[i], 'r')
         trjstart = int(rootgrp.variables['time'][0] / 60)
         trjind = (tplus - trjstart) / obj.dtrj
+        if trjind <= 0:
+            break   # Break out of loop
         lonarray = rootgrp.variables['longitude'][trjind, idlist[i]]
         latarray = rootgrp.variables['latitude'][trjind, idlist[i]]
         parray = rootgrp.variables['P'][trjind, idlist[i]]
-    
+        
+        if not inrange == None:
+            norm = plt.Normalize(inrange[0], inrange[1])
+            carray = parray[(parray > inrange[0]) & (parray < inrange[1])]
+            if cafter != None:
+                carray = cafter[cnt:cnt+parray.shape[0]]
+                carray = carray[(parray > inrange[0]) & (parray < inrange[1])]
+                carray = tplus - carray
+                norm = plt.Normalize(-2880, 2880)
+                
+            lonarray = lonarray[(parray > inrange[0]) & (parray < inrange[1])]
+            latarray = latarray[(parray > inrange[0]) & (parray < inrange[1])]
+        else:
+            norm = plt.Normalize(100, 1000)
+        
         lonarray += (180 - obj.pollon)   # Convert to real coordinates
         latarray += (90 - obj.pollat)
         
-        plt.scatter(lonarray, latarray, c = parray, s = 10,
-                    cmap = plt.get_cmap('Spectral'), linewidth = 0.1,
-                    norm=plt.Normalize(100, 1000))
+        cmap = clr.ListedColormap(['darkorange', 'orange', 'khaki', 'beige',
+                                   'greenyellow', 'lawngreen', 'green', 
+                                   'darkolivegreen'])
+        
+        plt.scatter(lonarray, latarray, c = carray, s = 10,
+                    cmap = cmap, linewidth = 0.1,
+                    norm = norm)
+        
         
     # Set plot properties
     plt.xlim(obj.xlim)
     plt.ylim(obj.ylim)
     plt.title(obj.date + timedelta(minutes = tplus))
-        
+    cb = plt.colorbar(shrink = 0.7) 
+    #cb.set_label('P')
+    #cb.ax.invert_yaxis()
+    plt.tight_layout()
+    
     # Save Plot
-    if savename != False:
+    if savename != None:
         print "Saving figure as", savename
         plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
         plt.close('all')
         plt.clf()
+        
+        
 
 def draw_asc_loc(obj, lon, lat, p, varlist, tplot, idtext = '', savename = None):
     """
@@ -1004,7 +1090,7 @@ def basemap(cfile, xlim, ylim):
     del field
     
     
-def contour(filelist, variable, cosmoind, xlim, ylim, trjstart = None):
+def contour(filelist, variable, cosmoind, xlim, ylim, zlevel = None):
     """
     Draws contour plot of one variable.
     
@@ -1053,8 +1139,11 @@ def contour(filelist, variable, cosmoind, xlim, ylim, trjstart = None):
                                 invfile = False)
             field = (field2 - field1)/(dt*2)*3600
     # Retrieve regular fields
+    elif zlevel != None:
+        print zlevel
+        field = pwg.getfield(filelist[cosmoind], variable, levs = zlevel)
     else:
-        field = pwg.getfield(filelist[cosmoind], variable, invfile = False)
+        field = pwg.getfield(filelist[cosmoind], variable)
      
     # Setting up grid
     ny, nx = field.shape
@@ -1100,6 +1189,17 @@ def contour(filelist, variable, cosmoind, xlim, ylim, trjstart = None):
                      zorder = 0.45)
         cbar = plt.colorbar(shrink = 0.7)
         cbar.set_label('CAPE [J/kg]', rotation = 90)
+    elif variable == 'var4':   # PV
+        #field = smoothfield(field, 2)
+        field = field * 1.e6   # PVU
+        levels = list(np.arange(-3, 8, 1))
+        plt.contourf(X, Y, field, cmap = plt.get_cmap('coolwarm'), 
+                     extend = 'both', levels = levels, alpha = 0.5,
+                     zorder = 0.45)
+        cbar = plt.colorbar(shrink = 0.7, pad = 0)
+        cbar.set_label('PV [PVU]', rotation = 90)
+        plt.contour(X, Y, field, color = 'black', levels = [2.], zorder = 0.5, 
+                    linewidth = 4.)
         
     else:   # All other fields, unformatted
         plt.contourf(X, Y, field)
@@ -1122,6 +1222,9 @@ def single_trj(lonarray, latarray, parray, linewidth = 0.7, carray = 'P'):
     
     # get colormap and normalize according to carray
     if carray == 'P':
+        #cmap = clr.ListedColormap(['linen', 'yellow', 'greenyellow', 
+                                   #'darkgreen', 'grey', 'grey', 'grey', 'grey',
+                                   #'grey'])
         cmap = plt.get_cmap('Spectral')
         norm = plt.Normalize(100, 1000)
     elif carray == 'w':
@@ -1132,7 +1235,13 @@ def single_trj(lonarray, latarray, parray, linewidth = 0.7, carray = 'P'):
                                        'lightblue', 'lightsalmon', 
                                        'r', 'violet', 'purple'])
         norm = plt.Normalize(-200, 200)
+    elif carray == 'POT_VORTIC':
+        cmap = plt.get_cmap('Spectral')
+        norm = plt.Normalize(-5e-6, 10e-6)
     else:
+        #cmap = clr.ListedColormap(['white', 'linen', 'yellow', 'greenyellow', 
+                                   #'darkgreen', 'grey', 'grey', 'grey', 'grey',
+                                   #'grey'])
         cmap = plt.get_cmap('Spectral')
         norm = plt.Normalize(0, 1000)
     lc = col.LineCollection(segments, cmap = cmap, norm = norm, alpha = 0.5)

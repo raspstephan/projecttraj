@@ -295,7 +295,21 @@ class TrjObj(object):
         
         self.data.append(diffarray)
         print code, 'has been added.'
-    
+        
+    def new_max(self, tracer):
+        """
+        TODO
+        """
+        
+        diffarray = utils._max_diff(self, tracer)
+        
+        code = tracer + '_max'
+        self.datadict[code] = len(self.data)
+        
+        self.data.append(diffarray)
+        print code, 'has been added.'
+        
+        
     
     def new_allasct(self, yspan, xmax, tracer = 'P'):
         """
@@ -857,6 +871,26 @@ class TrjObj(object):
                                  savename, plottype, idtext, ylim, sigma)
  
     
+    def draw_scatter_2(self, varname1, varname2, filtername = 'WCB', 
+                       after = 'P600'):
+        """
+        TODO
+        Plots one variable against another in a scatter plot, after P600 ascent.
+        """
+        
+        loclist, idlist = self._mask_iter(filtername)
+        if not after == None:
+            starttarray = self._mask_array(filtername, 'startt')
+            stoparray = (self._mask_array(filtername, after + '_stop') - 
+                            starttarray) / self.dtrj   # in time steps
+        else:
+            stoparray = None
+        
+        plots.draw_scatter_2(self, varname1, varname2, loclist, idlist, 
+                             stoparray)
+        
+    
+    
     
     def draw_scatter(self, dataname1, dataname2, factor1 = 1, factor2 = 1, 
                      carray = None, filtername = None, idtext = '', 
@@ -1113,7 +1147,7 @@ class TrjObj(object):
                            idtext, savename)
         
 
-    def draw_intersect_hor(self, level, leveltype = 'P', idtext = '', 
+    def draw_intersect_hor(self, tracer, level, leveltype = 'P', idtext = '', 
                            filtername = None, savebase = None):
         """
         TODO
@@ -1122,13 +1156,14 @@ class TrjObj(object):
         filelist, idlist = self._mask_iter(filtername)
         
         if savebase != None:    
-            savename = (savebase + 'intersect_hor_' + str(level) + 
+            savename = (savebase + 'intersect_hor_' + tracer + str(level) + 
                         '_' + idtext + '.png')
         else:
             savename = savebase
         
-        velarray = plots.draw_intersect_hor(self, filelist, idlist, level, 
-                                            leveltype, idtext, savename)
+        velarray = plots.draw_intersect_hor(self, tracer, filelist, idlist, 
+                                            level, leveltype, idtext, 
+                                            savename)
         return velarray
     
         
@@ -1212,7 +1247,8 @@ class TrjObj(object):
         
     def draw_trj_evo(self, varlist, filtername = None, tafter = None, 
                      interval = None, idtext = '', onlyasc = None, 
-                     savebase = None):
+                     savebase = None, inrange = None, linewidth = 0.7, 
+                     limited = None):
         """
         Draws trajectories at certain times after trajectory start 
         with correct background plots. If several starting times are given in 
@@ -1274,15 +1310,17 @@ class TrjObj(object):
                             str(tplot).zfill(4) + '.png')
             else:
                 savename = savebase
-
+            print limited
             plots.draw_trj_evo(self, varlist, loclist, idlist, tplot, 
                                idtext = idtext, onlybool = onlybool, 
                                startarray = startarray, stoparray = stoparray, 
-                               savename = savename)
+                               savename = savename, inrange = inrange, 
+                               linewidth = linewidth, limited = limited)
     
     def draw_trj_dot(self, varlist, tplus = None, interval = None, 
                      filtername = None, savebase = None, trjstart = None,
-                     onlyasc = None):
+                     onlyasc = None, idtext = '', inrange = None, 
+                     cafter = None):
         """
         Draws trajectoriy position as dots with correct background plots.
         Tplus is now time after model start!
@@ -1300,18 +1338,25 @@ class TrjObj(object):
         tmpmask1 = None
         if not trjstart == None:
             tmpmask1 = self.data[self.datadict['startt']] == trjstart
-        masklist = [tmpmask1]
-        ascind = self.datadict[onlyasc]
+            masklist = [tmpmask1]
+        if not onlyasc == None:
+            ascind = self.datadict[onlyasc]
         for t in tlist:
-           
-            tmpmask2 = (t > self.data[ascind+1]) & (t < self.data[ascind+2])
-            #print (t > self.data[ascind+1]) & (t < self.data[ascind+2])
-            masklist = [x for x in masklist if not x == None]
-            #print masklist
             
-            loclist, idlist = self._mask_iter(filtername, 
-                                              addmask = tmpmask2)
-
+            if not onlyasc == None:
+                tmpmask2 = (t > self.data[ascind+1]) & (t < self.data[ascind+2])
+                masklist = [x for x in masklist if not x == None]
+                loclist, idlist = self._mask_iter(filtername, 
+                                                  addmask = tmpmask2)
+            else: 
+                loclist, idlist = self._mask_iter(filtername) 
+                if cafter != None:
+                    starttarray = self._mask_array(filtername, 'startt')
+                    startval = (self._mask_array(filtername, cafter + '_start') -
+                                starttarray) / self.dtrj
+                    stopval = (self._mask_array(filtername, cafter + '_stop') -
+                               starttarray) / self.dtrj
+                    cafter = (startval + stopval) / 2
             
             
             if savebase != None:  
@@ -1322,7 +1367,8 @@ class TrjObj(object):
                 savename = savebase
 
             plots.draw_trj_dot(self,varlist, loclist, idlist, t, 
-                               savename = savename)
+                               savename = savename, idtext = idtext,
+                               inrange = inrange, cafter = cafter)
     
     def draw_asc_loc(self, dataname, varlist, filtername, tplot, tspan, 
                      idtext = '', savebase = None):
