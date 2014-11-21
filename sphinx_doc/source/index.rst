@@ -15,6 +15,7 @@ Contents:
    traj_tools_core
    traj_tools_plots
    traj_tools_utils
+   traj_tools_cosmoplan
 
 
 
