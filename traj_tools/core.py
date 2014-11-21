@@ -872,10 +872,11 @@ class TrjObj(object):
  
     
     def draw_scatter_2(self, varname1, varname2, filtername = 'WCB', 
-                       after = 'P600'):
+                       after = 'P600', plus = 1440):
         """
         TODO
         Plots one variable against another in a scatter plot, after P600 ascent.
+        - make lims parameters
         """
         
         loclist, idlist = self._mask_iter(filtername)
@@ -883,13 +884,39 @@ class TrjObj(object):
             starttarray = self._mask_array(filtername, 'startt')
             stoparray = (self._mask_array(filtername, after + '_stop') - 
                             starttarray) / self.dtrj   # in time steps
+            startarray = (self._mask_array(filtername, after + '_start') - 
+                          starttarray) / self.dtrj
+            carray = (startarray + stoparray) / 2.
         else:
             stoparray = None
         
+        dplus = plus / self.dtrj
         plots.draw_scatter_2(self, varname1, varname2, loclist, idlist, 
-                             stoparray)
+                             carray, dplus)
         
-    
+    def draw_scatter_3(self, varname, filtername = 'WCB', 
+                       after = 'P600', plus = 1440):
+        """
+        TODO
+        Plots one variable against another in a scatter plot, after P600 ascent.
+        - make lims parameters
+        """
+        
+        loclist, idlist = self._mask_iter(filtername)
+        if not after == None:
+            starttarray = self._mask_array(filtername, 'startt')
+            stoparray = (self._mask_array(filtername, after + '_stop') - 
+                            starttarray) / self.dtrj   # in time steps
+            startarray = (self._mask_array(filtername, after + '_start') - 
+                          starttarray) / self.dtrj
+            carray = (startarray + stoparray) / 2.
+        else:
+            stoparray = None
+        
+        dplus = plus / self.dtrj
+        plots.draw_scatter_3(self, varname, loclist, idlist, 
+                             carray, dplus)
+            
     
     
     def draw_scatter(self, dataname1, dataname2, factor1 = 1, factor2 = 1, 
@@ -987,8 +1014,13 @@ class TrjObj(object):
             cdtext = '_cd'
         else:
             cdtext = ''
-        savename = (savebase + 'avg_' + dataname + cdtext + '_' + filtername + 
+            
+        if savebase != None:
+            savename = (savebase + 'avg_' + dataname + cdtext + '_' + filtername + 
                     '_' + idtext)
+        else: 
+            savename = savebase
+        
         
         plots.draw_avg(dataname, loclist, idlist, idtext, centdiff, savename)
     

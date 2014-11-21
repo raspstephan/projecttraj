@@ -116,10 +116,11 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         else:
             tracemat = rootgrp.variables[tracer][:, idlist[i]]
         
-        # Get P data and ser zeros to nan
+        # Get P data and set zeros to nan
         pmat = rootgrp.variables['P'][:, idlist[i]]
-        zmask = pmat == 0
+        zmask = np.ma.mask_or(pmat == 0, np.isnan(pmat))
         tracemat[zmask] = np.nan
+        tracemat[tracemat == 0] = np.nan
         
         if tracer == 'var4':
             tracemat = tracemat * 1.e6   # PVU
@@ -222,14 +223,16 @@ def nanpercentile(a, per):
     return out
 
 
-def draw_scatter_2(obj, varname1, varname2, loclist, idlist, stoparray):
+def draw_scatter_2(obj, varname1, varname2, loclist, idlist, carray, dplus):
     """
     TODO
+    - only round carray when necessary!
     """
     
     varlist1 = np.array([])
     varlist2 = np.array([])
-    
+    acosmobytrj = obj.dacosmo / obj.dtrj
+    carray = acosmobytrj * np.around(carray / acosmobytrj)   # Round to nearest 60
     
     cnt = 0   # continuous counter for startarray and stoparray
     for i in range(len(loclist)):
@@ -241,24 +244,76 @@ def draw_scatter_2(obj, varname1, varname2, loclist, idlist, stoparray):
         p = rootgrp.variables['P'][:, :]
         
         for j in idlist[i]:
-            mask = (np.isfinite(p[:, j])) & (p[:, j] != 0)
-            mask &= (np.isfinite(var1[:, j])) & (np.isfinite(var2[:, j]))
-            if not stoparray == None:
-                mask[:stoparray[cnt]] = False
-            varlist1 = np.append(varlist1, var1[:, j][mask])
-            varlist2 = np.append(varlist2, var2[:, j][mask])
+            #mask = (np.isfinite(p[:, j])) & (p[:, j] != 0)
+            #mask &= (np.isfinite(var1[:, j])) & (np.isfinite(var2[:, j]))
+            #if not stoparray == None:
+                #mask[:stoparray[cnt]] = False
+            #varlist1 = np.append(varlist1, var1[:, j][mask])
+            #varlist2 = np.append(varlist2, var2[:, j][mask])
+            ind = carray[cnt] + dplus
+            if ind < var1[:, j].shape[0]:
+                if (np.isfinite(p[ind, j])) & (p[ind, j] != 0):
+                    varlist1 = np.append(varlist1, var1[ind, j])
+                    varlist2 = np.append(varlist2, var2[ind, j])
             cnt += 1
     
     varlist2 *= 1.e6
     #plt.scatter(varlist1, varlist2)
     x_edges = np.arange(0, 1000 + 20, 20)
-    y_edges = np.arange(-20, 20 + 0.8, 0.8)
+    y_edges = np.arange(-25, 25 + 1., 1.)
     plt.hist2d(varlist1, varlist2, cmin = 1, 
-               norm = clr.LogNorm(1, 10000),
-               bins = [x_edges, y_edges])
-    plt.colorbar()
-    #plt.tight_layout()
+               norm = clr.LogNorm(1, 1000),
+               bins = [x_edges, y_edges], zorder = 10)
+    plt.colorbar(use_gridspec = True)
+    plt.tight_layout()
+    plt.gcf().subplots_adjust(bottom = 0.1, left = 0.1)
     #plt.gca().set_ylim(-10.e-6, 10.e-6)
+
+
+def draw_scatter_3(obj, varname, loclist, idlist, carray, dplus):
+    """
+    TODO
+    - only round carray when necessary!
+    """
+    draw_contour(obj, [], 1440, idtext = '')
+    
+    varlist = np.array([])
+    lonlist = np.array([])
+    latlist = np.array([])
+    acosmobytrj = obj.dacosmo / obj.dtrj
+    carray = acosmobytrj * np.around(carray / acosmobytrj)   # Round to nearest 60
+    
+    cnt = 0   # continuous counter for startarray and stoparray
+    for i in range(len(loclist)):
+        print 'Plotting file', i+1, 'of', len(loclist)
+        rootgrp = nc.Dataset(loclist[i], 'r')
+        
+        var = rootgrp.variables[varname][:, :]
+        lon = rootgrp.variables['longitude'][:, :]
+        lat = rootgrp.variables['latitude'][:, :]
+        p = rootgrp.variables['P'][:, :]
+        
+        for j in idlist[i]:
+            #mask = (np.isfinite(p[:, j])) & (p[:, j] != 0)
+            #mask &= (np.isfinite(var1[:, j])) & (np.isfinite(var2[:, j]))
+            #if not stoparray == None:
+                #mask[:stoparray[cnt]] = False
+            #varlist1 = np.append(varlist1, var1[:, j][mask])
+            #varlist2 = np.append(varlist2, var2[:, j][mask])
+            if cnt % 3 == 0: 
+                ind = carray[cnt] + dplus
+                if ind < var[:, j].shape[0]:
+                    if (np.isfinite(p[ind, j])) & (p[ind, j] != 0):
+                        varlist = np.append(varlist, var[ind, j])
+                        lonlist = np.append(lonlist, lon[ind, j])
+                        latlist = np.append(latlist, lat[ind, j])
+            cnt += 1
+    
+    varlist *= 1.e6
+    plt.scatter(lonlist, latlist, c = varlist, s = 10, 
+                norm = plt.Normalize(-15, 15), linewidth = 0.1)
+    plt.colorbar(use_gridspec = True)
+    plt.tight_layout()
 
     
 
@@ -371,10 +426,13 @@ def draw_avg(dataname, loclist, idlist, idtext = '', centdiff = False,
                 array = ndi.filters.gaussian_filter(array, 5)
                 array = array / 5   # Convert to Minutes
             newmat.append(array)
-            plt.plot(time, array, 'grey')
+            plt.rc('axes', color_cycle = ['cyan', 'sage', 
+                                          'salmon', 'gold', 'violet', 'brown'])
+            plt.gca().plot(time, array, linewidth = 0.6, alpha = 0.5)
     newmat = np.array(newmat)
     avg = nanmean(newmat, axis = 0)
-    plt.plot(time, avg, 'r')
+    plt.plot(time, avg, 'black', linewidth = 2)
+    plt.gca().set_axis_bgcolor('grey')
     
     if savename != None:
         print 'Save figure as', savename
@@ -972,9 +1030,6 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
             latarray = latarray[(parray > inrange[0]) & (parray < inrange[1])]
         else:
             norm = plt.Normalize(100, 1000)
-        
-        lonarray += (180 - obj.pollon)   # Convert to real coordinates
-        latarray += (90 - obj.pollat)
         
         cmap = clr.ListedColormap(['darkorange', 'orange', 'khaki', 'beige',
                                    'greenyellow', 'lawngreen', 'green', 
