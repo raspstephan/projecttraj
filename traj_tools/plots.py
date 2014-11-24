@@ -79,8 +79,34 @@ def draw_vs_t(obj, tracer, loclist, idlist, savename = None, sigma = None):
 def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
                        plottype = 'Range', idtext = '', ylim = None, sigma = 1):
     """
-    TODO
-    NOTE: uses a lot of RAM!
+    Draws evolution of a tracer of all trajectories given by filter,
+    centered around midpoint of ascent, as given by carray.
+    Now also allows tracer "CD_w" = Centered Difference vertical velocity.
+    
+    Parameters
+    ----------
+    obj : TrjObj object
+      self 
+    loclist : list
+      List of trjfiles
+    idlist : list of lists
+      Indices for each trjfile
+    tracer : string
+      NetCDF name of tracer
+    carray : string
+      Ascent array to be used for centering
+    savename : string
+      Name of file to be saved
+    plottype : string
+      Type of plot. Only 'Smooth' is up to date!
+    idtext : string
+      Id string to be displayed
+    ylim : tuple, list
+      Tuple or list of y-axis limits
+    sigma : float
+      Sigma value for smoothing
+
+    NOTE: Can use a lot of RAM!
     """
     istart = 0
     matlist = []
@@ -210,8 +236,20 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
     
 def nanpercentile(a, per):
     """
-    TODO
-    Move to utils
+    Percentile function ignoring nans
+    
+    Parameters
+    ----------
+    a : np.array
+      Input array
+    per : float
+      Percentile value
+    
+    Returns
+    -------
+    out : np.array
+      Output values
+      
     """
     out = np.empty(a.shape[0])
     for i in range(a.shape[0]):
@@ -223,8 +261,28 @@ def nanpercentile(a, per):
     return out
 
 
-def draw_scatter_2(obj, varname1, varname2, loclist, idlist, carray, dplus):
+def draw_hist_2d(obj, varname1, varname2, loclist, idlist, carray, dplus):
     """
+    Draws a 2D histogram of two variables in filter.
+    'plus' mins after 'after' ascent.
+    
+    Parameters
+    ----------
+    obj : TrjObj object
+      self
+    varname1 : string
+      x-axis variable
+    varname2 : string
+      y-axis variable
+    loclist : list
+      List of trjfiles
+    idlist : list of lists
+      Indices for each trjfile
+    carray : string
+      Name of ascent after which to be plotted
+    dplus : int
+      Time [mins] after ascent to be plotted
+    
     TODO
     - only round carray when necessary!
     """
@@ -492,6 +550,7 @@ def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False,
 def draw_mult_hist(arrays, idtext = '', xlabel = '', savename = None, **kwargs):
     """
     TODO
+    Does not work!
     """
     
     # Set up figure
@@ -517,10 +576,30 @@ def draw_mult_hist(arrays, idtext = '', xlabel = '', savename = None, **kwargs):
     
 
 
-def draw_hist_2d(obj, varlist, filelist, idlist, tplot, tracerange = None, 
+def draw_trj_dens(obj, varlist, filelist, idlist, tplot, tracerange = None, 
                  idtext = '', savename = None):
     """
-    TODO
+    Draws a 2D histogram of trajectories over a contour map.
+        
+    Parameters
+    ----------
+    varlist : list
+      List of variables to be plotted. E.g. ["PMSL", "TOT_PREC_S"]
+      'CUM_PREC' for cumulative precipitation
+    time : float
+      Time in minutes after model start
+    filelist : list
+      List of unique file locations
+    idlist : list
+      List of list of trajectory IDs 
+    tracerange : tuple
+      Tuple eg ('P', 700, 1000), only consider trajectories within this 
+      range.
+    idtext : string
+      Text to be displayed in plot
+    savename : string
+      Name of file to be saved
+        
     """
     
     # Draw contour maps
@@ -575,7 +654,29 @@ def draw_hist_2d(obj, varlist, filelist, idlist, tplot, tracerange = None,
 def draw_intersect_hor(obj, tracer, filelist, idlist, level, leveltype = 'P', 
                        idtext = '', savename = None):
     """
-    TODO
+    Draws value of tracer at intersection with level over bg map
+    
+    Parameters
+    ----------
+    tracer : string
+      NetCDF Name
+    filelist : list
+      List of unique file locations
+    idlist : list
+      List of list of trajectory IDs 
+    level : float
+      value of level
+    leveltype : string
+      Variable name of level
+    idtext : string
+      id text
+    savename : string
+      path to output directory
+      
+    Returns
+    -------
+    traceplot : array
+      values at intersection
     """
     
     # Draw contour maps
@@ -628,13 +729,15 @@ def draw_intersect_hor(obj, tracer, filelist, idlist, level, leveltype = 'P',
                     start = slices.start - 1
                     stop = slices.start
                     traceplot, lonplot, latplot = interp_vert_vel(j,
-                            array, tracearray, lonarray, latarray, start, stop, traceplot, 
+                            array, tracearray, lonarray, latarray, start, stop, 
+                            traceplot, 
                             lonplot, latplot, level, positive)
                 if slices.stop != array.shape[0]:
                     start = slices.stop - 1
                     stop = slices.stop
                     traceplot, lonplot, latplot = interp_vert_vel(j,
-                            array, tracearray, lonarray, latarray, start, stop, traceplot, 
+                            array, tracearray, lonarray, latarray, start, stop, 
+                            traceplot, 
                             lonplot, latplot, level, positive)
                     
             else:
@@ -643,13 +746,15 @@ def draw_intersect_hor(obj, tracer, filelist, idlist, level, leveltype = 'P',
                         start = s.start - 1
                         stop = s.start
                         traceplot, lonplot, latplot = interp_vert_vel(j,
-                            array, tracearray, lonarray, latarray, start, stop, traceplot, 
+                            array, tracearray, lonarray, latarray, start, stop, 
+                            traceplot, 
                             lonplot, latplot, level, positive)
                     if s.stop != array.shape[0]:
                         start = s.stop - 1
                         stop = s.stop
                         traceplot, lonplot, latplot = interp_vert_vel(j,
-                            array, tracearray, lonarray, latarray, start, stop, traceplot, 
+                            array, tracearray, lonarray, latarray, start, stop, 
+                            traceplot, 
                             lonplot, latplot, level, positive)
             
             traceplot = np.array(traceplot) / obj.dtrj / 60 # Convert to seconds
@@ -670,10 +775,11 @@ def draw_intersect_hor(obj, tracer, filelist, idlist, level, leveltype = 'P',
         
     return traceplot
         
-def interp_vert_vel(j, array, tracearray, lonarray, latarray, start, stop, traceplot, lonplot, 
-                    latplot, level, positive = True):
+def interp_vert_vel(j, array, tracearray, lonarray, latarray, start, stop, 
+                    traceplot, lonplot, latplot, level, positive = True):
     """
     Function for use in draw_intersect_hor
+    TODO: docstring
     
     """
     w1 = np.abs(array[stop] - level) / np.abs(array[stop] - array[start])

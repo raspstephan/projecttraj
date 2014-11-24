@@ -138,7 +138,21 @@ def create_startfile(lonmin, lonmax, dlon,
 
 def _interpolate_3d(obj, varname, outint = 60):
     """
-    TODO
+    Adds the closest value (nearest neighbor) to netCDF file.
+    
+    Parameters
+    ----------
+    obj : TrjObj object
+      self object
+    varname : string
+      Name of surface variable
+    outint : integer
+      Output interval of variable
+    
+    Returns
+    -------
+    newlist : list
+      List with new trjfile names
     """
     
     # Get rotated lon/lat and height fields for interpolation
@@ -623,12 +637,12 @@ def _write2netcdf(conmat, tstart, savebase, fcount):
 # Functions used in core
 ####################################################
 
-def _max_diff(obj, tracer, flip = False):
+def _max_cd(obj, tracer, flip = False):
     """
     TODO
     """
     
-    difflist = []
+    cdlist = []
     for fn in obj.trjfiles:
         print 'Opening ', fn
         rootgrp = nc.Dataset(fn, 'r')
@@ -637,16 +651,29 @@ def _max_diff(obj, tracer, flip = False):
         for i in range(mat.shape[1]):
             array = mat[:, i][mat[:,i] != 0]
             if flip:
-                max_diff = np.gradient(array).min()
+                max_cd = np.gradient(array).min()
             else:
-                max_diff = np.gradient(array).max()
-            difflist.append(max_diff)
-    return np.array(difflist) / obj.dtrj / 60   # in s^-1
+                max_cd = np.gradient(array).max()
+            difflist.append(max_cd)
+    return np.array(cdlist) / obj.dtrj / 60   # in s^-1
     
 
 def _get_val_start(obj, ascstart, tracer, span = 2):
     """
-    TODO
+    Returns values of tracer at index given by ascstart.
+    Averages over range plus/minus span.
+    
+    Parameters
+    ----------
+    obj : TrjObj object
+      self
+    ascstart : np.array
+      Array with start indices
+    tracer : string
+      Name of netCDF tracer
+    span : integer
+      Span over shich to average value
+      
     """
     
     counter = 0
@@ -665,11 +692,7 @@ def _get_val_start(obj, ascstart, tracer, span = 2):
             counter += 1
     
     return np.array(vallist)
-                 
-        
-                   
-                   
-                   
+
 
 def _loc_filter(filelist, xmin, xmax, ymin, ymax):
     """

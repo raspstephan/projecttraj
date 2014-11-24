@@ -283,32 +283,26 @@ class TrjObj(object):
         print code, 'has been added.'
     
     
-    def new_max_diff(self, tracer, flip = False):
+    def new_max_cd(self, tracer, flip = False):
         """
-        TODO
+        Adds maximum centered difference velocity in m/s to data.
+        
+        Parameters
+        ----------
+        tracer : string
+          Name of tracer
+        flip : bool
+          If true array is flipped. E.g. for pressure
+        
         """
         
-        diffarray = utils._max_diff(self, tracer, flip)
+        diffarray = utils._max_cd(self, tracer, flip)
         
-        code = tracer + '_max_diff'
+        code = tracer + '_max_cd'
         self.datadict[code] = len(self.data)
         
         self.data.append(diffarray)
-        print code, 'has been added.'
-        
-    def new_max(self, tracer):
-        """
-        TODO
-        """
-        
-        diffarray = utils._max_diff(self, tracer)
-        
-        code = tracer + '_max'
-        self.datadict[code] = len(self.data)
-        
-        self.data.append(diffarray)
-        print code, 'has been added.'
-        
+        print code, 'has been added.' 
         
     
     def new_allasct(self, yspan, xmax, tracer = 'P'):
@@ -363,13 +357,10 @@ class TrjObj(object):
         print code, 'has been added.'
         
         
-    
     def new_loc_filter(self, xmin, xmax, ymin, ymax):
         """
         Adds a boolian array indicating if respective trajectories passed 
-        through the given rectangle. 
-        
-        NOTE: For now in rotated coords.
+        through the given rectangle. In rotated coordinates
         
         xmin : float
           Lower x boundary
@@ -633,9 +624,7 @@ class TrjObj(object):
             raise Exception (varname, 'not found!')
         return cosmoind, filelist
         
-        
-    
-    
+
     def saveme(self, savename):
         """
         Saves class object under savename.
@@ -669,6 +658,7 @@ class TrjObj(object):
         pickle.dump(self.filtdict, f, 2)
         f.close()
         print 'Saved as', savename
+
         
     def calc_theta(self):
         """
@@ -762,9 +752,17 @@ class TrjObj(object):
         
         self.trjfiles = newlist
        
+       
     def interpolate_3d(self, varname, outint = 60):
-        """
-        TODO
+        """        
+        Adds the closest value (nearest neighbor) to netCDF file.
+        
+        Parameters
+        ----------
+        varname : string
+          Name of surface variable
+        outint : integer
+          Output interval of variable
         """
         
         newlist = utils._interpolate_3d(self, varname, outint)
@@ -773,7 +771,15 @@ class TrjObj(object):
                 
     def get_val_start(self, ascname, tracer):
         """
-        TODO
+        Adds value at start of ascent to data.
+        
+        Parameters
+        ----------
+        ascname : string
+          Name of ascent identifier
+        tracer : string
+          netCDF tracer to be evaluated
+          
         """
         
         starttarray = self._mask_array(None, 'startt')
@@ -793,7 +799,7 @@ class TrjObj(object):
     
     def interpolate_value(self, totind, time, trjtracer, cosmotracer):
         """
-        TODO
+        Testing function, not sure for what!!!
         """
         
         # Get correct time indices
@@ -846,11 +852,32 @@ class TrjObj(object):
   
   
     def draw_centered_vs_t(self, tracer, filtername, carray, 
-                           savebase = None, sigma = 1, plottype = 'Std', 
+                           savebase = None, sigma = 1, plottype = 'Smooth', 
                            idtext = '', ylim = None):
         """
-        TODO
-        Now also allows tracer "CD_w" = Centered Difference vertical velocity
+        Draws evolution of a tracer of all trajectories given by filter,
+        centered around midpoint of ascent, as given by carray.
+        Now also allows tracer "CD_w" = Centered Difference vertical velocity.
+        
+        Parameters
+        ----------
+        tracer : string
+          NetCDF name of tracer
+        filtername : string
+          Name of filter
+        carray : string
+          Ascent array to be used for centering
+        savebase : string
+          Path to output directory
+        sigma : float
+          Sigma value for smoothing
+        plottype : string
+          Type of plot. Only 'Smooth' is up to date!
+        idtext : string
+          Id string to be displayed
+        ylim : tuple, list
+          Tuple or list of y-axis limits
+          
         """
         
         # Create savename and label names
@@ -871,12 +898,25 @@ class TrjObj(object):
                                  savename, plottype, idtext, ylim, sigma)
  
     
-    def draw_scatter_2(self, varname1, varname2, filtername = 'WCB', 
+    def draw_hist_2d(self, varname1, varname2, filtername = 'WCB', 
                        after = 'P600', plus = 1440):
         """
-        TODO
-        Plots one variable against another in a scatter plot, after P600 ascent.
-        - make lims parameters
+        Draws a 2D histogram of two variables in filter.
+        'plus' mins after 'after' ascent.
+        
+        Parameters
+        ----------
+        varname1 : string
+          x-axis variable
+        varname2 : string
+          y-axis variable
+        filtername : string
+          Name of filter
+        after : string
+          Name of ascent after which to be plotted
+        plus : int
+          Time [mins] after ascent to be plotted
+          
         """
         
         loclist, idlist = self._mask_iter(filtername)
@@ -891,13 +931,17 @@ class TrjObj(object):
             stoparray = None
         
         dplus = plus / self.dtrj
-        plots.draw_scatter_2(self, varname1, varname2, loclist, idlist, 
+        plots.draw_hist_2d(self, varname1, varname2, loclist, idlist, 
                              carray, dplus)
+        
         
     def draw_scatter_3(self, varname, filtername = 'WCB', 
                        after = 'P600', plus = 1440):
         """
-        TODO
+        Draws trajectory positions with color coded varname on bg plot,
+        plus mins after ascent!
+        TODO: doc string
+        NOTE: Not clear if extra function is needed
         Plots one variable against another in a scatter plot, after P600 ascent.
         - make lims parameters
         """
@@ -1122,6 +1166,7 @@ class TrjObj(object):
                        savebase = None, xlabel = '', **kwargs):
         """
         TODO
+        Does not work!
         """
         
         # Apply filters to arrays and package them
@@ -1142,7 +1187,7 @@ class TrjObj(object):
         
 
 
-    def draw_hist_2d(self, varlist, time, filtername = None, tracerange = None, 
+    def draw_trj_dens(self, varlist, time, filtername = None, tracerange = None, 
                      idtext = '', savebase = None):
         """
         Draws a 2D histogram of trajectories over a contour map.
@@ -1175,14 +1220,34 @@ class TrjObj(object):
         else:
             savename = savebase
             
-        plots.draw_hist_2d(self, varlist, filelist, idlist, time, tracerange, 
+        plots.draw_trj_dens(self, varlist, filelist, idlist, time, tracerange, 
                            idtext, savename)
         
 
     def draw_intersect_hor(self, tracer, level, leveltype = 'P', idtext = '', 
                            filtername = None, savebase = None):
         """
-        TODO
+        Draws value of tracer at intersection with level over bg map
+        
+        Parameters
+        ----------
+        tracer : string
+          NetCDF Name
+        level : float
+          value of level
+        leveltype : string
+          Variable name of level
+        idtext : string
+          id text
+        filtername : string
+          Name of filter
+        savebase : string
+          path to output directory
+          
+        Returns
+        -------
+        velarray : array
+          Array with values at intersection
         """
         
         filelist, idlist = self._mask_iter(filtername)
