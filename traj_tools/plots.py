@@ -77,7 +77,8 @@ def draw_vs_t(obj, tracer, loclist, idlist, savename = None, sigma = None):
 
 
 def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
-                       plottype = 'Range', idtext = '', ylim = None, sigma = 1):
+                       plottype = 'Smooth', idtext = '', ylim = None, 
+                       xlim = None, sigma = 1):
     """
     Draws evolution of a tracer of all trajectories given by filter,
     centered around midpoint of ascent, as given by carray.
@@ -103,6 +104,8 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
       Id string to be displayed
     ylim : tuple, list
       Tuple or list of y-axis limits
+    xlim : tuple, list
+      Tuple or list of x-axis limits
     sigma : float
       Sigma value for smoothing
 
@@ -169,13 +172,19 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
     exttarray = exttarray / 60.
     
     # Set up figure
+    fig = plt.figure(figsize = (10, 8))
+    ax = plt.gca()
     
     # Set plot properties
     if ylim == None:
         ylim = (1.5 * np.nanmin(meanarray), 1.5 * np.nanmax(meanarray))
+    if xlim == None:
+        xlim = [exttarray[mask].min(), exttarray[mask].max()]
     
-    #fig = plt.figure(figsize = (12, 8))
-    plt.plot([0,0], ylim, color = 'black')
+    plt.plot([0, 0], ylim, color = 'dimgrey', linewidth = 2)
+    plt.plot(xlim, [0, 0], color = 'dimgrey', linewidth = 2)
+    
+    
     if plottype == 'All':
         plt.plot(exttarray, totmat, 'grey')
         plt.plot(exttarray[mask], meanarray[mask], 'r')
@@ -207,26 +216,58 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         plt.plot(exttarray[mask], smoothper75, 'darkgrey')
         smootharray = ndi.filters.gaussian_filter(meanarray[mask], sigma)
         plt.plot(exttarray[mask], smootharray, 'r')
-    
+    elif plottype == 'Fill':
+        per5 = nanpercentile(totmat, 5)
+        per95 = nanpercentile(totmat, 95)
+        smoothper5 = ndi.filters.gaussian_filter(per5[mask], sigma)
+        smoothper95 = ndi.filters.gaussian_filter(per95[mask], sigma)
+        ax.fill_between(exttarray[mask], smoothper5, smoothper95, 
+                        facecolor = 'lightgrey', edgecolor = 'lightgrey',
+                        label = '90%')
+        
+        per25 = nanpercentile(totmat, 25)
+        per75 = nanpercentile(totmat, 75)
+        smoothper25 = ndi.filters.gaussian_filter(per25[mask], sigma)
+        smoothper75 = ndi.filters.gaussian_filter(per75[mask], sigma)
+        ax.fill_between(exttarray[mask], smoothper25, smoothper75, 
+                        facecolor = 'darkgrey', edgecolor = 'darkgrey',
+                        label = '50%')
+        
+        per50 = nanpercentile(totmat, 50)
+        smoothper50 = ndi.filters.gaussian_filter(per50[mask], sigma)
+        l2, = plt.plot(exttarray[mask], smoothper50, 'black')
+        
+        smootharray = ndi.filters.gaussian_filter(meanarray[mask], sigma)
+        l1, = plt.plot(exttarray[mask], smootharray, 'firebrick', linewidth = 2)
+        # Get filled colors as legends
+        r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
+        r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
+        plt.legend([l1, l2, r1, r2], ['mean', 'median', '50%', '90%'])
+        
     del totmat
     
-    # Set plot properties
-    if ylim == None:
-        ylim = (1.5 * np.nanmin(meanarray), 1.5 * np.nanmax(meanarray))
-    
-    ax = plt.gca()
     ax.set_ylim(ylim)
     if tracer == 'P':
         ax.invert_yaxis()
-    ax.xaxis.set_ticks(np.arange(-120, 120, 12))
-    ax.set_xlim([exttarray[mask].min(), exttarray[mask].max()])
-    ax.grid(True)
+    if (xlim[1] - xlim[0]) < 24:
+        dtick = 1
+    elif (xlim[1] - xlim[0]) < 48:
+        dtick = 6
+    else:
+        dtick = 12
+    ax.xaxis.set_ticks(np.arange(-120, 120, dtick))
+    ax.set_xlim(xlim)
+    ax.grid(color = 'dimgrey', linestyle = '-')
+    ax.set_frame_on(False)
+    plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
              fontsize = 6)
     if tracer == 'var4':
         tracer == 'PVU'
     plt.ylabel(tracer)
     plt.xlabel('Time [hrs] relative to center') 
+    
     
     
     if savename != None:

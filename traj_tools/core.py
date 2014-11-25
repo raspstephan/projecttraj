@@ -853,7 +853,7 @@ class TrjObj(object):
   
     def draw_centered_vs_t(self, tracer, filtername, carray, 
                            savebase = None, sigma = 1, plottype = 'Smooth', 
-                           idtext = '', ylim = None):
+                           idtext = '', ylim = None, xlim = None):
         """
         Draws evolution of a tracer of all trajectories given by filter,
         centered around midpoint of ascent, as given by carray.
@@ -877,7 +877,8 @@ class TrjObj(object):
           Id string to be displayed
         ylim : tuple, list
           Tuple or list of y-axis limits
-          
+        xlim : tuple, list
+          Tuple or list of x-axis limits
         """
         
         # Create savename and label names
@@ -895,7 +896,7 @@ class TrjObj(object):
         
         
         plots.draw_centered_vs_t(self, loclist, idlist, tracer, carray, 
-                                 savename, plottype, idtext, ylim, sigma)
+                                 savename, plottype, idtext, ylim, xlim, sigma)
  
     
     def draw_hist_2d(self, varname1, varname2, filtername = 'WCB', 
