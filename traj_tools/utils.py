@@ -16,6 +16,7 @@ import fortran.futils as futils
 import cPickle
 import scipy.ndimage as ndi
 from skewt import SkewT
+import mytools
 
 
 
@@ -316,11 +317,11 @@ def _calc_cape(obj):
     # Create new filelist
     newlist = []
     for trjfn in [obj.trjfiles[0]]:
-        newfn = trjfn.rstrip('.nc') + '_CAPE' + '.nc'
+        newfn = trjfn.rstrip('.nc') + '_CAPE_test2' + '.nc'
         newlist.append(newfn)
         os.system('cp ' + trjfn + ' ' + newfn)
     
-    for fn in [newlist[0]]:
+    for fn in [newlist][0]:
         print 'Open file:', fn 
         rootgrp = nc.Dataset(fn, 'a')
         tarray = rootgrp.variables['time'][:]
@@ -329,9 +330,12 @@ def _calc_cape(obj):
         pmat = rootgrp.variables['P'][:, :]
         tempmat = rootgrp.variables['T'][:, :]
         qvmat = rootgrp.variables['QV'][:, :]
+        varmat = rootgrp.variables['var145_S'][:, :]
         
-        newcape = rootgrp.createVariable('CAPE', 'f4', ('time', 'id'))
-        newcin = rootgrp.createVariable('CIN', 'f4', ('time', 'id'))
+        newcape = rootgrp.createVariable('CAPE_f', 'f4', ('time', 'id'))
+        newcin = rootgrp.createVariable('CIN_f', 'f4', ('time', 'id'))
+        #newcape = rootgrp.variables['CAPE'][:, :]
+        #newcin = rootgrp.variables['CIN'][:, :]
         
         # Retrieve trajectory start time
         trjstart = rootgrp.variables['time'][0] / 60   # In mins
@@ -358,10 +362,24 @@ def _calc_cape(obj):
                 TD = np.nan_to_num(TD) # nan to zero
                 TD = np.where(TD == 0., -150., TD)  # zero to -150 C   
                 
-                # Filter COSMO fields
+                dalpha = 0.025
+                lowlim = 200 * 1000   # 200km
                 
-                for itrj in range(lonmat.shape[1]):
-                    print itrj
+                ## Filter COSMO fields: PS, TC, TD
+                #print 'Filter fields'
+                #for zind in range(TD.shape[0]):
+                    #TD[zind, :, :] = mytools.SpFilterDCT(TD[zind, :, :], 
+                                                         #dalpha, 'l', 
+                                                         #[lowlim, np.inf])
+                    #PS[zind, :, :] = mytools.SpFilterDCT(PS[zind, :, :], 
+                                                         #dalpha, 'l', 
+                                                         #[lowlim, np.inf])
+                    #TC[zind, :, :] = mytools.SpFilterDCT(TC[zind, :, :], 
+                                                         #dalpha, 'l', 
+                                                         #[lowlim, np.inf])                      
+                
+                print 'Calculate CAPE'
+                for itrj in range(lonmat[0, :].shape[0]):
                     # Get parcel variables
                     lontrj = lonmat[t, itrj]
                     lattrj = latmat[t, itrj]
@@ -386,17 +404,15 @@ def _calc_cape(obj):
                     S = SkewT.Sounding(soundingdata=mydata)
                     
                     # calculate CAPE and CIN
+                    if temptrj <= tempdtrj:
+                        print temptrj, tempdtrj
+                        tempdtrj = temptrj
+                    trjparcel = (ptrj, temptrj, tempdtrj, 'parcel')
+
                     try:
-                        trjparcel = (ptrj, temptrj, tempdtrj, 'parcel')
                         P_lcl, P_lfc, P_el, CAPE, CIN = S.get_cape(*trjparcel)
-                    except AssertionError:
-                        print ptrj, temptrj, tempdtrj
-                        print mydata
-                        x = breakbreak
-                    #print mydata
-                    print ptrj, temptrj, tempdtrj
-                    print P_lcl, P_lfc, P_el, CAPE, CIN
-                    
+                    except:
+                        print temptrj, tempdtrj
                     # Write new value
                     newcape[t, itrj] = CAPE
                     newcin[t, itrj] = CIN
@@ -1203,8 +1219,8 @@ def _allxspan(array, yspan, xmax, flip = False):
             tuplist.append( (istart, istop, array[istart], 
                             array[istop - 1 + xspan[istop -1]]) )
         return tuplist   
-    
-    
+
+
 # Testing
 if __name__ == '__main__':   
     #from random import randrange

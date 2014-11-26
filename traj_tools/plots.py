@@ -151,7 +151,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         tracemat[zmask] = np.nan
         tracemat[tracemat == 0] = np.nan
         
-        if tracer == 'var4':
+        if tracer in ['var4', 'POT_VORTIC']:
             tracemat = tracemat * 1.e6   # PVU
         tmat = np.array([tarray] * len(idlist[i])).transpose()
         reltmat = tmat - carray[istart:istop]
