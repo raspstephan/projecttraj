@@ -674,11 +674,18 @@ class TrjObj(object):
         self.trjfiles = thetalist
     
     
-    def calc_cape(self):
+    def calc_cape(self, filterlim):
         """
         Calculates CAPE from trajectory position.
+        
+        Parameters
+        ----------
+        filterlim : float
+          Upper wavelength cutoff for DCT filter
+          in [m]
+          
         """
-        newlist = utils._calc_cape(self)
+        newlist = utils._calc_cape(self, filterlim)
         self.trjfiles = newlist
         
     

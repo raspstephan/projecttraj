@@ -304,7 +304,7 @@ def calc_theta(files):
         
     return thetalist
 
-def _calc_cape(obj):
+def _calc_cape(obj, filterlim = 0):
     """
     TODO
     make type of Cosmo file clever!
@@ -314,10 +314,12 @@ def _calc_cape(obj):
     HH = cu.derive.hl_to_fl(pwg.getfobj(obj.cfile, 'HH').data)
     #P0 = cosmo_ref_p(HH) / 100.   # hPa
     
+    filtstr = 'f' + str(int(filterlim / 1000.)) + 'km'
+    
     # Create new filelist
     newlist = []
     for trjfn in [obj.trjfiles[0]]:
-        newfn = trjfn.rstrip('.nc') + '_CAPE_test2' + '.nc'
+        newfn = trjfn.rstrip('.nc') + '_CAPE' + filtstr + '.nc'
         newlist.append(newfn)
         os.system('cp ' + trjfn + ' ' + newfn)
     
@@ -329,11 +331,9 @@ def _calc_cape(obj):
         latmat = rootgrp.variables['latitude'][:, :]
         pmat = rootgrp.variables['P'][:, :]
         tempmat = rootgrp.variables['T'][:, :]
-        qvmat = rootgrp.variables['QV'][:, :]
-        varmat = rootgrp.variables['var145_S'][:, :]
-        
-        newcape = rootgrp.createVariable('CAPE_f', 'f4', ('time', 'id'))
-        newcin = rootgrp.createVariable('CIN_f', 'f4', ('time', 'id'))
+        qvmat = rootgrp.variables['QV'][:, :]        
+        newcape = rootgrp.createVariable('CAPE' + filtstr, 'f4', ('time', 'id'))
+        newcin = rootgrp.createVariable('CIN' + filtstr, 'f4', ('time', 'id'))
         #newcape = rootgrp.variables['CAPE'][:, :]
         #newcin = rootgrp.variables['CIN'][:, :]
         
@@ -363,20 +363,20 @@ def _calc_cape(obj):
                 TD = np.where(TD == 0., -150., TD)  # zero to -150 C   
                 
                 dalpha = 0.025
-                lowlim = 200 * 1000   # 200km
+                lowlim = filterlim
                 
-                ## Filter COSMO fields: PS, TC, TD
-                #print 'Filter fields'
-                #for zind in range(TD.shape[0]):
-                    #TD[zind, :, :] = mytools.SpFilterDCT(TD[zind, :, :], 
-                                                         #dalpha, 'l', 
-                                                         #[lowlim, np.inf])
-                    #PS[zind, :, :] = mytools.SpFilterDCT(PS[zind, :, :], 
-                                                         #dalpha, 'l', 
-                                                         #[lowlim, np.inf])
-                    #TC[zind, :, :] = mytools.SpFilterDCT(TC[zind, :, :], 
-                                                         #dalpha, 'l', 
-                                                         #[lowlim, np.inf])                      
+                # Filter COSMO fields: PS, TC, TD
+                print 'Filter fields'
+                for zind in range(TD.shape[0]):
+                    TD[zind, :, :] = mytools.SpFilterDCT(TD[zind, :, :], 
+                                                         dalpha, 'l', 
+                                                         [lowlim, np.inf])
+                    PS[zind, :, :] = mytools.SpFilterDCT(PS[zind, :, :], 
+                                                         dalpha, 'l', 
+                                                         [lowlim, np.inf])
+                    TC[zind, :, :] = mytools.SpFilterDCT(TC[zind, :, :], 
+                                                         dalpha, 'l', 
+                                                         [lowlim, np.inf])                      
                 
                 print 'Calculate CAPE'
                 for itrj in range(lonmat[0, :].shape[0]):
