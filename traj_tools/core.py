@@ -674,7 +674,7 @@ class TrjObj(object):
         self.trjfiles = thetalist
     
     
-    def calc_cape(self, filterlim):
+    def calc_cape(self, filterlim, debug = False, getp = False):
         """
         Calculates CAPE from trajectory position.
         
@@ -685,7 +685,7 @@ class TrjObj(object):
           in [m]
           
         """
-        newlist = utils._calc_cape(self, filterlim)
+        newlist = utils._calc_cape(self, filterlim, debug, getp)
         self.trjfiles = newlist
         
     

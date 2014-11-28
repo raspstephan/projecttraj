@@ -7,5 +7,5 @@
 #$ -q four,six
 #$ -M s.rasp@physik.uni-muenchen.de
 #$ -l h_rt=60:00:00
-#$ -o /usr/users/stephan.rasp/tmp/job_out0.txt
-python calc_cape_c0.py
+#$ -o /usr/users/stephan.rasp/tmp/job_out1.txt
+python calc_cape_c1.py

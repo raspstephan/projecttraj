@@ -304,26 +304,31 @@ def calc_theta(files):
         
     return thetalist
 
-def _calc_cape(obj, filterlim = 0):
+def _calc_cape(obj, filterlim = 0, debug = False, getp = False):
     """
     TODO
     make type of Cosmo file clever!
+    If debug, no netCDF output is written.
     """
     
     outint = 60
     HH = cu.derive.hl_to_fl(pwg.getfobj(obj.cfile, 'HH').data)
-    #P0 = cosmo_ref_p(HH) / 100.   # hPa
+    if getp:
+        P0 = cosmo_ref_p(HH) / 100.   # hPa
     
     filtstr = 'f' + str(int(filterlim / 1000.)) + 'km'
     
     # Create new filelist
-    newlist = []
-    for trjfn in [obj.trjfiles[0]]:
-        newfn = trjfn.rstrip('.nc') + '_CAPE' + filtstr + '.nc'
-        newlist.append(newfn)
-        os.system('cp ' + trjfn + ' ' + newfn)
+    if not debug:
+        newlist = []
+        for trjfn in obj.trjfiles:
+            newfn = trjfn.rstrip('.nc') + '_CAPE' + filtstr + '.nc'
+            newlist.append(newfn)
+            os.system('cp ' + trjfn + ' ' + newfn)
+    else:
+        newlist = [obj.trjfiles[0]]
     
-    for fn in [newlist][0]:
+    for fn in newlist:
         print 'Open file:', fn 
         rootgrp = nc.Dataset(fn, 'a')
         tarray = rootgrp.variables['time'][:]
@@ -331,9 +336,15 @@ def _calc_cape(obj, filterlim = 0):
         latmat = rootgrp.variables['latitude'][:, :]
         pmat = rootgrp.variables['P'][:, :]
         tempmat = rootgrp.variables['T'][:, :]
-        qvmat = rootgrp.variables['QV'][:, :]        
-        newcape = rootgrp.createVariable('CAPE' + filtstr, 'f4', ('time', 'id'))
-        newcin = rootgrp.createVariable('CIN' + filtstr, 'f4', ('time', 'id'))
+        qvmat = rootgrp.variables['QV'][:, :]  
+        if not debug:
+            newcape = rootgrp.createVariable('CAPE' + filtstr, 'f4', 
+                                             ('time', 'id'))
+            newcin = rootgrp.createVariable('CIN' + filtstr, 'f4', 
+                                            ('time', 'id'))
+            # Fill new arrays with NaNs
+            newcape.fill(np.nan)
+            newcin.fill(np.nan)
         #newcape = rootgrp.variables['CAPE'][:, :]
         #newcin = rootgrp.variables['CIN'][:, :]
         
@@ -341,7 +352,7 @@ def _calc_cape(obj, filterlim = 0):
         trjstart = rootgrp.variables['time'][0] / 60   # In mins
         for t in range(tarray.shape[0]):
             # Only interpolate if outint
-            if (rootgrp.variables['time'][t] / 60) % outint == 0:
+            if (rootgrp.variables['time'][t] / 60.) % outint == 0:
                 # Get COSMO Index
                 icosmo = int((t * obj.dtrj + trjstart) / obj.dacosmo)
                 print obj.afiles[icosmo]
@@ -351,10 +362,12 @@ def _calc_cape(obj, filterlim = 0):
                 clons = T.rlons[0, :]
                 clats = T.rlats[:, 0]
                 TC = T.data - 273.15   # Convert to Celcius
-                #try:
-                PS = pwg.getfobj(obj.afiles[icosmo], 'PS').data / 100. # hPa
-                #PP = pwg.getfobj(obj.afiles[icosmo], 'PP').data / 100.  # hPa
-                #PS = P0 + PP
+                
+                if getp:
+                    PP = pwg.getfobj(obj.afiles[icosmo], 'PP').data / 100. # hPa
+                    PS = P0 + PP
+                else:
+                    PS = pwg.getfobj(obj.afiles[icosmo], 'PS').data / 100. # hPa
                 print 'calc td'
                 QV = pwg.getfobj(obj.afiles[icosmo], 'QV')
                 e  = cu.thermodyn.MixR2VaporPress(QV.data, PS * 100.)
@@ -381,45 +394,44 @@ def _calc_cape(obj, filterlim = 0):
                 print 'Calculate CAPE'
                 for itrj in range(lonmat[0, :].shape[0]):
                     # Get parcel variables
-                    lontrj = lonmat[t, itrj]
-                    lattrj = latmat[t, itrj]
                     ptrj = pmat[t, itrj]
-                    temptrj = tempmat[t, itrj] - 273.15
-                    qvtrj = qvmat[t, itrj]
-                    etrj = cu.thermodyn.MixR2VaporPress(qvtrj, ptrj * 100.)
-                    tempdtrj = cu.thermodyn.DewPoint(etrj)
-                    
-                    # Get closest lat lon from cosmo
-                    lonid = np.abs(clons - lontrj).argmin()
-                    latid = np.abs(clats - lontrj).argmin()
-                    
-                    mydata = dict(zip(('hght','pres','temp','dwpt'),
-                                      (HH[:, latid, lonid], 
-                                       PS[:, latid, lonid],
-                                       TC[:, latid, lonid], 
-                                       TD[:, latid, lonid])))
-                    
+                    # Test if trj still exists
+                    if (np.isfinite(ptrj)) & (ptrj != 0):   
+                        lontrj = lonmat[t, itrj]
+                        lattrj = latmat[t, itrj]
+                        temptrj = tempmat[t, itrj] - 273.15
+                        qvtrj = qvmat[t, itrj]
+                        etrj = cu.thermodyn.MixR2VaporPress(qvtrj, ptrj * 100.)
+                        tempdtrj = cu.thermodyn.DewPoint(etrj)
+                        
+                        # Get closest lat lon from cosmo
+                        lonid = np.abs(clons - lontrj).argmin()
+                        latid = np.abs(clats - lontrj).argmin()
+                        
+                        mydata = dict(zip(('hght','pres','temp','dwpt'),
+                                        (HH[:, latid, lonid], 
+                                        PS[:, latid, lonid],
+                                        TC[:, latid, lonid], 
+                                        TD[:, latid, lonid])))
+                        
 
-                    # Initialize sounding
-                    S = SkewT.Sounding(soundingdata=mydata)
-                    
-                    # calculate CAPE and CIN
-                    if temptrj <= tempdtrj:
-                        print temptrj, tempdtrj
-                        tempdtrj = temptrj
-                    trjparcel = (ptrj, temptrj, tempdtrj, 'parcel')
+                        # Initialize sounding
+                        S = SkewT.Sounding(soundingdata=mydata)
+                        
+                        # calculate CAPE and CIN
+                        if temptrj <= tempdtrj:
+                            print temptrj, tempdtrj
+                            tempdtrj = temptrj
+                        trjparcel = (ptrj, temptrj, tempdtrj, 'parcel')
 
-                    try:
-                        P_lcl, P_lfc, P_el, CAPE, CIN = S.get_cape(*trjparcel)
-                    except:
-                        print temptrj, tempdtrj
-                    # Write new value
-                    newcape[t, itrj] = CAPE
-                    newcin[t, itrj] = CIN
-                    
-            else:
-                newcape[t, :] = np.nan
-                newcin[t, :] = np.nan
+                        try:
+                            P_lcl, P_lfc, P_el, CAPE, CIN = S.get_cape(*trjparcel)
+                        except:
+                            print temptrj, tempdtrj
+                        # Write new value
+                        newcape[t, itrj] = CAPE
+                        newcin[t, itrj] = CIN
+
         rootgrp.close()
     return newlist
                     
