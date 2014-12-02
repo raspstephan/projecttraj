@@ -315,7 +315,14 @@ def _calc_cape(obj, filterlim = 0, debug = False, getp = False):
     HH = cu.derive.hl_to_fl(pwg.getfobj(obj.cfile, 'HH').data)
     if getp:
         P0 = cosmo_ref_p(HH) / 100.   # hPa
-    
+        print P0.shape
+        #ATTENTION: Quick fix, not correct!!!
+        tmp = np.ones((P0.shape[0], P0.shape[1], P0.shape[2] + 1))
+        tmp[:, :, 0:-1] = P0
+        tmp[:, :, -1] = P0[:, :, -1]
+        P0 = tmp
+        print P0.shape
+        
     filtstr = 'f' + str(int(filterlim / 1000.)) + 'km'
     
     # Create new filelist
@@ -343,8 +350,8 @@ def _calc_cape(obj, filterlim = 0, debug = False, getp = False):
             newcin = rootgrp.createVariable('CIN' + filtstr, 'f4', 
                                             ('time', 'id'))
             # Fill new arrays with NaNs
-            newcape.fill(np.nan)
-            newcin.fill(np.nan)
+            newcape[:, :].fill(np.nan)
+            newcin[:, :].fill(np.nan)
         #newcape = rootgrp.variables['CAPE'][:, :]
         #newcin = rootgrp.variables['CIN'][:, :]
         
@@ -365,10 +372,12 @@ def _calc_cape(obj, filterlim = 0, debug = False, getp = False):
                 
                 if getp:
                     PP = pwg.getfobj(obj.afiles[icosmo], 'PP').data / 100. # hPa
-                    PS = P0 + PP
+                    PS = P0 + PP 
                 else:
                     PS = pwg.getfobj(obj.afiles[icosmo], 'PS').data / 100. # hPa
                 print 'calc td'
+                if debug:
+                    breakbreak
                 QV = pwg.getfobj(obj.afiles[icosmo], 'QV')
                 e  = cu.thermodyn.MixR2VaporPress(QV.data, PS * 100.)
                 TD = cu.thermodyn.DewPoint(e)    

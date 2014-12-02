@@ -185,7 +185,8 @@ cat > INPUT_TRAJ << end_input_traj
 startfile_traj=
 '/home/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case2_20090129_v2/c2_de_v3.sf',
      ninc_out_traj = 10,
-     tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM', 'U', 'V', 'W'
+     tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'QI', 'RELHUM', 'U', 'V', 'W', 
+                     'POT_VORTIC',
   /
 end_input_traj
 
