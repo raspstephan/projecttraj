@@ -76,6 +76,95 @@ def draw_vs_t(obj, tracer, loclist, idlist, savename = None, sigma = None):
         plt.close('all')
 
 
+def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim, 
+              savename = None, sigma = 1, idtext = '', ylim = None, 
+              binwidth = 5.):
+    """
+    TODO
+    """
+    counter = 0
+    
+    # Initialize p array
+    parray = np.arange(0, 1050., binwidth) 
+    nbins = parray.shape[0]
+    tracerlist = [[] for i in range(nbins)] 
+    print parray.shape[0]
+    
+    
+    for i in range(len(loclist)):
+        
+        print 'Plotting file', i+1, 'of', len(loclist)
+        rootgrp = nc.Dataset(loclist[i], 'r')
+        tracemat = rootgrp.variables[tracer][:, :]
+        if tracer in ['POT_VORTIC', 'var4']:
+            tracemat = tracemat * 1.e6
+        pmat = rootgrp.variables['P'][:, :]
+        # Convert pmat to indices
+        pindmat = np.around((pmat - xlim[0]) / binwidth)
+        
+        for j in idlist[i]:
+            
+            tracearray = tracemat[startarray[counter]:stoparray[counter], j]
+            pindarray = pindmat[startarray[counter]:stoparray[counter], j]
+            
+            for k in range(tracearray.shape[0]):
+                #print pindarray[k], nbins
+                tracerlist[int(pindarray[k])].append(tracearray[k])
+                
+            counter += 1
+    
+    meanlist = []
+    per5 = []
+    per25 = []
+    per50 = []
+    per75 = []
+    per95 = []
+    for i in range(nbins):
+        tmparray = np.array(tracerlist[i])
+        tmparray = tmparray[np.isfinite(tmparray)]
+        if tmparray.shape[0] != 0:
+            meanlist.append(np.mean(tmparray))
+            per5.append(np.percentile(tmparray, 5))
+            per25.append(np.percentile(tmparray, 25))
+            per50.append(np.percentile(tmparray, 50))
+            per75.append(np.percentile(tmparray, 75))
+            per95.append(np.percentile(tmparray, 95))
+        else: 
+            meanlist.append(np.nan)
+            per5.append(np.nan)
+            per25.append(np.nan)
+            per50.append(np.nan)
+            per75.append(np.nan)
+            per95.append(np.nan)
+    
+    fig = plt.figure(figsize = (10, 8))
+    ax = plt.gca()
+    ax.grid(color = 'dimgrey', linestyle = '-')
+    ax.set_frame_on(False)
+    plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
+             fontsize = 6)
+    plt.plot(parray, meanlist)
+    ax.fill_between(parray, per5, per95, 
+                        facecolor = 'lightgrey', edgecolor = 'lightgrey',
+                        label = '90%')
+    ax.fill_between(parray, per25, per75, 
+                        facecolor = 'darkgrey', edgecolor = 'darkgrey',
+                        label = '50%')  
+    l2, = plt.plot(parray, per50, 'black')
+    l1, = plt.plot(parray, meanlist, 'firebrick', linewidth = 2)
+    # Get filled colors as legends
+    r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
+    r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
+    plt.legend([l1, l2, r1, r2], ['mean', 'median', '50%', '90%'])
+    
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    ax.invert_xaxis()
+
+
+
 def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
                        plottype = 'Smooth', idtext = '', ylim = None, 
                        xlim = None, sigma = 1):
@@ -292,6 +381,9 @@ def nanpercentile(a, per):
       Output values
       
     """
+    a = np.array(a)
+    if len(a.shape) == 1:
+        out = np.percentile(a[np.isfinite(a)], per)
     out = np.empty(a.shape[0])
     for i in range(a.shape[0]):
         b = a[i][np.isfinite(a[i])]

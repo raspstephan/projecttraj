@@ -853,9 +853,34 @@ class TrjObj(object):
         # Get iterable lists
         loclist, idlist = self._mask_iter(filtername)
         
-        
         plots.draw_vs_t(self, tracer, loclist, idlist,
                         savename = savename, sigma = sigma)
+
+
+    def draw_vs_p(self, tracer, filtername, carray, xlim, savebase = None, 
+                  sigma = 1, idtext = '', ylim = None, binwidth = 5.):
+        """
+        Plots tracer against p in given asc array.
+        
+        Parameters
+        ----------
+        """
+        
+        # Get iterable lists
+        loclist, idlist = self._mask_iter(filtername)
+        
+        starttarray = self._mask_array(filtername, 'startt')
+        startarray = (self._mask_array(filtername, carray + '_start') - 
+                        starttarray) / self.dtrj
+        stoparray = (self._mask_array(filtername, carray + '_stop') - 
+                        starttarray) / self.dtrj
+        
+        savename = savebase
+        
+        plots.draw_vs_p(self, tracer, loclist, idlist, startarray, stoparray,
+                        xlim, savename, sigma, idtext, ylim, binwidth)
+        
+        
   
   
     def draw_centered_vs_t(self, tracer, filtername, carray, 
