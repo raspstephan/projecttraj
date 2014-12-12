@@ -87,9 +87,7 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
     # Initialize p array
     parray = np.arange(0, 1050., binwidth) 
     nbins = parray.shape[0]
-    tracerlist = [[] for i in range(nbins)] 
-    print parray.shape[0]
-    
+    tracerlist = [[] for i in range(nbins)]     
     
     for i in range(len(loclist)):
         
@@ -99,6 +97,12 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
         if tracer in ['POT_VORTIC', 'var4']:
             tracemat = tracemat * 1.e6
         pmat = rootgrp.variables['P'][:, :]
+        
+        # Get P data and set zeros to nan
+        zmask = np.ma.mask_or(pmat == 0, np.isnan(pmat))
+        tracemat[zmask] = np.nan
+        tracemat[tracemat == 0] = np.nan
+        
         # Convert pmat to indices
         pindmat = np.around((pmat - xlim[0]) / binwidth)
         
@@ -157,12 +161,16 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
     # Get filled colors as legends
     r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
     r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
-    plt.legend([l1, l2, r1, r2], ['mean', 'median', '50%', '90%'])
+    plt.legend([l1, l2, r1, r2], ['mean', 'median', '50%', '90%'], loc = 2)
     
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
     ax.invert_xaxis()
 
+    if savename != None:
+        print 'Save figure as', savename
+        plt.savefig(savename, bbox_inches = 'tight', dpi = 300)
+        plt.close('all')
 
 
 def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,

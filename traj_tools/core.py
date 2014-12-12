@@ -875,7 +875,12 @@ class TrjObj(object):
         stoparray = (self._mask_array(filtername, carray + '_stop') - 
                         starttarray) / self.dtrj
         
-        savename = savebase
+        # Create savename and label names
+        if savebase != None:
+            savename = (savebase + 'vs_p_' + tracer + '_' +
+                        filtername + '_' + idtext)
+        else: 
+            savename = savebase
         
         plots.draw_vs_p(self, tracer, loclist, idlist, startarray, stoparray,
                         xlim, savename, sigma, idtext, ylim, binwidth)

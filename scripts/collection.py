@@ -1,7 +1,7 @@
 import traj_tools as trj
 
 c0 = trj.loadme('c0_rot.trj')
-c0.create_filter('WCB_Conv', [('P600', 0, 2880), ('P400', 0, 120)])
+#c0.create_filter('WCB_Conv', [('P600', 0, 2880), ('P400', 0, 120)])
 c1 = trj.loadme('c1.trj')
 
 
@@ -110,3 +110,14 @@ for t in range(360, c1.maxmins + 60, 60):
                     savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/')
     
     
+# 121214
+
+c0.draw_vs_p('THETA', 'WCB_NonConv', 'P600', (100, 1000), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', idtext = '121214a', ylim = (280, 350))
+c0.draw_vs_p('THETA', 'WCB_Conv', 'P600', (100, 1000), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', idtext = '121214b', ylim = (280, 350))
+c1.draw_vs_p('THETA', 'WCB', 'P600', (100, 1000), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/', idtext = '121214c', ylim = (280, 350))
+c0.draw_vs_p('THETAE', 'WCB_NonConv', 'P600', (100, 1000), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', idtext = '121214d', ylim = (300, 350))
+c0.draw_vs_p('THETAE', 'WCB_Conv', 'P600', (100, 1000), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', idtext = '121214e', ylim = (300, 350))
+c1.draw_vs_p('THETAE', 'WCB', 'P600', (100, 1000), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/', idtext = '121214f', ylim = (300, 350))  
+c0.draw_vs_p('var4', 'WCB_NonConv', 'P600', (100, 1000), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', idtext = '121214g', ylim = (-5, 10))
+c0.draw_vs_p('var4', 'WCB_Conv', 'P600', (100, 1000), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', idtext = '121214h', ylim = (-5, 10))
+c1.draw_vs_p('POT_VORTIC', 'WCB', 'P600', (100, 1000), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/', idtext = '121214i', ylim = (-5, 10))  
