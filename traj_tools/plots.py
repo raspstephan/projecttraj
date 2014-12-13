@@ -117,6 +117,7 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
                 
             counter += 1
     
+    countlist = []
     meanlist = []
     per5 = []
     per25 = []
@@ -126,6 +127,7 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
     for i in range(nbins):
         tmparray = np.array(tracerlist[i])
         tmparray = tmparray[np.isfinite(tmparray)]
+        countlist.append(tmparray.shape[0])
         if tmparray.shape[0] != 0:
             meanlist.append(np.mean(tmparray))
             per5.append(np.percentile(tmparray, 5))
@@ -166,6 +168,10 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
     ax.invert_xaxis()
+    
+    # Plot second axis
+    ax2 = ax.twinx()
+    ax2.bar(parray, countlist, color = 'green')
 
     if savename != None:
         print 'Save figure as', savename
