@@ -117,22 +117,16 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
                 
             counter += 1
     
-    countlist = []
     meanlist = []
     per5 = []
     per25 = []
     per50 = []
     per75 = []
     per95 = []
-
-    # Set lower density limit TODO
-    denslim = 100
-
     for i in range(nbins):
         tmparray = np.array(tracerlist[i])
         tmparray = tmparray[np.isfinite(tmparray)]
-        countlist.append(tmparray.shape[0])
-        if tmparray.shape[0] >= denslim:
+        if tmparray.shape[0] != 0:
             meanlist.append(np.mean(tmparray))
             per5.append(np.percentile(tmparray, 5))
             per25.append(np.percentile(tmparray, 25))
@@ -169,15 +163,8 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
     r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
     plt.legend([l1, l2, r1, r2], ['mean', 'median', '50%', '90%'], loc = 2)
     
-    # Plot second axis
-    ax2 = ax.twinx()
-    ax2.bar(parray, countlist, linewidth = 0, color = 'sage', width = 5, alpha = 0.8)
-    ax2.set_yticks(np.arange(0, np.max(countlist) + 5000, 5000))
-    
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
-    ax2.set_xlim(xlim)
-    ax2.set_ylim((0, np.max(countlist) * 4))
     ax.invert_xaxis()
 
     if savename != None:
