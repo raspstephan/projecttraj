@@ -121,3 +121,23 @@ c1.draw_vs_p('THETAE', 'WCB', 'P600', (100, 1000), savebase = '/usr/users/stepha
 c0.draw_vs_p('var4', 'WCB_NonConv', 'P600', (100, 1000), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', idtext = '121214g', ylim = (-5, 10))
 c0.draw_vs_p('var4', 'WCB_Conv', 'P600', (100, 1000), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', idtext = '121214h', ylim = (-5, 10))
 c1.draw_vs_p('POT_VORTIC', 'WCB', 'P600', (100, 1000), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/', idtext = '121214i', ylim = (-5, 10))  
+
+#171214
+c0.draw_vs_p('THETA', 'WCB_NonConv', 'P600', (100, 1000), idtext = '171214a', ylim = (280, 330), ylabel = 'THETA [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+c0.draw_vs_p('THETA', 'WCB_Conv', 'P600', (100, 1000), idtext = '171214b', ylim = (285, 340), ylabel = 'THETA [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+c1.draw_vs_p('THETA', 'WCB', 'P600', (50, 1000), idtext = '171214e', ylim = (280, 350), ylabel = 'THETA [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/')
+c0.draw_vs_p('THETAE_new', 'WCB_NonConv', 'P600', (100, 1000), idtext = '171214c', ylim = (300, 330), ylabel = 'THETA_E [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+c0.draw_vs_p('THETAE_new', 'WCB_Conv', 'P600', (100, 1000), idtext = '171214d', ylim = (300, 340), ylabel = 'THETA_E [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+c1.draw_vs_p('THETAE_new', 'WCB', 'P600', (50, 1000), idtext = '171214f', ylim = (300, 350), ylabel = 'THETA_E [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/')
+c1.draw_vs_p('POT_VORTIC', 'WCB', 'P600', (50, 1000), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/', idtext = '171214g', ylim = (-5, 10), ylabel = 'PV [PVU]')  
+c0.draw_vs_p('QV', 'WCB_NonConv', 'P600', (100, 1000), idtext = '171214h', ylabel = 'QV [kg/kg]', ylim = (0.00001, 0.1), log = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+c0.draw_vs_p('QV', 'WCB_Conv', 'P600', (100, 1000), idtext = '171214i', ylabel = 'QV [kg/kg]', ylim = (0.00001, 0.1), log = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+c1.draw_vs_p('QV', 'WCB', 'P600', (50, 1000), idtext = '171214j', ylabel = 'QV [kg/kg]', ylim = (0.00001, 0.1), log = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/')
+
+
+
+
+
+
+
+

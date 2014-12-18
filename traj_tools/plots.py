@@ -78,11 +78,12 @@ def draw_vs_t(obj, tracer, loclist, idlist, savename = None, sigma = None):
 
 def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim, 
               savename = None, sigma = 1, idtext = '', ylim = None, 
-              binwidth = 5.):
+              binwidth = 5., ylabel = '', log = False):
     """
     TODO
     """
     counter = 0
+    total = 0
     
     # Initialize p array
     parray = np.arange(0, 1050., binwidth) 
@@ -90,10 +91,11 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
     tracerlist = [[] for i in range(nbins)]     
     
     for i in range(len(loclist)):
-        
+        total += len(idlist[i])
         print 'Plotting file', i+1, 'of', len(loclist)
         rootgrp = nc.Dataset(loclist[i], 'r')
         tracemat = rootgrp.variables[tracer][:, :]
+        
         if tracer in ['POT_VORTIC', 'var4']:
             tracemat = tracemat * 1.e6
         pmat = rootgrp.variables['P'][:, :]
@@ -117,55 +119,78 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
                 
             counter += 1
     
+    countlist = []
     meanlist = []
     per5 = []
     per25 = []
     per50 = []
     per75 = []
     per95 = []
+    
+    # Set lower density limit TODO 
+    denslim = 0.025 * total
+    
     for i in range(nbins):
         tmparray = np.array(tracerlist[i])
         tmparray = tmparray[np.isfinite(tmparray)]
-        if tmparray.shape[0] != 0:
+        countlist.append(tmparray.shape[0])
+        if tmparray.shape[0] >= denslim:
             meanlist.append(np.mean(tmparray))
             per5.append(np.percentile(tmparray, 5))
             per25.append(np.percentile(tmparray, 25))
             per50.append(np.percentile(tmparray, 50))
             per75.append(np.percentile(tmparray, 75))
             per95.append(np.percentile(tmparray, 95))
-        else: 
+        else:
             meanlist.append(np.nan)
             per5.append(np.nan)
             per25.append(np.nan)
             per50.append(np.nan)
             per75.append(np.nan)
             per95.append(np.nan)
-    
+            
     fig = plt.figure(figsize = (10, 8))
     ax = plt.gca()
     ax.grid(color = 'dimgrey', linestyle = '-')
-    ax.set_frame_on(False)
+    #ax.set_frame_on(False)
     plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
                     left = 'off', right = 'off')
-    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
+    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes,
              fontsize = 6)
     plt.plot(parray, meanlist)
-    ax.fill_between(parray, per5, per95, 
-                        facecolor = 'lightgrey', edgecolor = 'lightgrey',
-                        label = '90%')
-    ax.fill_between(parray, per25, per75, 
-                        facecolor = 'darkgrey', edgecolor = 'darkgrey',
-                        label = '50%')  
+    ax.fill_between(parray, per5, per95,
+                    facecolor = 'lightgrey', edgecolor = 'lightgrey',
+                    label = '90%')
+    ax.fill_between(parray, per25, per75,
+                    facecolor = 'darkgrey', edgecolor = 'darkgrey',
+                    label = '50%')
     l2, = plt.plot(parray, per50, 'black')
     l1, = plt.plot(parray, meanlist, 'firebrick', linewidth = 2)
     # Get filled colors as legends
     r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
     r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
     plt.legend([l1, l2, r1, r2], ['mean', 'median', '50%', '90%'], loc = 2)
-    
+    # Plot second axis
+    ax2 = ax.twinx()
+    ax2.bar(parray, countlist, linewidth = 0, color = 'sage', width = 5, 
+            alpha = 0.8)
+    maxbin = np.max(countlist)
+    if maxbin > 100000:
+        inc = 50000
+    else:
+        inc = 5000
+    ax2.set_yticks(np.arange(inc, np.max(countlist) + inc, inc))
+    ax2.set_ylabel('Number of Trajectories', position = (0.1, 0.175))
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
+    ax.set_xlabel('Pressure [hPa]')
+    ax.set_ylabel(ylabel)
+    ax2.set_xlim(xlim)
+    ax2.set_ylim((0, np.max(countlist) * 4))
     ax.invert_xaxis()
+    if log:
+        ax.set_yscale('log')
+
 
     if savename != None:
         print 'Save figure as', savename

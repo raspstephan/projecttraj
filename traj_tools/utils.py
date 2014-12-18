@@ -278,28 +278,38 @@ def calc_theta(files):
     # Iterate over files in filelist
     for f in thetalist:
         print 'Open file:', f 
-        rootgrp = nc.Dataset(f, 'a')
-        
-        # Read file arrays needed for calculation
-        pmat = rootgrp.variables['P'][:, :] * 100.   # Convert to SI Units
-        tmat = rootgrp.variables['T'][:, :]
-        qvmat = rootgrp.variables['QV'][:, :]
-
-        # Add new array to netCDF file
-        tmptheta = tmat * ((P0 / pmat) ** (R / CP))
-        if newtheta: 
-            theta = rootgrp.createVariable('THETA', 'f4', ('time', 'id'))
-            theta[:, :] = tmptheta
+        try:
+            rootgrp = nc.Dataset(f, 'a')
             
-        try: 
-            thetae = rootgrp.createVariable('THETAE', 'f4', ('time', 'id'))
+            # Read file arrays needed for calculation
+            pmat = rootgrp.variables['P'][:, :] * 100.   # Convert to SI Units
+            tmat = rootgrp.variables['T'][:, :]
+            qvmat = rootgrp.variables['QV'][:, :]
+
+            # Add new array to netCDF file
+            tmptheta = tmat * ((P0 / pmat) ** (R / CP))
+            if newtheta: 
+                theta = rootgrp.createVariable('THETA', 'f4', ('time', 'id'))
+                theta[:, :] = tmptheta
+                
+            try: 
+                thetae = rootgrp.createVariable('THETAE_new', 'f4', ('time', 'id'))
+            except RuntimeError:
+                #error = raw_input('Variable name already exists. Continue?')
+                print 'Replace old values'
+                thetae = rootgrp.variables['THETAE_new'][:, :]
+            
+            # Calculate THETAE (following Bolton, 1980)
+            mix = qvmat / (1 - qvmat) * 1000.  # in g /kg
+            emat = (pmat / 100.) * mix / (622. + mix)
+            tlclmat = 2840. / (3.5 * np.log(tmat) - np.log(emat) - 4.805) + 55.
+            thetae[:, :] = (tmat * (P0 / pmat) ** (0.2854 * 1 - 0.28e-3 * 
+                            mix) * np.exp((3.376 / tlclmat - 0.00254) * mix * (1 + 
+                            0.81e-3 * mix)))
+            
+            rootgrp.close()
         except RuntimeError:
-            error = raw_input('Variable name already exists. Continue?')
-            thetae = rootgrp.variables['THETAE'][:, :]
-        mix = qvmat / (1 - qvmat)
-        thetae[:, :] = tmptheta * np.exp(LV / CP * mix / tmat)
-        
-        rootgrp.close()
+            print 'RuntimeError, skip file'
         
         
     return thetalist

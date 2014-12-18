@@ -858,7 +858,8 @@ class TrjObj(object):
 
 
     def draw_vs_p(self, tracer, filtername, carray, xlim, savebase = None, 
-                  sigma = 1, idtext = '', ylim = None, binwidth = 5.):
+                  sigma = 1, idtext = '', ylim = None, binwidth = 5., 
+                  ylabel = '', log = False):
         """
         Plots tracer against p in given asc array.
         
@@ -883,7 +884,8 @@ class TrjObj(object):
             savename = savebase
         
         plots.draw_vs_p(self, tracer, loclist, idlist, startarray, stoparray,
-                        xlim, savename, sigma, idtext, ylim, binwidth)
+                        xlim, savename, sigma, idtext, ylim, binwidth, ylabel,
+                        log)
         
         
   
