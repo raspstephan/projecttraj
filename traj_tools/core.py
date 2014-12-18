@@ -346,7 +346,8 @@ class TrjObj(object):
           
         """
         
-        allmat = utils._allasct_cd(self.trjfiles, diff, sigma, tracer, self.dtrj)
+        allmat = utils._allasct_cd(self.trjfiles, diff, sigma, tracer, 
+                                   self.dtrj)
         print allmat.shape
         
         # Update dictionary
@@ -355,7 +356,23 @@ class TrjObj(object):
         
         self.data.append(allmat)
         print code, 'has been added.'
+    
+    
+    def new_dt(self, tracer):
+        """
+        Adds a variable to netCDF files with D/Dt values in [s^-1].
         
+        Parameters
+        ----------
+        tracer : string
+          Name of tracer
+          
+        """
+        utils._new_dt(self, tracer)
+    
+    
+    
+    
         
     def new_loc_filter(self, xmin, xmax, ymin, ymax):
         """

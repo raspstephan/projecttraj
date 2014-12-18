@@ -469,6 +469,29 @@ def cosmo_ref_p(z, psl=100000.,Tsl=288.15,beta=42.):
     return p0
         
 
+
+def _new_dt(obj, tracer):
+    """
+    TODO
+    """
+    
+    for fn in obj.trjfiles:
+        
+        rootgrp = nc.Dataset(fn, 'a')
+        
+        tracemat = rootgrp.variables[tracer][:, :]
+        gradmat = np.gradient(tracemat)[0] / (obj.dtrj * 60.)   # 1/s
+        
+        newvar = rootgrp.createVariable(tracer + '_dt', 'f4', ('time', 'id'))
+        newvar[:, :] = gradmat
+        
+        rootgrp.close()
+        
+        
+        
+
+
+
 def _get_level(obj, filename, varname, level, leveltype = 'PS'):
     """
     TODO
