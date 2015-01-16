@@ -7,11 +7,11 @@
 # Runfile. Cosmo-EU for Case2
 
 #Define Label for queue
-QLabel=ceu_c2v2
+QLabel=ceu_big
 
 #Define directories
 indir=/home/scratch/users/stephan.rasp/Case2_20090129_v2/d1euin_seaice
-outdir=/home/scratch/users/stephan.rasp/Case2_20090129_v2/d2euout
+outdir=/home/scratch/users/stephan.rasp/Case2_20090129_v2/d2euout_new1
 
 #Define time properties
 date=2009012812
@@ -24,12 +24,12 @@ startlon=-25.0; startlat=-28.0; ie=801; je=897
 pollat=35; pollon=170.0
 
 #Define parallelization
-NPX=8
+NPX=16
 NPY=8
 NPIO=0
 
 #Define executable
-COSMOEXE=/usr/users/stephan.rasp/cosmo_131108_5.00_traj_restart/cosmoexe_pur
+COSMOEXE=/usr/users/stephan.rasp/cosmo_131108_5.00_traj_v1214/cosmoexe_pur
 
 #Folgende Änderungen zu DWD-Einstellungen wurden gemacht:
 # - Gebiet wurde verkleinert
@@ -116,7 +116,7 @@ end_input_sat
 cat > INPUT_IO  << end_input_io
  &IOCTL
   lasync_io=.FALSE., l_ke_in_gds=.TRUE., ngribout=3, yform_read='apix',
-  nhour_restart=12,24,132, ydir_restart='$outdir', 
+  nhour_restart=12,132,12, ydir_restart='$outdir', 
  /
  &DATABASE
  /
@@ -292,9 +292,10 @@ cat > INPUT_TRAJ << end_input_traj
      ydir_traj='$outdir',
      
 startfile_traj=
-'/home/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case2_20090129_v2/c2_eu_v3.sf',
-     ninc_out_traj = 10,
-     tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM', 'U', 'V', 'W'
+'/home/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case2_20090129_v2/c2_de_v3.sf',
+     ninc_out_traj = 5,
+     tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'QI', 'QS', 'RELHUM', 'U', 'V', 'W', 'POT_VORTIC',
+
   /
 end_input_traj
 
@@ -315,6 +316,7 @@ echo "#$ -j y" >> batchjob
 echo "#$ -R y" >> batchjob
 echo "#$ -q eight">>batchjob
 echo "#$ -M s.rasp@physik.uni-muenchen.de" >> batchjob
+echo "#$ -l h_rt=400:00:00" >> batchjob
 echo "#$ -m n" >> batchjob
 echo "#$ -o $outdir/cosmo.out" >> batchjob
 echo /home/opt/openmpi-1.6.4/bin/mpirun -np $NP $COSMOEXE >> batchjob

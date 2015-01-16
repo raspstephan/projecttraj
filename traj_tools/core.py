@@ -1339,7 +1339,7 @@ class TrjObj(object):
     def draw_trj_all(self, varlist, filtername = None, savebase = None, 
                      starts = False, onlyasc = None, trjstart = None, 
                      idtext = '', linewidth = 0.7, carray = 'P',
-                     centdiff = False, sigma = None):
+                     centdiff = False, sigma = None, thinning = 1):
         """
         Draws XY Plot of trajectories with color as a function of 'P'.
         If filtername is given, plots only filetered trajectories.
@@ -1397,7 +1397,7 @@ class TrjObj(object):
                         startarray = startarray, stoparray = stoparray, 
                         trjstart = trjstart, idtext = idtext, 
                         linewidth = linewidth, carray = carray,
-                        centdiff = centdiff, sigma = sigma)
+                        centdiff = centdiff, sigma = sigma, thinning = thinning)
         
     def draw_trj_evo(self, varlist, filtername = None, tafter = None, 
                      interval = None, idtext = '', onlyasc = None, 
@@ -1464,7 +1464,6 @@ class TrjObj(object):
                             str(tplot).zfill(4) + '.png')
             else:
                 savename = savebase
-            print limited
             plots.draw_trj_evo(self, varlist, loclist, idlist, tplot, 
                                idtext = idtext, onlybool = onlybool, 
                                startarray = startarray, stoparray = stoparray, 
@@ -1474,7 +1473,7 @@ class TrjObj(object):
     def draw_trj_dot(self, varlist, tplus = None, interval = None, 
                      filtername = None, savebase = None, trjstart = None,
                      onlyasc = None, idtext = '', inrange = None, 
-                     cafter = None):
+                     cafter = None, thinning = False):
         """
         Draws trajectoriy position as dots with correct background plots.
         Tplus is now time after model start!
@@ -1522,7 +1521,8 @@ class TrjObj(object):
 
             plots.draw_trj_dot(self,varlist, loclist, idlist, t, 
                                savename = savename, idtext = idtext,
-                               inrange = inrange, cafter = cafter)
+                               inrange = inrange, cafter = cafter, 
+                               thinning = thinning)
     
     def draw_asc_loc(self, dataname, varlist, filtername, tplot, tspan, 
                      idtext = '', savebase = None):

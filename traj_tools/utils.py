@@ -476,7 +476,7 @@ def _new_dt(obj, tracer):
     """
     
     for fn in obj.trjfiles:
-        
+        print 'Opening file', fn
         rootgrp = nc.Dataset(fn, 'a')
         
         tracemat = rootgrp.variables[tracer][:, :]
@@ -1152,7 +1152,7 @@ def _minxspan(array, yspan, flip = False):
     
     # Filter out nans and zeros
     array = array[np.isfinite(array)]
-    array = array[array != 0]
+    array = array[np.abs(array) > 1000]   #ATTENTION Might not work for PV, QV, ...
     # Flip array if needed
     if flip:
         array = -array 

@@ -1050,10 +1050,13 @@ def draw_contour(obj, varlist, time, idtext, savename = None):
                     #trjstart = trjstart)
                     
         # Get index and filelist
+        print time
         if type(varlist[i]) in [list, tuple]:
             var = varlist[i][0]
             zlevel = varlist[i][1]
+            
             cosmoind, filelist = obj._get_index(var, time)
+
             contour(filelist, var, cosmoind, obj.xlim, obj.ylim, zlevel)
         else: 
             cosmoind, filelist = obj._get_index(varlist[i], time)
@@ -1083,7 +1086,7 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
              savename = False,pollon = None, pollat = None, xlim = None, 
              ylim = None, onlybool = False, startarray = None, 
              stoparray = None, trjstart = None, idtext = '', linewidth = 0.7,
-             carray = 'P', centdiff = False, sigma = None):
+             carray = 'P', centdiff = False, sigma = None, thinning = 1):
     """
     Plots one xy plot with trajectories.
     
@@ -1146,11 +1149,11 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
         
         for j in idlist[i]:
             # Filter out zero values!
+            
             if onlybool:
                 parray = pmat[startarray[cnt]:stoparray[cnt], j]
                 lonarray = lonmat[startarray[cnt]:stoparray[cnt], j]
                 latarray = latmat[startarray[cnt]:stoparray[cnt], j]
-                cnt += 1
             else:
                 parray = pmat[:, j][pmat[:, j] != 0]
                 lonarray = lonmat[:, j][pmat[:, j] != 0]
@@ -1160,9 +1163,10 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
                 if sigma != None:
                     parray = ndi.filters.gaussian_filter(parray, sigma)
                 parray = np.gradient(parray)
-            
-            single_trj(lonarray, latarray, parray, linewidth = linewidth, 
-                       carray = carray)
+            if cnt % thinning == 0:
+                single_trj(lonarray, latarray, parray, linewidth = linewidth, 
+                        carray = carray)
+            cnt += 1
 
     cb = plt.colorbar(lc, shrink = 0.7) 
     cb.set_label(carray)
@@ -1267,9 +1271,11 @@ def draw_trj_evo(obj, varlist, loclist, idlist, tplot,
         plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
         plt.close('all')
         plt.clf()
+        
 
 def draw_trj_dot(obj, varlist, loclist, idlist, tplus, 
-                 savename = None, idtext = '', inrange = None, cafter = None):
+                 savename = None, idtext = '', inrange = None, cafter = None,
+                 thinning = False):
     """
     tplus = time after MODEL start
     """
@@ -1284,24 +1290,29 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
         trjstart = int(rootgrp.variables['time'][0] / 60)
         trjind = (tplus - trjstart) / obj.dtrj
         if trjind <= 0:
-            break   # Break out of loop
+            break
         lonarray = rootgrp.variables['longitude'][trjind, idlist[i]]
         latarray = rootgrp.variables['latitude'][trjind, idlist[i]]
-        parray = rootgrp.variables['P'][trjind, idlist[i]]
+        carray = rootgrp.variables['P'][trjind, idlist[i]]
         
         if not inrange == None:
             norm = plt.Normalize(inrange[0], inrange[1])
-            carray = parray[(parray > inrange[0]) & (parray < inrange[1])]
+            carray = carray[(carray > inrange[0]) & (carray < inrange[1])]
             if cafter != None:
                 carray = cafter[cnt:cnt+parray.shape[0]]
                 carray = carray[(parray > inrange[0]) & (parray < inrange[1])]
                 carray = tplus - carray
                 norm = plt.Normalize(-2880, 2880)
                 
-            lonarray = lonarray[(parray > inrange[0]) & (parray < inrange[1])]
-            latarray = latarray[(parray > inrange[0]) & (parray < inrange[1])]
+            lonarray = lonarray[(carray > inrange[0]) & (carray < inrange[1])]
+            latarray = latarray[(carray > inrange[0]) & (carray < inrange[1])]
         else:
-            norm = plt.Normalize(100, 1000)
+            norm = plt.Normalize(10000, 100000)
+        
+        if not thinning == False:
+            lonarray = lonarray[::thinning]
+            latarray = latarray[::thinning]
+            carray = carray[::thinning]
         
         cmap = clr.ListedColormap(['darkorange', 'orange', 'khaki', 'beige',
                                    'greenyellow', 'lawngreen', 'green', 
@@ -1553,7 +1564,7 @@ def single_trj(lonarray, latarray, parray, linewidth = 0.7, carray = 'P'):
                                    #'darkgreen', 'grey', 'grey', 'grey', 'grey',
                                    #'grey'])
         cmap = plt.get_cmap('Spectral')
-        norm = plt.Normalize(100, 1000)
+        norm = plt.Normalize(10000, 100000)
     elif carray == 'w':
         cmap = plt.get_cmap('Reds')
         norm = plt.Normalize(0, 2)
