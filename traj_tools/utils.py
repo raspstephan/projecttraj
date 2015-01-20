@@ -245,7 +245,7 @@ def convert_p2std(files):
         
       
 
-def calc_theta(files):
+def calc_theta(filelist):
     """
     Adds Potential Temperature as a Variable to given netCDF files. 
     The new variable is called 'THETA'.
@@ -266,68 +266,36 @@ def calc_theta(files):
     CP = 1004.  # specific heat at constant pressure [J K-1 kg-1]
     LV = 2.25e6 # latent heat of condensation [J kg-1]
     
-    
-    # Checking if filelist needs to be created
-    if type(files) == list:
-        filelist = files
-    elif type(files) == str:
-        files = os.path.normpath(files) + '/'
-        filelist = sorted(glob.glob(files + '*.nc'))
-    else:
-        raise Exception('Wrong type for files.')
-    
-    assert (len(filelist) > 0), 'No files selected.'
-    
-    # Create new files
-    if 'theta' in filelist[0]:
-        thetalist = filelist
-        newtheta = False
-    else:
-        thetalist = []
-        for f in filelist:
-            thetaf = f.rstrip('.nc') + '_theta.nc'
-            thetalist.append(thetaf)
-            os.system('cp ' + f + ' ' + thetaf)
-        newtheta = True
-    
     # Iterate over files in filelist
-    for f in thetalist:
+    for f in filelist:
         print 'Open file:', f 
+        rootgrp = nc.Dataset(f, 'a')
+        
+        # Read file arrays needed for calculation
+        pmat = rootgrp.variables['P'][:, :] * 100.   # Convert to SI Units
+        tmat = rootgrp.variables['T'][:, :]
+        qvmat = rootgrp.variables['QV'][:, :]
+        
+        # Add new array to netCDF file            
+        tmptheta = tmat * ((P0 / pmat) ** (R / CP))
+        # Calculate THETAE (following Bolton, 1980)
+        mix = qvmat / (1 - qvmat) * 1000.  # in g /kg
+        emat = (pmat / 100.) * mix / (622. + mix)
+        tlclmat = 2840. / (3.5 * np.log(tmat) - np.log(emat) - 4.805) + 55.
+        tmpthetae = (tmat * (P0 / pmat) ** (0.2854 * 1 - 0.28e-3 * 
+                        mix) * np.exp((3.376 / tlclmat - 0.00254) * mix * (1 + 
+                        0.81e-3 * mix)))
         try:
-            rootgrp = nc.Dataset(f, 'a')
-            
-            # Read file arrays needed for calculation
-            pmat = rootgrp.variables['P'][:, :] * 100.   # Convert to SI Units
-            tmat = rootgrp.variables['T'][:, :]
-            qvmat = rootgrp.variables['QV'][:, :]
+            rootgrp.variables['THETA'][:, :] = tmptheta
+            rootgrp.variables['THETAE'][:, :] = tmpthetae
+        except KeyError:
+            theta = rootgrp.createVariable('THETA', 'f4', ('time', 'id'))
+            thetae = rootgrp.createVariable('THETAE', 'f4', ('time', 'id'))
+            theta[:, :] = tmptheta
+            thetae[:, :] = tmpthetae
+        
+        rootgrp.close()
 
-            # Add new array to netCDF file
-            tmptheta = tmat * ((P0 / pmat) ** (R / CP))
-            if newtheta: 
-                theta = rootgrp.createVariable('THETA', 'f4', ('time', 'id'))
-                theta[:, :] = tmptheta
-                
-            try: 
-                thetae = rootgrp.createVariable('THETAE_new', 'f4', ('time', 'id'))
-            except RuntimeError:
-                #error = raw_input('Variable name already exists. Continue?')
-                print 'Replace old values'
-                thetae = rootgrp.variables['THETAE_new'][:, :]
-            
-            # Calculate THETAE (following Bolton, 1980)
-            mix = qvmat / (1 - qvmat) * 1000.  # in g /kg
-            emat = (pmat / 100.) * mix / (622. + mix)
-            tlclmat = 2840. / (3.5 * np.log(tmat) - np.log(emat) - 4.805) + 55.
-            thetae[:, :] = (tmat * (P0 / pmat) ** (0.2854 * 1 - 0.28e-3 * 
-                            mix) * np.exp((3.376 / tlclmat - 0.00254) * mix * (1 + 
-                            0.81e-3 * mix)))
-            
-            rootgrp.close()
-        except RuntimeError:
-            print 'RuntimeError, skip file'
-        
-        
-    return thetalist
 
 def _calc_cape(obj, filterlim = 0, debug = False, getp = False):
     """
@@ -495,10 +463,16 @@ def _new_dt(obj, tracer):
         rootgrp = nc.Dataset(fn, 'a')
         
         tracemat = rootgrp.variables[tracer][:, :]
+        pmat = rootgrp.variables['P'][:, :]
+        tracemat[np.isnan(pmat)] = np.nan 
+        tracemat[pmat == 0] = np.nan
         gradmat = np.gradient(tracemat)[0] / (obj.dtrj * 60.)   # 1/s
         
-        newvar = rootgrp.createVariable(tracer + '_dt', 'f4', ('time', 'id'))
-        newvar[:, :] = gradmat
+        try:
+            newvar = rootgrp.createVariable(tracer + '_dt', 'f4', ('time', 'id'))
+            newvar[:, :] = gradmat
+        except RuntimeError:
+            rootgrp.variables[tracer + '_dt'][:, :] = gradmat
         
         rootgrp.close()
         
@@ -717,6 +691,69 @@ def _write2netcdf(conmat, tstart, savebase, fcount):
         
     
 
+####################################################
+# Functions used in plots
+####################################################
+
+def _centered_mat(obj, loclist, idlist, tracer, carray):
+    """
+    TODO
+    """
+    
+    istart = 0
+    matlist = []
+
+    # Round carray to closes value divisable by dtrj
+    carray = obj.dtrj * np.around(carray / obj.dtrj)
+    exttarray = np.arange(-obj.maxmins, obj.maxmins + obj.dtrj, obj.dtrj,
+                          dtype = 'float')
+    
+    for i in range(len(loclist)):
+        istop = len(idlist[i]) + istart
+        print 'Evaluating file', i+1, 'of', len(loclist)
+        rootgrp = nc.Dataset(loclist[i], 'r')
+        tarray = rootgrp.variables['time'][:] / 60   # Convert to minutes
+        
+        # Create extended matrix and tarray
+        exttracemat = np.empty((exttarray.shape[0], len(idlist[i])))
+        exttracemat.fill(np.nan)
+        
+        
+        # Get data and relative times
+        if tracer == 'CD_w':
+            zmat = rootgrp.variables['z'][:, idlist[i]]
+            if zmat.shape[1] == 1:
+                tracemat = zmat
+                grad = np.gradient(zmat[:, 0])
+                tracemat[:, 0] = grad
+            else:
+                tracemat = np.gradient(zmat)[0]
+                #print tracemat
+            tracemat = tracemat / 60. / obj.dtrj   # m/s
+            #print tracemat
+        else:
+            tracemat = rootgrp.variables[tracer][:, idlist[i]]
+        
+        # Get P data and set zeros to nan
+        pmat = rootgrp.variables['P'][:, idlist[i]]
+        zmask = np.ma.mask_or(pmat == 0, np.isnan(pmat))
+        tracemat[zmask] = np.nan
+        tracemat[tracemat == 0] = np.nan
+        
+        if tracer in ['var4', 'POT_VORTIC', 'var4_dt', 'POT_VORTIC_dt']:
+            tracemat = tracemat * 1.e6   # PVU
+        tmat = np.array([tarray] * len(idlist[i])).transpose()
+        reltmat = tmat - carray[istart:istop]
+        istart = istop
+        
+        for j in range(len(idlist[i])):
+            ind = np.where(exttarray == reltmat[0, j])[0][0]
+            exttracemat[ind:(ind + tracemat[:, j].shape[0]), j] = tracemat[:, j]
+                    
+        matlist.append(exttracemat)
+    
+    totmat = np.hstack(matlist)
+    return totmat, exttarray
 
 ####################################################
 # Functions used in core

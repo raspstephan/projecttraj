@@ -142,9 +142,16 @@ with plt.style.context('fivethirtyeight'):
     plt.xticks(range(0, 48 + 6, 6))
     savename = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/hist_P600_WCB_200115a'
     plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
-
-
-
+# P
+c0.draw_centered_vs_t('P', 'WCB_NonConv', 'P600', plottype='Fill', ylim = (200, 1000), sigma = 1, idtext = '200115b', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+c0.draw_centered_vs_t('P', 'WCB_Conv', 'P600', plottype='Fill', ylim = (200, 1000), sigma = 1, idtext = '200115c', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+c1.draw_centered_vs_t('P', 'WCB', 'P600', plottype='Fill', ylim = (200, 1000), sigma = 1, idtext = '200115d', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/')
+c2.draw_centered_vs_t('P', 'WCB', 'P600', plottype='Fill', ylim = (200, 1000), sigma = 1, idtext = '200115e', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
+#PV
+c0.draw_centered_vs_t('var4', 'WCB_NonConv', 'P600', plottype='Fill', ylim = (-3, 6), sigma = 1, idtext = '200115f', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+c0.draw_centered_vs_t('var4', 'WCB_Conv', 'P600', plottype='Fill', ylim = (-3, 6), sigma = 1, idtext = '20011g', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+c1.draw_centered_vs_t('var4', 'WCB', 'P600', plottype='Fill', ylim = (-3, 6), sigma = 1, idtext = '200115h', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/')
+c2.draw_centered_vs_t('POT_VORTIC', 'WCB', 'P600', plottype='Fill', ylim = (-3, 6), sigma = 1, idtext = '200115i', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
 
 
 

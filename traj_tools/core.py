@@ -687,8 +687,7 @@ class TrjObj(object):
         >>> case1.calc_theta()
         """
         
-        thetalist = utils.calc_theta(self.trjfiles)
-        self.trjfiles = thetalist
+        utils.calc_theta(self.trjfiles)
     
     
     def convert_p2std(self):
@@ -962,7 +961,30 @@ class TrjObj(object):
         plots.draw_centered_vs_t(self, loclist, idlist, tracer, carray, 
                                  savename, plottype, idtext, ylim, xlim, sigma)
  
-    
+    def draw_centered_integr(self, tracer, filtername, carray, 
+                           savebase = None, sigma = 1, 
+                           idtext = '', ylim = None, xlim = None, 
+                           middleval = 0):
+        """
+        TODO
+        """
+        # Create savename and label names
+        if savebase != None:
+            savename = (savebase + 'centered_integr_' + tracer + '_' + carray + 
+                        '_' + filtername + '_' + idtext)
+        else: 
+            savename = savebase
+        
+        
+        loclist, idlist = self._mask_iter(filtername)
+        startval = self._mask_array(filtername, carray + '_start')
+        stopval = self._mask_array(filtername, carray + '_stop')
+        carray = (startval + stopval) / 2
+        
+        
+        plots.draw_centered_integr(self, loclist, idlist, tracer, carray, 
+                                 savename, idtext, ylim, xlim, sigma, middleval)
+
     def draw_hist_2d(self, varname1, varname2, filtername = 'WCB', 
                        after = 'P600', plus = 1440):
         """

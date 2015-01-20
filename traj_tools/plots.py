@@ -34,6 +34,7 @@ import scipy.ndimage as ndi
 from scipy.stats import nanmean
 from datetime import datetime, timedelta
 import netCDF4 as nc
+import utils
 
 
 
@@ -233,60 +234,13 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
 
     NOTE: Can use a lot of RAM!
     """
-    istart = 0
-    matlist = []
-
-    # Round carray to closes value divisable by dtrj
-    carray = obj.dtrj * np.around(carray / obj.dtrj)
-    exttarray = np.arange(-obj.maxmins, obj.maxmins + obj.dtrj, obj.dtrj,
-                          dtype = 'float')
     
-    for i in range(len(loclist)):
-        istop = len(idlist[i]) + istart
-        print 'Plotting file', i+1, 'of', len(loclist)
-        rootgrp = nc.Dataset(loclist[i], 'r')
-        tarray = rootgrp.variables['time'][:] / 60   # Convert to minutes
-        
-        # Create extended matrix and tarray
-        exttracemat = np.empty((exttarray.shape[0], len(idlist[i])))
-        exttracemat.fill(np.nan)
-        
-        
-        # Get data and relative times
-        if tracer == 'CD_w':
-            zmat = rootgrp.variables['z'][:, idlist[i]]
-            if zmat.shape[1] == 1:
-                tracemat = zmat
-                grad = np.gradient(zmat[:, 0])
-                tracemat[:, 0] = grad
-            else:
-                tracemat = np.gradient(zmat)[0]
-                #print tracemat
-            tracemat = tracemat / 60. / obj.dtrj   # m/s
-            #print tracemat
-        else:
-            tracemat = rootgrp.variables[tracer][:, idlist[i]]
-        
-        # Get P data and set zeros to nan
-        pmat = rootgrp.variables['P'][:, idlist[i]]
-        zmask = np.ma.mask_or(pmat == 0, np.isnan(pmat))
-        tracemat[zmask] = np.nan
-        tracemat[tracemat == 0] = np.nan
-        
-        if tracer in ['var4', 'POT_VORTIC']:
-            tracemat = tracemat * 1.e6   # PVU
-        tmat = np.array([tarray] * len(idlist[i])).transpose()
-        reltmat = tmat - carray[istart:istop]
-        istart = istop
-        
-        for j in range(len(idlist[i])):
-            ind = np.where(exttarray == reltmat[0, j])[0][0]
-            exttracemat[ind:(ind + tracemat[:, j].shape[0]), j] = tracemat[:, j]
-                    
-        matlist.append(exttracemat)
+    totmat, exttarray = utils._centered_mat(obj, loclist, idlist, tracer, carray)
     
-    totmat = np.hstack(matlist)    
     meanarray = np.nanmean(totmat, axis = 1)
+    countlist = np.sum(np.isfinite(totmat), axis = 1)
+    
+    print "Mean at t = 0:", meanarray[np.round(meanarray.shape[0]/2)]
     
     mask = np.isfinite(meanarray)
     
@@ -345,7 +299,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         smoothper95 = ndi.filters.gaussian_filter(per95[mask], sigma)
         ax.fill_between(exttarray[mask], smoothper5, smoothper95, 
                         facecolor = 'lightgrey', edgecolor = 'lightgrey',
-                        label = '90%')
+                        label = '90%', alpha = 0.5)
         
         per25 = nanpercentile(totmat, 25)
         per75 = nanpercentile(totmat, 75)
@@ -353,7 +307,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         smoothper75 = ndi.filters.gaussian_filter(per75[mask], sigma)
         ax.fill_between(exttarray[mask], smoothper25, smoothper75, 
                         facecolor = 'darkgrey', edgecolor = 'darkgrey',
-                        label = '50%')
+                        label = '50%', alpha = 0.5)
         
         per50 = nanpercentile(totmat, 50)
         smoothper50 = ndi.filters.gaussian_filter(per50[mask], sigma)
@@ -365,7 +319,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
         r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
         plt.legend([l1, l2, r1, r2], ['mean', 'median', '50%', '90%'])
-        
+    
     del totmat
     
     ax.set_ylim(ylim)
@@ -385,10 +339,26 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
                     left = 'off', right = 'off')
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
              fontsize = 6)
+    # Second axix
+    
+    ax2 = ax.twinx()
+    ax2.bar(exttarray[mask], countlist[mask], linewidth = 0, color = 'darkgreen', 
+            width = 5, alpha = 0.8)
+    ax.set_zorder(2)
+    ax2.set_zorder(1)
+    maxbin = np.max(countlist)
+    if maxbin > 15000:
+        inc = 5000
+    else:
+        inc = 1000
+    ax2.set_yticks(np.arange(inc, np.max(countlist) + inc, inc))
+    ax2.set_ylabel('Number of Trajectories', position = (0.1, 0.175))
+    ax2.set_xlim(xlim)
+    ax2.set_ylim((0, np.max(countlist) * 4))
     if tracer == 'var4':
         tracer == 'PVU'
-    plt.ylabel(tracer)
-    plt.xlabel('Time [hrs] relative to center') 
+    ax.set_ylabel(tracer)
+    ax.set_xlabel('Time [hrs] relative to center') 
     
     
     
@@ -426,6 +396,105 @@ def nanpercentile(a, per):
             out[i] = np.percentile(b[np.isfinite(b)], per)
     return out
 
+def draw_centered_integr(obj, loclist, idlist, tracer, carray, savename = None,
+                       idtext = '', ylim = None, 
+                       xlim = None, sigma = 1, middleval = 0):
+    """
+    Draws evolution of a tracer of all trajectories given by filter,
+    centered around midpoint of ascent, as given by carray.
+    Now also allows tracer "CD_w" = Centered Difference vertical velocity.
+    
+    Parameters
+    ----------
+    obj : TrjObj object
+      self 
+    loclist : list
+      List of trjfiles
+    idlist : list of lists
+      Indices for each trjfile
+    tracer : string
+      NetCDF name of tracer
+    carray : string
+      Ascent array to be used for centering
+    savename : string
+      Name of file to be saved
+    plottype : string
+      Type of plot. Only 'Smooth' is up to date!
+    idtext : string
+      Id string to be displayed
+    ylim : tuple, list
+      Tuple or list of y-axis limits
+    xlim : tuple, list
+      Tuple or list of x-axis limits
+    sigma : float
+      Sigma value for smoothing
+
+    NOTE: Can use a lot of RAM!
+    """
+    
+    totmat, exttarray = utils._centered_mat(obj, loclist, idlist, tracer, 
+                                            carray)
+    
+    meanarray = nanpercentile(totmat, 50)
+    meanarray = meanarray * 60 * obj.dtrj
+    meanarray[np.isnan(meanarray)] = 0
+    middle = np.round(meanarray.shape[0]/2)
+    print middle
+    
+    integrarray = np.cumsum(meanarray)
+    
+    offset = integrarray[middle] - middleval
+    integrarray -= offset
+    
+    mask = np.isfinite(meanarray)
+    
+    # Convert time array to hours
+    exttarray = exttarray / 60.
+    
+    # Set up figure
+    fig = plt.figure(figsize = (10, 8))
+    ax = plt.gca()
+    
+    # Set plot properties
+    if ylim == None:
+        ylim = (1.5 * np.nanmin(meanarray), 1.5 * np.nanmax(meanarray))
+    if xlim == None:
+        xlim = [exttarray[mask].min(), exttarray[mask].max()]
+    
+    plt.plot([0, 0], ylim, color = 'dimgrey', linewidth = 2)
+    plt.plot(xlim, [0, 0], color = 'dimgrey', linewidth = 2)
+    
+    plt.plot(exttarray[mask], integrarray[mask], 'firebrick', linewidth = 2)
+    
+    
+    del totmat
+    
+    ax.set_ylim(ylim)
+    if tracer == 'P_dt':
+        ax.invert_yaxis()
+    if (xlim[1] - xlim[0]) < 24:
+        dtick = 1
+    elif (xlim[1] - xlim[0]) < 48:
+        dtick = 6
+    else:
+        dtick = 12
+    ax.xaxis.set_ticks(np.arange(-120, 120, dtick))
+    ax.set_xlim(xlim)
+    ax.grid(color = 'dimgrey', linestyle = '-')
+    ax.set_frame_on(False)
+    plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
+             fontsize = 6)
+    if tracer == 'var4':
+        tracer == 'PVU'
+    ax.set_ylabel(tracer)
+    ax.set_xlabel('Time [hrs] relative to center') 
+    
+    if savename != None:
+        print 'Save figure as', savename
+        plt.savefig(savename, bbox_inches = 'tight', dpi = 300)
+        plt.close('all')
 
 def draw_hist_2d(obj, varname1, varname2, loclist, idlist, carray, dplus):
     """
