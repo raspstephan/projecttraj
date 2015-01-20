@@ -153,6 +153,11 @@ c0.draw_centered_vs_t('var4', 'WCB_Conv', 'P600', plottype='Fill', ylim = (-3, 6
 c1.draw_centered_vs_t('var4', 'WCB', 'P600', plottype='Fill', ylim = (-3, 6), sigma = 1, idtext = '200115h', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/')
 c2.draw_centered_vs_t('POT_VORTIC', 'WCB', 'P600', plottype='Fill', ylim = (-3, 6), sigma = 1, idtext = '200115i', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
 
+# centered_THETA_P600_WCB_200115j.png
+# centered_THETAE_P600_WCB_200115k.png
+
+#xy_path
+c2.draw_trj_all([], 'WCB', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/', idtext = '200115l', thinning = 10)
 
 
 
