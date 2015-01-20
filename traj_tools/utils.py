@@ -227,8 +227,23 @@ def _interpolate_3d(obj, varname, outint = 60):
 
     return newlist
 
-
-                
+def convert_p2std(files):
+    """
+    Converts Pressure variable in netCDF files to hPa, with np.nan as default 
+    value
+    """
+    
+    for f in files:
+        print "Converting file:", f
+        rootgrp = nc.Dataset(f, 'a')
+        p = rootgrp.variables['P'][:, :]
+        p = p / 100.
+        p[p < 1.] = np.nan
+        rootgrp.variables['P'][:, :] = p
+        rootgrp.close
+        
+        
+      
 
 def calc_theta(files):
     """
@@ -1152,7 +1167,6 @@ def _minxspan(array, yspan, flip = False):
     
     # Filter out nans and zeros
     array = array[np.isfinite(array)]
-    array = array[np.abs(array) > 1000]   #ATTENTION Might not work for PV, QV, ...
     # Flip array if needed
     if flip:
         array = -array 
@@ -1174,7 +1188,8 @@ def _minxspan(array, yspan, flip = False):
     else:
         # Use Fortran implementation, use 0 as error values
         xspan, istart, istop, startval, stopval  = futils.futils.minxspan(array, 
-                                                   yspan, len(array) + 1, 0, 0, 0, 0)
+                                                   yspan, len(array) + 1, 0, 0, 
+                                                   0, 0)
         
         # Check if output is correct. NOTE: THIS IS A POTENTIAL BUG!!!
         if (istart < 0) and (istop < 0):

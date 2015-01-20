@@ -1307,16 +1307,17 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
             lonarray = lonarray[(carray > inrange[0]) & (carray < inrange[1])]
             latarray = latarray[(carray > inrange[0]) & (carray < inrange[1])]
         else:
-            norm = plt.Normalize(10000, 100000)
+            norm = plt.Normalize(100, 1000)
         
         if not thinning == False:
             lonarray = lonarray[::thinning]
             latarray = latarray[::thinning]
             carray = carray[::thinning]
         
-        cmap = clr.ListedColormap(['darkorange', 'orange', 'khaki', 'beige',
-                                   'greenyellow', 'lawngreen', 'green', 
-                                   'darkolivegreen'])
+        #cmap = clr.ListedColormap(['darkorange', 'orange', 'khaki', 'beige',
+                                   #'greenyellow', 'lawngreen', 'green', 
+                                   #'darkolivegreen'])
+        cmap = 'Spectral'
         
         plt.scatter(lonarray, latarray, c = carray, s = 10,
                     cmap = cmap, linewidth = 0.1,

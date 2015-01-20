@@ -691,6 +691,14 @@ class TrjObj(object):
         self.trjfiles = thetalist
     
     
+    def convert_p2std(self):
+        """
+        Converts Pressure variable in netCDF files to hPa, with np.nan as default 
+        value
+        """
+        utils.convert_p2std(self.trjfiles)
+        
+    
     def calc_cape(self, filterlim, debug = False, getp = False):
         """
         Calculates CAPE from trajectory position.

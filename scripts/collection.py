@@ -134,6 +134,14 @@ c0.draw_vs_p('QV', 'WCB_NonConv', 'P600', (100, 1000), idtext = '171214h', ylabe
 c0.draw_vs_p('QV', 'WCB_Conv', 'P600', (100, 1000), idtext = '171214i', ylabel = 'QV [kg/kg]', ylim = (0.00001, 0.1), log = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
 c1.draw_vs_p('QV', 'WCB', 'P600', (50, 1000), idtext = '171214j', ylabel = 'QV [kg/kg]', ylim = (0.00001, 0.1), log = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/')
 
+# 200115
+with plt.style.context('fivethirtyeight'):
+    c2.draw_hist('P600', mintohrs = True, idtext = '200115a', filtername = 'WCB')
+    plt.gca().set_xlim(0, 48)
+    plt.xlabel('Ascent time for 600hPa [hrs]')
+    plt.xticks(range(0, 48 + 6, 6))
+    savename = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/hist_P600_WCB_200115a'
+    plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
 
 
 
