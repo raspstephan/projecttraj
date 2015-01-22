@@ -173,7 +173,7 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
     plt.legend([l1, l2, r1, r2], ['mean', 'median', '50%', '90%'], loc = 2)
     # Plot second axis
     ax2 = ax.twinx()
-    ax2.bar(parray, countlist, linewidth = 0, color = 'sage', width = 5, 
+    ax2.bar(parray, countlist, linewidth = 0, color = 'darkgreen', width = 5, 
             alpha = 0.8)
     maxbin = np.max(countlist)
     if maxbin > 100000:
@@ -201,7 +201,7 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
 
 def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
                        plottype = 'Smooth', idtext = '', ylim = None, 
-                       xlim = None, sigma = 1):
+                       xlim = None, sigma = 1, select = False):
     """
     Draws evolution of a tracer of all trajectories given by filter,
     centered around midpoint of ascent, as given by carray.
@@ -235,8 +235,26 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
     NOTE: Can use a lot of RAM!
     """
     
-    totmat, exttarray = utils._centered_mat(obj, loclist, idlist, tracer, carray)
-    
+    totmat, exttarray = utils._centered_mat(obj, loclist, idlist, tracer, 
+                                                carray)
+    #print exttarray.shape
+    if select:
+        # Get start and end indices
+        startind = np.argmin(np.abs(exttarray - (xlim[0] * 60)))
+        stopind = np.argmin(np.abs(exttarray - (xlim[1] * 60)))
+        #print totmat.shape
+        #print startind, stopind
+        totmat = totmat[startind:stopind, :]
+        exttarray = exttarray[startind:stopind]
+        #print totmat.shape
+        selectarray = np.where(np.isfinite(np.sum(totmat, axis = 0)))
+        print selectarray
+        #print selectarray, np.sum(totmat, axis = 0)
+        totmat = totmat[:, selectarray[0]]
+        if tracer == 'var4':
+            totmat[totmat == 0] = np.nan
+        #print totmat.shape
+        
     meanarray = np.nanmean(totmat, axis = 1)
     countlist = np.sum(np.isfinite(totmat), axis = 1)
     
@@ -318,7 +336,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         # Get filled colors as legends
         r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
         r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
-        plt.legend([l1, l2, r1, r2], ['mean', 'median', '50%', '90%'])
+        plt.legend([l1, l2, r2, r1], ['mean', 'median', '50%', '90%'])
     
     del totmat
     
@@ -1634,7 +1652,7 @@ def single_trj(lonarray, latarray, parray, linewidth = 0.7, carray = 'P'):
                                    #'darkgreen', 'grey', 'grey', 'grey', 'grey',
                                    #'grey'])
         cmap = plt.get_cmap('Spectral')
-        norm = plt.Normalize(10000, 100000)
+        norm = plt.Normalize(100, 1000)
     elif carray == 'w':
         cmap = plt.get_cmap('Reds')
         norm = plt.Normalize(0, 2)

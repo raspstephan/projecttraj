@@ -281,6 +281,27 @@ class TrjObj(object):
                 'Array shapes do not match. Look for error in source code.'
         self.data.extend(ascdata)
         print code, 'has been added.'
+        
+    def new_cross_level(self, tracer, ascname, level):
+        """
+        TODO
+        """
+        ascdata = self.data[self.datadict[ascname]]
+        
+        starttarray = self.data[1]
+        startdata = (self.data[self.datadict[ascname + '_start']] - 
+                        starttarray) / self.dtrj
+        stopdata = (self.data[self.datadict[ascname + '_stop']] - 
+                        starttarray) / self.dtrj
+        
+        diffarray = utils._cross_level(self, tracer, ascdata, 
+                                       startdata, stopdata, level)
+        
+        code = tracer + 'cross' + str(level)
+        self.datadict[code] = len(self.data)
+        
+        self.data.append(diffarray)
+        print code, 'has been added.' 
     
     
     def new_max_cd(self, tracer, flip = False):
@@ -916,7 +937,8 @@ class TrjObj(object):
   
     def draw_centered_vs_t(self, tracer, filtername, carray, 
                            savebase = None, sigma = 1, plottype = 'Smooth', 
-                           idtext = '', ylim = None, xlim = None):
+                           idtext = '', ylim = None, xlim = None, 
+                           select = False):
         """
         Draws evolution of a tracer of all trajectories given by filter,
         centered around midpoint of ascent, as given by carray.
@@ -953,13 +975,22 @@ class TrjObj(object):
         
         
         loclist, idlist = self._mask_iter(filtername)
-        startval = self._mask_array(filtername, carray + '_start')
-        stopval = self._mask_array(filtername, carray + '_stop')
-        carray = (startval + stopval) / 2
+        try:
+            startval = self._mask_array(filtername, carray + '_start')
+            stopval = self._mask_array(filtername, carray + '_stop')
+            carray = (startval + stopval) / 2
+            print carray
+        except:
+            starttarray = self._mask_array(filtername, 'startt')
+            carray =  ((self._mask_array(filtername, carray) * self.dtrj) +
+                       starttarray)
+            print carray
+            
         
         
         plots.draw_centered_vs_t(self, loclist, idlist, tracer, carray, 
-                                 savename, plottype, idtext, ylim, xlim, sigma)
+                                 savename, plottype, idtext, ylim, xlim, sigma,
+                                 select)
  
     def draw_centered_integr(self, tracer, filtername, carray, 
                            savebase = None, sigma = 1, 

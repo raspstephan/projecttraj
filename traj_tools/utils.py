@@ -733,12 +733,14 @@ def _centered_mat(obj, loclist, idlist, tracer, carray):
             #print tracemat
         else:
             tracemat = rootgrp.variables[tracer][:, idlist[i]]
+            if tracer == 'var4':
+                tracemat[np.isnan(tracemat)] = 0
         
         # Get P data and set zeros to nan
         pmat = rootgrp.variables['P'][:, idlist[i]]
         zmask = np.ma.mask_or(pmat == 0, np.isnan(pmat))
         tracemat[zmask] = np.nan
-        tracemat[tracemat == 0] = np.nan
+        #tracemat[tracemat == 0] = np.nan
         
         if tracer in ['var4', 'POT_VORTIC', 'var4_dt', 'POT_VORTIC_dt']:
             tracemat = tracemat * 1.e6   # PVU
@@ -754,6 +756,7 @@ def _centered_mat(obj, loclist, idlist, tracer, carray):
     
     totmat = np.hstack(matlist)
     return totmat, exttarray
+
 
 ####################################################
 # Functions used in core
@@ -778,7 +781,36 @@ def _max_cd(obj, tracer, flip = False):
                 max_cd = np.gradient(array).max()
             difflist.append(max_cd)
     return np.array(cdlist) / obj.dtrj / 60   # in s^-1
-    
+
+def _cross_level(obj, tracer, ascdata, startdata, stopdata, level):
+    """
+    TODO
+    For now only for P
+    """
+    count = 0
+    crosslist = []
+    for fn in obj.trjfiles:
+        print 'Opening ', fn
+        rootgrp = nc.Dataset(fn, 'r')
+        tracemat = rootgrp.variables[tracer][:, :]
+        for i in range(tracemat.shape[1]):
+            #print ascdata[count]
+            if np.isnan(ascdata[count]):
+                crosslist.append(np.nan)
+            else:
+                #print tracemat[startdata[count]-2:stopdata[count] + 1, i]
+                #print startdata[count], stopdata[count]
+                try:
+                    ind = np.where(tracemat[startdata[count]:stopdata[count] + 1, i]
+                               < level)[0][0]
+                except IndexError:
+                    print "Index out of bounds"
+                    ind = 1
+                #print ind + startdata[count]
+                #print tracemat[ind + startdata[count], i]
+                crosslist.append(ind + startdata[count])
+            count += 1
+    return np.array(crosslist)
 
 def _get_val_start(obj, ascstart, tracer, span = 2):
     """
