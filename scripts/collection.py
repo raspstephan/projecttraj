@@ -208,7 +208,118 @@ c0.draw_centered_vs_t('THETA', 'WCB_NonConv', 'Pcross600', plottype = 'Fill', yl
 c1.draw_centered_vs_t('THETA', 'WCB', 'Pcross600', plottype = 'Fill', ylim = (280, 350), xlim = (-36, 36), select=True, idtext = '220115p', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/')
 c1.draw_centered_vs_t('THETAE', 'WCB', 'Pcross600', plottype = 'Fill', ylim = (280, 350), xlim = (-36, 36), select=True, idtext = '220115q', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/')
 
-c0.draw_centered_vs_t('THETAE', 'WCB_Conv', 'Pcross600', plottype = 'Fill', ylim = (280, 350), xlim = (-36, 36), select=True, idtext = '220115r', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
-c0.draw_centered_vs_t('THETAE', 'WCB_NonConv', 'Pcross600', plottype = 'Fill', ylim = (280, 350), xlim = (-36, 36), select=True, idtext = '220115s', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+#c0.draw_centered_vs_t('THETAE_new', 'WCB_Conv', 'Pcross600', plottype = 'Fill', ylim = (280, 350), xlim = (-36, 36), select=True, idtext = '220115r', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+#c0.draw_centered_vs_t('THETAE_new', 'WCB_NonConv', 'Pcross600', plottype = 'Fill', ylim = (280, 350), xlim = (-36, 36), select=True, idtext = '220115s', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+
+#230115
+
+plt.style.use('fivethirtyeight')
+
+c0.draw_hist('P400', mintohrs = True, idtext = '230115a', filtername = 'WCB')
+plt.gca().set_xlim(0, 48)
+plt.xlabel('Ascent time for 400hPa [hrs]')
+plt.xticks(range(0, 48 + 6, 6))
+savename = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/hist_P400_WCB_230115a'
+plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+
+c0.draw_hist('P500', mintohrs = True, idtext = '230115b', filtername = 'WCB')
+plt.gca().set_xlim(0, 48)
+plt.xlabel('Ascent time for 500hPa [hrs]')
+plt.xticks(range(0, 48 + 6, 6))
+savename = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/hist_P500_WCB_230115b'
+plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+
+c0.draw_hist('P600', mintohrs = True, idtext = '230115d', filtername = 'WCB')
+plt.gca().set_xlim(0, 48)
+plt.xlabel('Ascent time for 600hPa [hrs]')
+plt.xticks(range(0, 48 + 6, 6))
+savename = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/hist_P600_WCB_230115d'
+plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+
+c0.draw_hist('P700', mintohrs = True, idtext = '230115c', filtername = 'WCB')
+plt.gca().set_xlim(0, 48)
+plt.xlabel('Ascent time for 700hPa [hrs]')
+plt.xticks(range(0, 48 + 6, 6))
+savename = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/hist_P700_WCB_230115c'
+plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+
+
+c1.draw_hist('P400', mintohrs = True, idtext = '230115e', filtername = 'WCB')
+plt.gca().set_xlim(0, 48)
+plt.xlabel('Ascent time for 400hPa [hrs]')
+plt.xticks(range(0, 48 + 6, 6))
+savename = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/hist_P400_WCB_230115e'
+plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+
+c1.draw_hist('P500', mintohrs = True, idtext = '230115f', filtername = 'WCB')
+plt.gca().set_xlim(0, 48)
+plt.xlabel('Ascent time for 500hPa [hrs]')
+plt.xticks(range(0, 48 + 6, 6))
+savename = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/hist_P500_WCB_230115f'
+plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+
+c1.draw_hist('P600', mintohrs = True, idtext = '230115g', filtername = 'WCB')
+plt.gca().set_xlim(0, 48)
+plt.xlabel('Ascent time for 600hPa [hrs]')
+plt.xticks(range(0, 48 + 6, 6))
+savename = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/hist_P600_WCB_230115g'
+plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+
+c1.draw_hist('P700', mintohrs = True, idtext = '230115h', filtername = 'WCB')
+plt.gca().set_xlim(0, 48)
+plt.xlabel('Ascent time for 700hPa [hrs]')
+plt.xticks(range(0, 48 + 6, 6))
+savename = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/hist_P700_WCB_230115h'
+plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+
+
+c2.draw_hist('P400', mintohrs = True, idtext = '230115i', filtername = 'WCB_Cy1_new')
+plt.gca().set_xlim(0, 48)
+plt.xlabel('Ascent time for 400hPa [hrs]')
+plt.xticks(range(0, 48 + 6, 6))
+savename = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/hist_P400_WCB_Cy1_new_230115i'
+plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+
+c2.draw_hist('P500', mintohrs = True, idtext = '230115j', filtername = 'WCB_Cy1_new')
+plt.gca().set_xlim(0, 48)
+plt.xlabel('Ascent time for 500hPa [hrs]')
+plt.xticks(range(0, 48 + 6, 6))
+savename = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/hist_P500_WCB_Cy1_new_230115j'
+plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+
+c2.draw_hist('P600', mintohrs = True, idtext = '230115k', filtername = 'WCB_Cy1_new')
+plt.gca().set_xlim(0, 48)
+plt.xlabel('Ascent time for 600hPa [hrs]')
+plt.xticks(range(0, 48 + 6, 6))
+savename = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/hist_P600_WCB_Cy1_new_230115k'
+plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+
+c2.draw_hist('P700', mintohrs = True, idtext = '230115l', filtername = 'WCB_Cy1_new')
+plt.gca().set_xlim(0, 48)
+plt.xlabel('Ascent time for 700hPa [hrs]')
+plt.xticks(range(0, 48 + 6, 6))
+savename = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/hist_P700_WCB_Cy1_new_230115l'
+plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+
+c0.draw_trj_dot(["PMSL", "TOT_PREC_S"], interval = 20, filtername='WCB', thinning = 10, savebase='/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/dot/')
+
+c0.draw_trj_all([], 'WCB', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', idtext = '230115m', thinning = 10)
+c0.draw_trj_all([], 'WCB_Conv', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', idtext = '230115n', thinning = 10)
+c0.draw_trj_all([], 'WCB_NonConv', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', idtext = '230115o', thinning = 10)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

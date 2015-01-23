@@ -357,22 +357,24 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
                     left = 'off', right = 'off')
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
              fontsize = 6)
-    # Second axix
-    
-    ax2 = ax.twinx()
-    ax2.bar(exttarray[mask], countlist[mask], linewidth = 0, color = 'darkgreen', 
-            width = 5, alpha = 0.8)
-    ax.set_zorder(2)
-    ax2.set_zorder(1)
     maxbin = np.max(countlist)
-    if maxbin > 15000:
-        inc = 5000
+    # Second axix
+    if not select:
+        ax2 = ax.twinx()
+        ax2.bar(exttarray[mask], countlist[mask], linewidth = 0, color = 'darkgreen', 
+                width = 5, alpha = 0.8)
+        ax.set_zorder(2)
+        ax2.set_zorder(1)
+        if maxbin > 15000:
+            inc = 5000
+        else:
+            inc = 1000
+        ax2.set_yticks(np.arange(inc, np.max(countlist) + inc, inc))
+        ax2.set_ylabel('Number of Trajectories', position = (0.1, 0.175))
+        ax2.set_xlim(xlim)
+        ax2.set_ylim((0, np.max(countlist) * 4))
     else:
-        inc = 1000
-    ax2.set_yticks(np.arange(inc, np.max(countlist) + inc, inc))
-    ax2.set_ylabel('Number of Trajectories', position = (0.1, 0.175))
-    ax2.set_xlim(xlim)
-    ax2.set_ylim((0, np.max(countlist) * 4))
+        plt.title('Number of trajectories: ' + str(maxbin))
     if tracer == 'var4':
         tracer == 'PVU'
     ax.set_ylabel(tracer)
@@ -782,7 +784,8 @@ def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False,
                  **kwargs)
         plt.gca().set_xscale('log')
     else:
-        plt.hist(array[np.isfinite(array)], bins = 144, **kwargs)
+        plt.hist(array[np.isfinite(array)], bins = np.arange(0, 96.5, 0.5), 
+                 align = 'right', **kwargs)
         
     
     # Add labels and text

@@ -740,6 +740,8 @@ def _centered_mat(obj, loclist, idlist, tracer, carray):
         pmat = rootgrp.variables['P'][:, idlist[i]]
         zmask = np.ma.mask_or(pmat == 0, np.isnan(pmat))
         tracemat[zmask] = np.nan
+        # Filter out very large values
+        tracemat[tracemat > 1e20] = np.nan
         #tracemat[tracemat == 0] = np.nan
         
         if tracer in ['var4', 'POT_VORTIC', 'var4_dt', 'POT_VORTIC_dt']:
