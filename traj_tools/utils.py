@@ -648,7 +648,7 @@ def _write2netcdf(conmat, tstart, savebase, fcount):
     rootgrp.ref_hour = 0
     rootgrp.ref_min = 0
     rootgrp.ref_sec = 0
-    rootgrp.duration_in_sec = tsteps* dt + trjstart
+    rootgrp.duration_in_sec = tsteps * dt + trjstart
     rootgrp.pollon = -165
     rootgrp.pollat = 35
     rootgrp.output_timestep_in_sec = 300
@@ -991,7 +991,7 @@ def _delta(filelist, tracer, mode = 'minmax'):
     
 
 
-def _minasct(filelist, yspan, tracer, dtrj, interpolate = False):
+def _minasct(filelist, yspan, tracer, dtrj, interpolate = False, within = None):
     """
     Calculate minimum ascent time for all trajectories from NetCDF files.
     
@@ -1032,18 +1032,30 @@ def _minasct(filelist, yspan, tracer, dtrj, interpolate = False):
     else:
         flip = False
     
+    count = 0
     for f in filelist:
         print 'Opening file:', f
         rootgrp = nc.Dataset(f, 'r')
         mat = rootgrp.variables[tracer][:, :]
         trjstart = int(rootgrp.variables['time'][0] / 60) / dtrj
         for j in range(mat.shape[1]):
-            asctup = _minxspan(mat[:, j], yspan, flip)
+            if not within == None:
+                if np.isnan(within[0][count]):
+                    asctup = [np.nan] * 5
+                else:
+                    asctup = _minxspan(mat[within[0][count]:within[1][count], j], 
+                                       yspan, flip)
+                asctup[1] += within[0][count]
+                asctup[2] += within[0][count]
+            else:
+                asctup = _minxspan(mat[:, j], yspan, flip)
             asct.append(asctup[0])
             ascstart.append(asctup[1] + trjstart)
             ascstop.append(asctup[2] + trjstart)
             ascstartval.append(asctup[3])
             ascstopval.append(asctup[4])
+            count += 1
+            
     assert (len(asct) == len(ascstart) == len(ascstop) == len(ascstartval) == 
             len (ascstopval)), \
             'Array lengths do not match'

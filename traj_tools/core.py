@@ -248,7 +248,7 @@ class TrjObj(object):
         
     
     
-    def new_asc(self, yspan, tracer = 'P', interpolate = True):
+    def new_asc(self, yspan, tracer = 'P', interpolate = True, within = None):
         """
         Adds a new ascent filter to data.
         
@@ -265,12 +265,22 @@ class TrjObj(object):
         P600 has been added
         
         """
-
+        code = tracer + str(yspan)
+        if not within == None:
+            code = code + 'within' + within
+            starttarray = self._mask_array(None, 'startt')
+            startarray = (self._mask_array(None, within + '_start') - 
+                          starttarray) / self.dtrj
+            stoparray = (self._mask_array(None, within + '_stop') - 
+                          starttarray) / self.dtrj
+            within = [startarray, stoparray]
+            
+        
         ascdata = utils._minasct(self.trjfiles, yspan, tracer, self.dtrj, 
-                                 interpolate)
+                                 interpolate, within)
         
         # Update dictionary
-        code = tracer + str(yspan)
+        
         self.datadict[code] = len(self.data)
         self.datadict[code + '_start'] = len(self.data) + 1
         self.datadict[code + '_stop'] = len(self.data) + 2
@@ -281,6 +291,8 @@ class TrjObj(object):
                 'Array shapes do not match. Look for error in source code.'
         self.data.extend(ascdata)
         print code, 'has been added.'
+        
+        
         
     def new_cross_level(self, tracer, ascname, level):
         """
@@ -1137,11 +1149,11 @@ class TrjObj(object):
                         + '_' + str(filtername) + '_' + str(idtext))
         else: 
             savename = savebase
-        #xlabel = 'Time x ' + str(factor1) +' for ' + str(dataname1) + ' [hrs]'
-        #ylabel = 'Time x ' + str(factor2) +' for ' + str(dataname2) + ' [hrs]'
+        xlabel = 'Time x ' + str(factor1) +' for ' + str(dataname1) + ' [hrs]'
+        ylabel = 'Time x ' + str(factor2) +' for ' + str(dataname2) + ' [hrs]'
         
-        xlabel = dataname1
-        ylabel = dataname2
+        #xlabel = dataname1
+        #ylabel = dataname2
         
         # Pass parameters to plots function
         plots.draw_scatter(array1, array2, carray, idtext, xlabel, ylabel, 
@@ -1279,6 +1291,18 @@ class TrjObj(object):
         plots.draw_hist(array, idtext, xlabel, savename, log, mintohrs, 
                         **kwargs)
 
+
+    def draw_hist_3d(self, datalist, filterlist):
+        """
+        """
+        newdatalist = []
+        for i in range(len(datalist)):
+            newdatalist.append(self._mask_array(filterlist[i], datalist[i]) 
+                               / 60.)
+        
+        plots.draw_hist_3d(newdatalist, datalist)
+                               
+        
     
     def draw_mult_hist(self, dataname, objs, filtername = None, idtext = '', 
                        savebase = None, xlabel = '', **kwargs):

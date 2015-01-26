@@ -31,10 +31,11 @@ import matplotlib.collections as col
 from mpl_toolkits.basemap import Basemap
 import cosmo_utils.pywgrib as pwg
 import scipy.ndimage as ndi
-from scipy.stats import nanmean
+from scipy.stats import nanmean, pearsonr
 from datetime import datetime, timedelta
 import netCDF4 as nc
 import utils
+from mpl_toolkits.mplot3d import Axes3D
 
 
 
@@ -251,8 +252,8 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         print selectarray
         #print selectarray, np.sum(totmat, axis = 0)
         totmat = totmat[:, selectarray[0]]
-        if tracer == 'var4':
-            totmat[totmat == 0] = np.nan
+        
+        totmat[totmat == 0] = np.nan
         #print totmat.shape
         
     meanarray = np.nanmean(totmat, axis = 1)
@@ -583,6 +584,26 @@ def draw_hist_2d(obj, varname1, varname2, loclist, idlist, carray, dplus):
     #plt.gca().set_ylim(-10.e-6, 10.e-6)
 
 
+def draw_hist_3d(datalist, namelist):
+    """
+    """
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection = '3d')
+    
+    for i in range(len(datalist)):
+        histdata, histrange = np.histogram(datalist[i], 
+                                           bins = np.arange(0, 48, 0.5))
+        ax.bar(histrange[:-1], histdata, i, zdir = 'y', color = 'b', alpha = 0.8) 
+    
+    ax.set_xlabel('hrs')
+    ax.set_ylabel('criterion')
+    ax.set_zlabel('Count')
+    
+    plt.yticks(range(0, len(datalist)), namelist)
+    
+    ax.set_zlim(0,1000)
+    
+
 def draw_scatter_3(obj, varname, loclist, idlist, carray, dplus):
     """
     TODO
@@ -664,12 +685,14 @@ def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None,
         
     # Convert to hours
     array1 = array1 / 60
-    #array2 = array2 / 60
+    array2 = array2 / 60
+    
+    print np.nanmean(array1), np.nanmean(array2)
     #plt.scatter(array1, array2)
     # Plot scatter plot, add labels
-    sca = ax.scatter(array1, array2) #c = carray, s = 8,
-                     #cmap=plt.get_cmap('Spectral'), 
-                     #norm=plt.Normalize(100, 1000), linewidths = 0)
+    sca = ax.scatter(array1, array2, c = carray, s = 8,
+                     cmap=plt.get_cmap('Spectral'), 
+                     norm=plt.Normalize(100, 1000), linewidths = 0)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     
@@ -678,18 +701,18 @@ def draw_scatter(array1, array2, carray = None, idtext = '', xlabel = None,
     ymx = np.amax(array2[np.isfinite(array2)])
     mx = max(xmx, ymx)
     plt.xlim(0, xmx+0.1*xmx)
-    plt.ylim(0, ymx+0.1*ymx)
-    #plt.plot([0, mx], [0, mx])
-    #plt.xticks(np.arange(0, xmx+3, 3))
-    #plt.yticks(np.arange(0, ymx+3, 3))
+    plt.ylim(0, xmx+0.1*xmx)
+    plt.plot([0, mx], [0, mx])
+    plt.xticks(np.arange(0, xmx+3, 3))
+    plt.yticks(np.arange(0, xmx+3, 3))
     
     # Add idtext
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
              fontsize = 6)
-    ##cb = fig.colorbar(sca, shrink = 0.7)
-    ##cb.set_label('p')
-    ##cb.ax.invert_yaxis()
-    ##ax.set_axis_bgcolor('grey')
+    cb = fig.colorbar(sca, shrink = 0.7)
+    cb.set_label('p')
+    cb.ax.invert_yaxis()
+    ax.set_axis_bgcolor('grey')
     
     if savename != None:
         print 'Save figure as', savename
