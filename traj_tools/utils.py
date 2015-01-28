@@ -710,7 +710,7 @@ def _centered_mat(obj, loclist, idlist, tracer, carray):
     
     for i in range(len(loclist)):
         istop = len(idlist[i]) + istart
-        print 'Evaluating file', i+1, 'of', len(loclist)
+        print 'Evaluating file', i+1, 'of', len(loclist), loclist[i]
         rootgrp = nc.Dataset(loclist[i], 'r')
         tarray = rootgrp.variables['time'][:] / 60   # Convert to minutes
         
@@ -850,7 +850,7 @@ def _get_val_start(obj, ascstart, tracer, span = 2):
     return np.array(vallist)
 
 
-def _loc_filter(filelist, xmin, xmax, ymin, ymax):
+def _loc_filter(filelist, xmin, xmax, ymin, ymax, tmin = None, tmax = None):
     """
     Returns a boolian array of all trajecories in filelist, indicating if the
     given rectangle was passed or not.
@@ -878,13 +878,19 @@ def _loc_filter(filelist, xmin, xmax, ymin, ymax):
     for f in filelist:
         print 'Opening file:', f
         rootgrp = nc.Dataset(f, 'r')
+        startt = rootgrp.variables['time'][0] / 60   # Convert to minutes
+        start = int((tmin - startt) / 5.)
+        stop = int((tmax - startt) / 5.)
         lon = rootgrp.variables['longitude'][:, :]
         lat = rootgrp.variables['latitude'][:, :]
         
         for j in range(lon.shape[1]):
-            m =  (lon[:, j] > xmin) & (lon[:, j] < xmax)
-            m &= (lat[:, j] > ymin) & (lat[:, j] < ymax)
-            boollist.append(np.any(m))
+            if start >= 0:
+                m =  (lon[start:stop, j] > xmin) & (lon[start:stop, j] < xmax)
+                m &= (lat[start:stop, j] > ymin) & (lat[start:stop, j] < ymax)
+                boollist.append(np.any(m))
+            else:
+                boollist.append(False)
             
     return np.array(boollist)
 

@@ -44,34 +44,105 @@ def draw_vs_t(obj, tracer, loclist, idlist, savename = None, sigma = None):
     """
     TODO
     """
-    
-    
-    # 
+    sigma = 1
+    ylim = (0, 1000)
+    xlim = None
+    idtext = ''
+    matlist = []
+    exttarray = np.arange(0, obj.maxmins + obj.dtrj, obj.dtrj, dtype = 'float')
+    exttarray = exttarray / 60.
     for i in range(len(loclist)):
         print 'Plotting file', i+1, 'of', len(loclist)
         rootgrp = nc.Dataset(loclist[i], 'r')
-        
-    #if dataname == 'z_CD':
-        #array = rootgrp.variables['z'][:, fileid]
-        
-        #array = np.gradient(array)
-        #if sigma != None:
-            #array = ndi.filters.gaussian_filter(array, sigma)
-    #else:
-        #array = rootgrp.variables[dataname][:, fileid]
-        #if sigma != None:
-            #array = ndi.filters.gaussian_filter(array, sigma)
             
-        tracerarray = rootgrp.variables[tracer][:, :]
-        tarray = rootgrp.variables['time'][:] / 60   # Convert to minutes
+        tracemat = rootgrp.variables[tracer][:, :]
+        tstart = rootgrp.variables['time'][0] / 60. / obj.dtrj   # Convert to minutes
+        print tstart
+        tstart = int(tstart)
+        exttracemat = np.empty((exttarray.shape[0], len(idlist[i])))
+        exttracemat.fill(np.nan)
         
         # Convert zeros to nans
-        tracerarray[tracerarray == 0] = np.nan
+        tracemat[tracemat == 0] = np.nan
         
-        # Plot trajectories in idlist
-        plt.plot(tarray, tracerarray[:, idlist[i]])
-            
-            
+        # Write in file
+        exttracemat[tstart:] = tracemat[:, idlist[i]]
+        matlist.append(exttracemat)
+        
+    totmat = np.hstack(matlist)
+    meanarray = np.nanmean(totmat, axis = 1)
+    countlist = np.sum(np.isfinite(totmat), axis = 1)
+    mask = np.isfinite(meanarray)
+    
+    # Set up figure
+    fig = plt.figure(figsize = (10, 8))
+    ax = plt.gca()
+    
+    # Set plot properties
+    if ylim == None:
+        ylim = (1.5 * np.nanmin(meanarray), 1.5 * np.nanmax(meanarray))
+    if xlim == None:
+        xlim = [exttarray[mask].min(), exttarray[mask].max()]
+        
+    per5 = nanpercentile(totmat, 5)
+    per95 = nanpercentile(totmat, 95)
+    smoothper5 = ndi.filters.gaussian_filter(per5[mask], sigma)
+    smoothper95 = ndi.filters.gaussian_filter(per95[mask], sigma)
+    ax.fill_between(exttarray[mask], smoothper5, smoothper95, 
+                    facecolor = 'lightgrey', edgecolor = 'lightgrey',
+                    label = '90%', alpha = 0.5)
+    
+    per25 = nanpercentile(totmat, 25)
+    per75 = nanpercentile(totmat, 75)
+    smoothper25 = ndi.filters.gaussian_filter(per25[mask], sigma)
+    smoothper75 = ndi.filters.gaussian_filter(per75[mask], sigma)
+    ax.fill_between(exttarray[mask], smoothper25, smoothper75, 
+                    facecolor = 'darkgrey', edgecolor = 'darkgrey',
+                    label = '50%', alpha = 0.5)
+    
+    per50 = nanpercentile(totmat, 50)
+    smoothper50 = ndi.filters.gaussian_filter(per50[mask], sigma)
+    l2, = plt.plot(exttarray[mask], smoothper50, 'black')
+    
+    smootharray = ndi.filters.gaussian_filter(meanarray[mask], sigma)
+    l1, = plt.plot(exttarray[mask], smootharray, 'firebrick', linewidth = 2)
+    # Get filled colors as legends
+    r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
+    r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
+    plt.legend([l1, l2, r2, r1], ['mean', 'median', '50%', '90%'])
+    
+    del totmat
+    
+    ax.set_ylim(ylim)
+    if tracer == 'P':
+        ax.invert_yaxis()
+    dtick = 3
+    #ax.xaxis.set_ticks(np.arange(0, 120, dtick))
+    ax.set_xlim(xlim)
+    ax.grid(color = 'dimgrey', linestyle = '-')
+    ax.set_frame_on(False)
+    plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
+             fontsize = 6)
+    maxbin = np.max(countlist)
+    
+    ax2 = ax.twinx()
+    ax2.bar(exttarray[mask], countlist[mask], linewidth = 0, color = 'darkgreen', 
+            width = 5, alpha = 0.8)
+    ax.set_zorder(2)
+    ax2.set_zorder(1)
+    inc = 500
+    ax2.set_yticks(np.arange(inc, np.max(countlist) + inc, inc))
+    ax2.set_ylabel('Number of Trajectories', position = (0.1, 0.175))
+    ax2.set_xlim(xlim)
+    ax2.set_ylim((0, np.max(countlist) * 4))
+    
+    ax.set_ylabel(tracer)
+    ax.set_xlabel('Time [hrs] relative to center') 
+    
+    
+    
     if savename != None:
         print 'Save figure as', savename
         plt.savefig(savename, bbox_inches = 'tight')
@@ -171,7 +242,7 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
     # Get filled colors as legends
     r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
     r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
-    plt.legend([l1, l2, r1, r2], ['mean', 'median', '50%', '90%'], loc = 2)
+    plt.legend([l1, l2, r2, r1], ['mean', 'median', '50%', '90%'], loc = 2)
     # Plot second axis
     ax2 = ax.twinx()
     ax2.bar(parray, countlist, linewidth = 0, color = 'darkgreen', width = 5, 
@@ -584,24 +655,46 @@ def draw_hist_2d(obj, varname1, varname2, loclist, idlist, carray, dplus):
     #plt.gca().set_ylim(-10.e-6, 10.e-6)
 
 
-def draw_hist_3d(datalist, namelist):
+def draw_hist_3d(datalist, namelist, idtext = '', savename = None, ylim = None):
     """
     """
     fig = plt.figure()
-    ax = fig.add_subplot(111, projection = '3d')
+    ax = plt.gca()
+    #ax = fig.add_subplot(111, projection = '3d')
     
-    for i in range(len(datalist)):
-        histdata, histrange = np.histogram(datalist[i], 
-                                           bins = np.arange(0, 48, 0.5))
-        ax.bar(histrange[:-1], histdata, i, zdir = 'y', color = 'b', alpha = 0.8) 
+    #for i in range(len(datalist)):
+        #histdata, histrange = np.histogram(datalist[i], 
+                                           #bins = np.arange(0, 48, 0.5))
+        #ax.bar(histrange[:-1], histdata, i, zdir = 'y', color = 'b', alpha = 0.8) 
     
-    ax.set_xlabel('hrs')
-    ax.set_ylabel('criterion')
-    ax.set_zlabel('Count')
+    #ax.set_xlabel('hrs')
+    #ax.set_ylabel('criterion')
+    #ax.set_zlabel('Count')
     
-    plt.yticks(range(0, len(datalist)), namelist)
+    #plt.yticks(range(0, len(datalist)), namelist)
     
-    ax.set_zlim(0,1000)
+    #ax.set_zlim(0,1000)
+    newcolors = ['#A3CC52', '#CCCC00', '#FFB84D', '#FF5C33', '#8F0000']
+    colors = newcolors[:len(namelist)]
+    plt.hist(datalist, bins = np.linspace(0, 48, 144), 
+                 histtype = 'step', linewidth = 2, label = namelist, 
+                 color = colors)
+    plt.legend()  
+    plt.gca().set_xlim(0, 48)
+    if not ylim == None:
+        plt.gca().set_ylim(ylim)
+    
+    plt.xlabel('Ascent time [hrs]')
+    plt.ylabel('Frequency')
+    
+    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
+             fontsize = 6)
+    
+    if savename != None:
+        print 'Save figure as', savename
+        plt.savefig(savename, bbox_inches = 'tight', dpi = 300)
+        plt.close('all')
+    
     
 
 def draw_scatter_3(obj, varname, loclist, idlist, carray, dplus):
@@ -778,7 +871,7 @@ def draw_avg(dataname, loclist, idlist, idtext = '', centdiff = False,
 
 
 def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False,
-              mintohrs = False, **kwargs):
+              ylog = False, mintohrs = False, **kwargs):
     """
     Returns/Saves a histogram of given array
     
@@ -809,6 +902,8 @@ def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False,
     else:
         plt.hist(array[np.isfinite(array)], bins = np.arange(0, 96.5, 0.5), 
                  align = 'right', **kwargs)
+    if ylog:
+        plt.gca().set_yscale('log')
         
     
     # Add labels and text

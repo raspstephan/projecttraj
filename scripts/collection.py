@@ -332,7 +332,48 @@ c0.draw_centered_vs_t('z', 'WCB_NonConv', 'Pcross600', plottype = 'Fill', ylim =
 
 c2.draw_centered_vs_t('z', 'WCB_Cy1_new', 'Pcross600', plottype = 'Fill', ylim = (0, 15000), xlim = (-36, 36), select=True, idtext = '260115o', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
 
+#270115
 
+c2.draw_centered_vs_t('P', 'WCB_Cy1_new', 'Pcross600', plottype = 'Fill', ylim = (200, 1000), xlim = (-6, 36), select=True, idtext = '270115a', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
+
+c0.draw_centered_vs_t('P_dt', 'WCB_NonConv', 'Pcross600', plottype = 'Fill', ylim = (-0.10, 0.1), xlim = (-6, 6), select=True, idtext = '270115b', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+c0.draw_centered_vs_t('P_dt', 'WCB_Conv', 'Pcross600', plottype = 'Fill', ylim = (-0.50, 0.1), xlim = (-6, 6), select=True, idtext = '270115c', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+c1.draw_centered_vs_t('P_dt', 'WCB', 'Pcross600', plottype = 'Fill', ylim = (-0.5, 0.1), xlim = (-6, 6), select=True, idtext = '270115d', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/')
+c2.draw_centered_vs_t('P_dt', 'WCB_Cy1_new', 'Pcross600', plottype = 'Fill', ylim = (-0.1, 0.1), xlim = (-6, 6), select=True, idtext = '270115e', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
+
+c0.draw_vs_p('P_dt', 'WCB_NonConv', 'P600', (100, 1000), ylim = (-0.1, 0.05), idtext = '270115f', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+c0.draw_vs_p('P_dt', 'WCB_Conv', 'P600', (100, 1000), ylim = (-0.5, 0.1), idtext = '270115g', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+c1.draw_vs_p('P_dt', 'WCB', 'P600', (100, 1000), ylim = (-0.5, 0.1), idtext = '270115h', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/')
+c2.draw_vs_p('P_dt', 'WCB_Cy1_new', 'P600', (100, 1000), ylim = (-0.1, 0.05), idtext = '270115i', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
+
+#280115
+
+plt.style.use('fivethirtyeight')
+c1.draw_hist('P600', mintohrs = True, idtext = '280115a', filtername = 'WCB', ylog = True)
+plt.gca().set_xlim(0, 48)
+plt.xlabel('Ascent time for 600hPa [hrs]')
+plt.xticks(range(0, 48 + 6, 6))
+savename = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/hist_P600_WCB_280115a'
+plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+
+c0.draw_hist('P600', mintohrs = True, idtext = '280115b', filtername = 'WCB', ylog = True)
+plt.gca().set_xlim(0, 48)
+plt.xlabel('Ascent time for 600hPa [hrs]')
+plt.xticks(range(0, 48 + 6, 6))
+savename = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/hist_P600_WCB_280115b'
+plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+
+c0.draw_hist('P600', mintohrs = True, idtext = '280115c', filtername = 'WCB_Conv', ylog = True)
+plt.gca().set_xlim(0, 48)
+plt.xlabel('Ascent time for 600hPa [hrs]')
+plt.xticks(range(0, 48 + 6, 6))
+savename = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/hist_P600_WCB_Conv_280115c'
+plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+
+
+c2.draw_hist_3d(['P200withinP600', 'P300withinP600', 'P400withinP600', 'P500withinP600', 'P600'], ['WCB', 'WCB', 'WCB', 'WCB', 'WCB'], idtext = '280115e', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/', ylim = (0, 3000))
+c1.draw_hist_3d(['P200withinP600', 'P300withinP600', 'P400withinP600', 'P500withinP600', 'P600'], ['WCB', 'WCB', 'WCB', 'WCB', 'WCB'], idtext = '280115f', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/', ylim = (0, 10000))
+c0.draw_hist_3d(['P200withinP600', 'P300withinP600', 'P400withinP600', 'P500withinP600', 'P600'], ['WCB', 'WCB', 'WCB', 'WCB', 'WCB'], idtext = '280115g', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
 
 
 

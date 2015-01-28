@@ -407,7 +407,7 @@ class TrjObj(object):
     
     
         
-    def new_loc_filter(self, xmin, xmax, ymin, ymax):
+    def new_loc_filter(self, xmin, xmax, ymin, ymax, tmin = None, tmax = None):
         """
         Adds a boolian array indicating if respective trajectories passed 
         through the given rectangle. In rotated coordinates
@@ -422,7 +422,8 @@ class TrjObj(object):
           Upper y boundary
         """
         
-        boolarr = utils._loc_filter(self.trjfiles, xmin, xmax, ymin, ymax)
+        boolarr = utils._loc_filter(self.trjfiles, xmin, xmax, ymin, ymax, tmin,
+                                    tmax)
         
         code = str(xmin) + str(xmax) + str(ymin) + str(ymax)
         self.datadict[code] = len(self.data)
@@ -513,6 +514,16 @@ class TrjObj(object):
         self.filtdict[name] = len(self.filtlist)
         self.filtlist.append(mask)
         print name, 'has been added.'
+        
+    def count_trjs(self, filtername):
+        """
+        TODO
+        """
+        
+        data = self.filtlist[self.filtdict[filtername]]
+        
+        return np.sum(data)
+        
 
 
     def _nrot2rot(self, nrcoord, mode):
@@ -981,7 +992,8 @@ class TrjObj(object):
         # Create savename and label names
         if savebase != None:
             savename = (savebase + 'centered_' + tracer + '_' + carray + '_' +
-                        filtername + '_' + idtext)
+                        filtername + '_' + str(xlim[0]) + '_' + str(xlim[1]) + 
+                        '_' + idtext)
         else: 
             savename = savebase
         
@@ -1201,7 +1213,7 @@ class TrjObj(object):
     
         
     def draw_hist(self, data, filtername = None, idtext = '', savebase = None,
-                  log = False, mintohrs  = False, **kwargs):
+                  log = False, ylog = False, mintohrs  = False, **kwargs):
         """
         Make a histogram of the ratio of two parameters.
         dataname1 / dataname 2 adjusted by multiplication factor.
@@ -1288,11 +1300,12 @@ class TrjObj(object):
             raise Exception('Wrong input for data')
 
         # Pass parameters to plots function
-        plots.draw_hist(array, idtext, xlabel, savename, log, mintohrs, 
+        plots.draw_hist(array, idtext, xlabel, savename, log, ylog, mintohrs, 
                         **kwargs)
 
 
-    def draw_hist_3d(self, datalist, filterlist):
+    def draw_hist_3d(self, datalist, filterlist, idtext = '', 
+                     savebase = None, ylim = None):
         """
         """
         newdatalist = []
@@ -1300,7 +1313,12 @@ class TrjObj(object):
             newdatalist.append(self._mask_array(filterlist[i], datalist[i]) 
                                / 60.)
         
-        plots.draw_hist_3d(newdatalist, datalist)
+        if savebase != None:    
+            savename = savebase + 'hist_multi_' + idtext + '.png'
+        else:
+            savename = savebase
+        
+        plots.draw_hist_3d(newdatalist, datalist, idtext, savename, ylim)
                                
         
     
