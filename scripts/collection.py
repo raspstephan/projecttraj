@@ -373,7 +373,20 @@ plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
 
 c2.draw_hist_3d(['P200withinP600', 'P300withinP600', 'P400withinP600', 'P500withinP600', 'P600'], ['WCB', 'WCB', 'WCB', 'WCB', 'WCB'], idtext = '280115e', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/', ylim = (0, 3000))
 c1.draw_hist_3d(['P200withinP600', 'P300withinP600', 'P400withinP600', 'P500withinP600', 'P600'], ['WCB', 'WCB', 'WCB', 'WCB', 'WCB'], idtext = '280115f', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/', ylim = (0, 10000))
-c0.draw_hist_3d(['P200withinP600', 'P300withinP600', 'P400withinP600', 'P500withinP600', 'P600'], ['WCB', 'WCB', 'WCB', 'WCB', 'WCB'], idtext = '280115g', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+c0.draw_hist_3d(['P200withinP600', 'P300withinP600', 'P400withinP600', 'P500withinP600', 'P600'], ['WCB', 'WCB', 'WCB', 'WCB', 'WCB'], idtext = '280115g', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', ylim = (0, 3000))
+
+#290115
+
+c2.draw_centered_vs_t('POT_VORTIC', 'WCB_Cy1_new', 'Pcross600', plottype = 'Fill', ylim = (-3, 6), xlim = (-6, 36), select=True, idtext = '290115a', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
+c2.draw_centered_vs_t('P', 'WCB_Cy1_new', 'Pcross600', plottype = 'Fill', ylim = (200, 1000), xlim = (-12, 36), select=True, idtext = '290115b', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
+c2.draw_centered_vs_t('z', 'WCB_Cy1_new', 'Pcross600', plottype = 'Fill', ylim = (0, 15000), xlim = (-12, 36), select=True, idtext = '290115c', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
+
+c2.draw_centered_vs_t('THETA', 'WCB_Cy1_new', 'Pcross600', plottype = 'Fill', ylim = (280, 350), xlim = (-12, 36), select=True, idtext = '290115d', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
+c2.draw_centered_vs_t('THETAE', 'WCB_Cy1_new', 'Pcross600', plottype = 'Fill', ylim = (280, 350), xlim = (-12, 36), select=True, idtext = '290115e', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
+
+c2.draw_centered_vs_t('POT_VORTIC', 'WCB_Cy1_new', 'Pcross600', plottype = 'Fill', ylim = (-3, 6), xlim = (-12, 36), select=True, idtext = '290115f', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
+c2.draw_centered_vs_t('QV', 'WCB_Cy1_new', 'Pcross600', plottype = 'Fill', ylim = (0, 0.02), xlim = (-12, 36), select=True, idtext = '290115g', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
+
 
 
 
