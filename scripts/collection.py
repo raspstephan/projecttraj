@@ -387,10 +387,24 @@ c2.draw_centered_vs_t('THETAE', 'WCB_Cy1_new', 'Pcross600', plottype = 'Fill', y
 c2.draw_centered_vs_t('POT_VORTIC', 'WCB_Cy1_new', 'Pcross600', plottype = 'Fill', ylim = (-3, 6), xlim = (-12, 36), select=True, idtext = '290115f', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
 c2.draw_centered_vs_t('QV', 'WCB_Cy1_new', 'Pcross600', plottype = 'Fill', ylim = (0, 0.02), xlim = (-12, 36), select=True, idtext = '290115g', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
 
+#030215
 
+for t in range(0, c0.maxmins, 360):
+    c0.draw_trj_dot([['var4', 300], 'PMSL'], t, filtername = 'WCB_NonConv', thinning = 10, idtext = '030215a', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/synop/set1_', setting = 1, path = True)
+    c0.draw_contour(['var145_S', 'PMSL', 'TOT_PREC_S'], t, idtext = '030215b', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/synop/set2_', setting = 2)
 
+for t in range(0, c1.maxmins, 360):
+    c1.draw_contour([['var4', 300], 'PMSL'], t, idtext = '030215c', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/synop/set1_', setting = 1)
+    c1.draw_contour(['var145_S', 'PMSL', 'TOT_PREC_S'], t, idtext = '030215d', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/synop/set2_', setting = 2)
+    
+for t in range(0, c2.maxmins, 360):
+    c2.draw_trj_dot([['var4', 300], 'PMSL'], t, filtername = 'WCB_Cy1_new', thinning = 10, idtext = '030215e', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/synop/set1_', setting = 1, path = True)
+    c2.draw_contour(['var145_S', 'PMSL', 'TOT_PREC_S'], t, idtext = '030215f', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/synop/set2_', setting = 2)
 
-
-
+#040215 - Deepening
+for t in range(0, c0.maxmins, 60):
+    c0.draw_contour(['PMSL'], t, idtext = 'Deepening', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/deepening/', setting = 3)
+for t in range(0, c2.maxmins, 60):
+    c2.draw_contour(['PMSL'], t, idtext = 'Deepening', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/deepening/', setting = 3)
 
 

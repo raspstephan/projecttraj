@@ -242,7 +242,30 @@ def convert_p2std(files):
         rootgrp.variables['P'][:, :] = p
         rootgrp.close
         
-        
+def rcoo_2_gcoo(rlon, rlat, pollon, pollat):
+    """
+    TODO
+    """
+    
+    # Convert to radians
+    rlon = np.deg2rad(rlon)   
+    rlat = np.deg2rad(rlat)
+    pollon = np.deg2rad(pollon + 180)   # Not sure why and if correct
+    pollat = np.deg2rad(pollat)
+    
+    # Convert into real coordinates
+    glon = np.arctan((np.cos(rlat) * np.sin(rlon)) / 
+                     (np.sin(pollat) * np.cos(rlat) * np.cos(rlon) - 
+                      np.sin(rlat) * np.cos(pollat))) + pollon
+    glat = np.arcsin(np.sin(rlat) * np.sin(pollat) + np.cos(rlat) * 
+                     np.cos(rlon) * np.cos(pollat))
+    
+    # Convert back to degrees
+    glon = np.rad2deg(glon)   
+    glat = np.rad2deg(glat)
+    
+    return glon, glat
+
       
 
 def calc_theta(filelist):
@@ -489,25 +512,42 @@ def _get_level(obj, filename, varname, level, leveltype = 'PS'):
     
     # Get pressure field
     try:
-        levmat = pwg.getfield(filename, leveltype) / 100.   # hPa
+        print filename
+        fobj = pwg.getfobj(filename, leveltype)
+        levmat = fobj.data / 100.
+        lats = fobj.lats
+        lons = fobj.lons
     except:
         print leveltype, 'not found. Try "PP"!'
-        
-        
-        ppmat = pwg.getfield(filename, 'PP') / 100.   # hPa
+
+        fobj = pwg.getfobj(filename, 'PP')
+        ppmat = fobj.data / 100.
+        lats = fobj.lats
+        lons = fobj.lons
         HHhl = pwg.getfield(obj.cfile, 'HH')
         print HHhl.shape
         HHfl = cu.derive.hl_to_fl(HHhl)
         print HHfl.shape
         P0 = cosmo_ref_p(HHfl) / 100.   # hPa
-        del HH
+        del HHfl, HHhl
+        print P0.shape, np.swapaxes(np.array([P0[:, :, -1]]).T, 0, 1).shape
+        P0 = np.concatenate((P0, np.swapaxes(np.array([P0[:, :, -1]]).T, 0, 1)), 
+                             axis = 2)
+        print P0.shape
         levmat = P0 + ppmat
         del P0, ppmat
         #except:
             #print 'ERROR! Not possible to get pressure data!'
     
     # Get variable array
-    varmat = pwg.getfield(filename, varname)
+    if varname == 'THETA':
+        tmat = pwg.getfield(filename, 'T')
+        P0 = 1.e5   # reference pressure [Pa]
+        R = 287.    # specific gas constant dry air [J K-1 kg-1]
+        CP = 1004.  # specific heat at constant pressure [J K-1 kg-1]
+        varmat = tmat * ((P0 / levmat / 100) ** (R / CP))
+    else:
+        varmat = pwg.getfield(filename, varname)
     
     # Get indices
     minmat = levmat - level
@@ -533,7 +573,7 @@ def _get_level(obj, filename, varname, level, leveltype = 'PS'):
             posweight = negval[i, j] / diff 
             array[i, j] = (varmat[negind[i, j], i, j] * negweight + 
                            varmat[posind[i, j], i, j] * posweight)
-    return array
+    return array, lons, lats
 
     
 

@@ -669,7 +669,13 @@ class TrjObj(object):
           
         """
         
-        if varname in pwg.get_fieldtable(self.rfiles[0]).fieldnames:
+        if len(self.afiles) > 0 and varname in pwg.get_fieldtable(self.afiles[0]).fieldnames:
+            cosmoind = int(mins / self.dacosmo)
+            filelist = self.afiles
+        elif len(self.halffiles) > 0 and varname in pwg.get_fieldtable(self.halffiles[0]).fieldnames:
+            cosmoind = int(mins / self.dhalfcosmo)
+            filelist = self.halffiles
+        elif varname in pwg.get_fieldtable(self.rfiles[0]).fieldnames:
             cosmoind = int(mins / self.dprcosmo)
             filelist = self.rfiles
         elif varname in pwg.get_fieldtable(self.pfiles[0]).fieldnames:
@@ -678,9 +684,6 @@ class TrjObj(object):
         #elif varname in pwg.get_fieldtable(self.halffiles[0]).fieldnames:
             #cosmoind = int(mins / self.dhalfcosmo)
             #filelist = self.halffiles
-        elif varname in pwg.get_fieldtable(self.afiles[0]).fieldnames:
-            cosmoind = int(mins / self.dacosmo)
-            filelist = self.afiles
         else:
             raise Exception (varname, 'not found!')
         return cosmoind, filelist
@@ -1576,7 +1579,8 @@ class TrjObj(object):
     def draw_trj_dot(self, varlist, tplus = None, interval = None, 
                      filtername = None, savebase = None, trjstart = None,
                      onlyasc = None, idtext = '', inrange = None, 
-                     cafter = None, thinning = False):
+                     cafter = None, thinning = False, setting = None, 
+                     path = False):
         """
         Draws trajectoriy position as dots with correct background plots.
         Tplus is now time after model start!
@@ -1625,7 +1629,8 @@ class TrjObj(object):
             plots.draw_trj_dot(self,varlist, loclist, idlist, t, 
                                savename = savename, idtext = idtext,
                                inrange = inrange, cafter = cafter, 
-                               thinning = thinning)
+                               thinning = thinning, setting = setting,
+                               path = path)
     
     def draw_asc_loc(self, dataname, varlist, filtername, tplot, tspan, 
                      idtext = '', savebase = None):
@@ -1694,7 +1699,7 @@ class TrjObj(object):
     
         
     def draw_contour(self, varlist, time, savebase = None, interval = None, 
-                     idtext = ''):
+                     idtext = '', setting = None):
         """
         Draws a countourplot of given variables.
         
@@ -1728,7 +1733,7 @@ class TrjObj(object):
                 savename = savebase
             print 'Plotting for time:', time
             plots.draw_contour(self, varlist, time, savename = savename, 
-                               idtext = idtext)
+                               idtext = idtext, setting = setting)
             
             
     ##################

@@ -1223,7 +1223,8 @@ def draw_field(obj, field, fieldname, savename = None):
         plt.clf()
         
 
-def draw_contour(obj, varlist, time, idtext, savename = None):
+def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False, 
+                 setting = None):
     """
     Plots a contour plot of the given variables at the specified time.
     
@@ -1247,11 +1248,12 @@ def draw_contour(obj, varlist, time, idtext, savename = None):
     ax = plt.gca()   
     ax.set_aspect('equal')
     
+    
     # Draw basemap
-    basemap(obj.cfile, obj.xlim, obj.ylim)
+    m = basemap(obj.cfile, obj.xlim, obj.ylim, rcoo)
     
     # Plotting all contour fields
-    for i in range(len(varlist)):   
+    for var in varlist:   
         # NOTE: 'CUM_PREC' not implemented right now
         #if varlist[i] == 'CUM_PREC':
             #contour(rfiles, varlist[i], cosmoind, xlim, ylim, 
@@ -1259,24 +1261,26 @@ def draw_contour(obj, varlist, time, idtext, savename = None):
                     
         # Get index and filelist
         print time
-        if type(varlist[i]) in [list, tuple]:
-            var = varlist[i][0]
-            zlevel = varlist[i][1]
-            
-            cosmoind, filelist = obj._get_index(var, time)
+        if type(var) in [list, tuple]:
+            if var[0] == 'THETA':
+                cosmoind, filelist = obj._get_index('T', time)
+            else:
+                cosmoind, filelist = obj._get_index(var[0], time)
 
-            contour(filelist, var, cosmoind, obj.xlim, obj.ylim, zlevel)
+            contour(obj, filelist, var[0], cosmoind, obj.xlim, obj.ylim, var[1], 
+                    m = m, setting = setting)
         else: 
-            cosmoind, filelist = obj._get_index(varlist[i], time)
-            contour(filelist, varlist[i], cosmoind, obj.xlim, obj.ylim)
+            cosmoind, filelist = obj._get_index(var, time)
+            contour(obj, filelist, var, cosmoind, obj.xlim, obj.ylim, m = m, 
+                    setting = setting)
         
-    # Set plot properties
-    plt.xlim(obj.xlim)
-    plt.ylim(obj.ylim)
+    ## Set plot properties
+    #plt.xlim(obj.xlim)
+    #plt.ylim(obj.ylim)
     
     # Set labels and title
-    plt.xlabel('longitude')
-    plt.ylabel('latitude')
+    #plt.xlabel('longitude')
+    #plt.ylabel('latitude')
     plt.title(obj.date + timedelta(minutes = time))
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
              fontsize = 6)
@@ -1288,6 +1292,8 @@ def draw_contour(obj, varlist, time, idtext, savename = None):
         plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
         plt.close('all')
         plt.clf()
+    else:
+        return m
 
 
 def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles, 
@@ -1435,8 +1441,10 @@ def draw_trj_evo(obj, varlist, loclist, idlist, tplot,
             latmat = rootgrp.variables['latitude'][:trjind, :]
             pmat = rootgrp.variables['P'][:trjind, :]
             
-            lonmat[:, :] += (180 - obj.pollon)   # Convert to real coordinates
-            latmat[:, :] += (90 - obj.pollat)
+            
+            lonmat, latmat = utils.rcoo_2_gcoo(lonmat, latmat, obj.pollon, 
+                                               obj.pollat)
+            
             
             for j in idlist[i]:
                 # Filter out zero values!
@@ -1483,12 +1491,12 @@ def draw_trj_evo(obj, varlist, loclist, idlist, tplot,
 
 def draw_trj_dot(obj, varlist, loclist, idlist, tplus, 
                  savename = None, idtext = '', inrange = None, cafter = None,
-                 thinning = False):
+                 thinning = False, setting = None, path = False):
     """
     tplus = time after MODEL start
     """
     
-    draw_contour(obj, varlist, tplus, idtext = idtext)
+    m = draw_contour(obj, varlist, tplus, idtext = idtext, setting = setting)
     cnt = 0   # continuous counter for startarray and stoparray
     
     # Plot trajectories
@@ -1499,9 +1507,21 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
         trjind = (tplus - trjstart) / obj.dtrj
         if trjind <= 0:
             break
-        lonarray = rootgrp.variables['longitude'][trjind, idlist[i]]
-        latarray = rootgrp.variables['latitude'][trjind, idlist[i]]
-        carray = rootgrp.variables['P'][trjind, idlist[i]]
+        lonmat = rootgrp.variables['longitude'][:, :]
+        lonmat = lonmat[:, idlist[i]]
+        latmat = rootgrp.variables['latitude'][:, :]
+        latmat = latmat[:, idlist[i]]
+        lonarray = lonmat[trjind, :]
+        latarray = latmat[trjind, :]
+        carray = rootgrp.variables['P'][:, :]
+        carray = carray[trjind, idlist[i]]
+
+        lonarray, latarray = utils.rcoo_2_gcoo(lonarray, latarray, obj.pollon, 
+                                               obj.pollat)
+        lonmat[lonmat == 0] = np.nan
+        latmat[latmat == 0] = np.nan
+        lonmat, latmat = utils.rcoo_2_gcoo(lonmat, latmat, obj.pollon, 
+                                               obj.pollat)
         
         if not inrange == None:
             norm = plt.Normalize(inrange[0], inrange[1])
@@ -1518,6 +1538,8 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
             norm = plt.Normalize(100, 1000)
         
         if not thinning == False:
+            lonmat = lonmat[:, ::thinning]
+            latmat = latmat[:, ::thinning]
             lonarray = lonarray[::thinning]
             latarray = latarray[::thinning]
             carray = carray[::thinning]
@@ -1527,18 +1549,24 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
                                    #'darkolivegreen'])
         cmap = 'Spectral'
         
-        plt.scatter(lonarray, latarray, c = carray, s = 10,
-                    cmap = cmap, linewidth = 0.1,
+        if path:
+            xmat, ymat = m(lonmat, latmat)
+            plt.plot(xmat, ymat, color = 'gray', linewidth = 0.5, alpha = 0.8, 
+                     zorder = 0.2)
+        
+        x, y = m(lonarray, latarray)
+        m.scatter(x, y, c = carray, s = 15,
+                    cmap = cmap, linewidth = 0.5,
                     norm = norm)
         
         
     # Set plot properties
-    plt.xlim(obj.xlim)
-    plt.ylim(obj.ylim)
+    #plt.xlim(obj.xlim)
+    #plt.ylim(obj.ylim)
     plt.title(obj.date + timedelta(minutes = tplus))
     cb = plt.colorbar(shrink = 0.7) 
-    #cb.set_label('P')
-    #cb.ax.invert_yaxis()
+    cb.set_label('P')
+    cb.ax.invert_yaxis()
     plt.tight_layout()
     
     # Save Plot
@@ -1605,7 +1633,7 @@ def draw_asc_loc(obj, lon, lat, p, varlist, tplot, idtext = '', savename = None)
 #########################################
 
 
-def basemap(cfile, xlim, ylim):
+def basemap(cfile, xlim, ylim, rcoo = False):
     """
     Draws Land-Sea Map
     
@@ -1619,25 +1647,57 @@ def basemap(cfile, xlim, ylim):
       Dimensions in y-direction in rotated coordinates
 
     """
-    dx = 0.025   # Assumes COSMO 2.2 resolution
-    field = pwg.getfield(cfile, "FR_LAND_S", invfile = False)
+    #dx = 0.025   # Assumes COSMO 2.8 resolution
+    #field = pwg.getfield(cfile, "FR_LAND_S", invfile = False)
     
-    # Setting up grid
-    ny, nx = field.shape
-    x = np.linspace(xlim[0], xlim[1], nx)
-    y = np.linspace(ylim[0], ylim[1], ny)
+    ## Setting up grid
+    #ny, nx = field.shape
+    #x = np.linspace(xlim[0], xlim[1], nx)
+    #y = np.linspace(ylim[0], ylim[1], ny)
 
-    X, Y = np.meshgrid(x, y)
+    #X, Y = np.meshgrid(x, y)
     
-    # Plot and filter field
-    field[field != 0] = 1.
-    plt.contourf(X, Y, field, levels = [0.5, 2], colors = ["0.85"], zorder=0.4)
-    #plt.contour(X, Y, field, 2, colors = "0.5")
+    ## Plot and filter field
+    #field[field != 0] = 1.
+    #plt.contourf(X, Y, field, levels = [0.5, 2], colors = ["0.85"], zorder=0.4)
+    ##plt.contour(X, Y, field, 2, colors = "0.5")
     
-    del field
+    #del field
     
+    cosobj = pwg.getfobj(cfile, "FR_LAND_S")
+    lats = cosobj.lats
+    lons = cosobj.lons
+    # from cosmoutils
+    jmid = len(lats[:,0])/2
+    imid = len(lons[0,:])/2
+    latmid = lats[jmid,imid]
+    lonmid = lons[jmid,imid]
+   
+    lllat = lats[0,0]
+    lllon = lons[0,0]
+    urlat = lats[-1,-1]
+    urlon = lons[-1,-1]
     
-def contour(filelist, variable, cosmoind, xlim, ylim, zlevel = None):
+    m = Basemap(projection="stere", lon_0=lonmid, lat_0=latmid, 
+                llcrnrlat=lllat, urcrnrlat=urlat, llcrnrlon=lllon, 
+                urcrnrlon=urlon, resolution='i')
+    m.drawcoastlines(color = 'black')
+    m.drawcountries(color = 'grey')
+    
+    npars = 5
+    nmers = 5
+    if npars>0 and nmers>0:
+        #parallels = np.arange(int(lllat), int(urlat)+1, (int(urlat)+1-int(lllat))/float(npars))
+        parallels = np.arange(-100, 100, 5)
+        m.drawparallels(parallels, labels = [1,0,0,0])
+        #meridians = np.arange(int(lllon), int(urlon)+1, (int(urlon)+1-int(lllon))/float(nmers))
+        meridians = np.arange(-100, 100, 5)
+        m.drawmeridians(meridians, labels = [0,0,0,1])
+    
+    return m
+    
+def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None, 
+            m = None, setting = None):
     """
     Draws contour plot of one variable.
     
@@ -1670,87 +1730,176 @@ def contour(filelist, variable, cosmoind, xlim, ylim, zlevel = None):
         #diff = len(filelist)-1 - trjstart/5
         #field = (field2 - field1)/(dt*diff)*3600
     
+    
+    
     # Get precipitation difference
     if variable == "TOT_PREC_S":
         try:
-            field1 = pwg.getfield(filelist[cosmoind - 1], "TOT_PREC_S", 
-                                invfile = False)
-            field2 = pwg.getfield(filelist[cosmoind + 1], "TOT_PREC_S", 
-                                invfile = False)
-            field = (field2 - field1)/(dt*2)*3600
+            field1 = pwg.getfobj(filelist[cosmoind - 1], "TOT_PREC_S")
+            field2 = pwg.getfobj(filelist[cosmoind + 1], "TOT_PREC_S")
+            X, Y = m(field1.lons, field1.lats)
+            field = (field2.data - field1.data)/(dt*2)*3600
         except IndexError:
             # Reached end of array, use precip from previous time step
-            field1 = pwg.getfield(filelist[cosmoind - 2], "TOT_PREC_S", 
-                                invfile = False)
-            field2 = pwg.getfield(filelist[cosmoind], "TOT_PREC_S", 
-                                invfile = False)
-            field = (field2 - field1)/(dt*2)*3600
+            field1 = pwg.getfobj(filelist[cosmoind - 2], "TOT_PREC_S")
+            field2 = pwg.getfobj(filelist[cosmoind], "TOT_PREC_S")
+            X, Y = m(field1.lons, field1.lats)
+            field = (field2.data - field1.data)/(dt*2)*3600
     # Retrieve regular fields
-    elif zlevel != None:
-        print zlevel
-        field = pwg.getfield(filelist[cosmoind], variable, levs = zlevel)
+    elif plevel != None:
+        print plevel
+        field, flons, flats = utils._get_level(obj, filelist[cosmoind], 
+                                               variable, plevel)
+        X, Y = m(flons, flats)
     else:
-        field = pwg.getfield(filelist[cosmoind], variable)
+        fobj = pwg.getfobj(filelist[cosmoind], variable)
+        field = fobj.data
+        X, Y = m(fobj.lons, fobj.lats)
      
-    # Setting up grid
-    ny, nx = field.shape
-    x = np.linspace(xlim[0], xlim[1], nx)
-    y = np.linspace(ylim[0], ylim[1], ny)
-    X, Y = np.meshgrid(x, y)
+    ## Setting up grid
+    #ny, nx = field.shape
+    #x = np.linspace(xlim[0], xlim[1], nx)
+    #y = np.linspace(ylim[0], ylim[1], ny)
+    #X, Y = np.meshgrid(x, y)
+    if setting == 1:
+        print 'Setting 1'
+        if variable == "PMSL":   # Surface pressure
+            field = smoothfield(field, 3)/100
+            levels = list(np.arange(900, 1100, 5))
+            CS = m.contour(X, Y, field, levels = levels, colors = 'green', 
+                            linewidths = 1.5, zorder = 0.5)
+            plt.clabel(CS, fontsize = 7, inline = 1, fmt = "%.0f")
+        elif variable == 'THETA':
+            field = smoothfield(field, 5)
+            levels = np.arange(200, 350, 2)
+            CS = plt.contour(X, Y, field, colors = 'black', levels = levels, 
+                             zorder = 0.4, alpha = 1, linewidths = 1.5, 
+                             linestyles = '-')
+            plt.clabel(CS, inline = 1, fontsize = 7, fmt = "%.0f")
+            #cbar = plt.colorbar(shrink = 0.7, pad = 0)
+        elif variable == 'var4':   # PV
+            field = smoothfield(field, 3)
+            field = field * 1.e6   # PVU
+            levels = [-0.2, 0.2, 1, 1.5, 2, 3, 5]
+            cmap = ['#80B2CC', '#FFFFFF', '#FFE0C2', '#FF9933', '#CC3300', 
+                    '#FF5C33']
+            CS = plt.contourf(X, Y, field, colors = cmap, 
+                              extend = 'both', levels = levels, alpha = 0.5,
+                              zorder = 0.45)
+            CS.cmap.set_under('#007ACC')
+            CS.cmap.set_over('#FFCC00')
+            
+            cbar = plt.colorbar(shrink = 0.7, pad = 0)
+            cbar.set_label('PV [PVU]', rotation = 90)
+            #levels = np.arange(-5, 10, 2)
+            #CS = plt.contour(X, Y, field, colors = 'black', levels = levels, 
+                        #zorder = 0.6, linewidths = 2.)
+            #plt.clabel(CS, inline = 1, fontsize = 7, fmt = "%.0f")
+            
+    elif setting == 2:
+        print 'Setting 2'
+        if variable == "PMSL":   # Surface pressure
+            field = smoothfield(field, 3)/100
+            levels = list(np.arange(900, 1100, 5))
+            CS = m.contour(X, Y, field, levels = levels, colors = 'green', 
+                            linewidths = 1.5, zorder = 0.5)
+            plt.clabel(CS, fontsize = 7, inline = 1, fmt = "%.0f")
+        elif variable == 'var145_S':   # CAPE
+            field = smoothfield(field, 3)
+            levels = list(np.arange(100, 3000, 100))
+            plt.contourf(X, Y, field, cmap = plt.get_cmap('hot_r'), 
+                        extend = 'max', levels = levels, alpha = 0.8, 
+                        zorder = 0.45)
+            cbar = plt.colorbar(shrink = 1, pad = 0)
+            cbar.set_label('CAPE [J/kg]', rotation = 90)
+        elif variable in ["TOT_PREC_S", 'CUM_PREC']:   # Precipitation fields
+            cmPrec =( (0    , 0.627 , 1    ),
+                    (0.137, 0.235 , 0.98 ),
+                    (0.1  , 0.1   , 0.784),
+                    (0.392, 0     , 0.627),
+                    (0.784, 0     , 0.627),
+                    (1    , 0.3   , 0.9  ) )   # Tobi's colormap
+            levels = [0.1, 0.3, 1, 3, 10, 100]
+            plt.contourf(X, Y, field, levels, colors=cmPrec, extend='max', 
+                        alpha = 0.8, zorder = 1)
+            cbar = plt.colorbar(shrink = 1, pad = 0.01)
+            cbar.set_label('Precipitation [mm/h]', rotation = 90)
+        elif variable == 'THETA':
+            field = smoothfield(field, 5)
+            #levels = np.arange(200, 350, 2)
+            #CS = plt.contourf(X, Y, field, colors = 'black', levels = levels, 
+                             #zorder = 0.4, alpha = 1, linewidths = 1.5, 
+                             #linestyles = '-')
+            #plt.clabel(CS, inline = 1, fontsize = 7, fmt = "%.0f")
+            CS = plt.contourf(X, Y, field, cmap = 'spectral', 
+                             zorder = 0.4, alpha = 0.5)
+            cbar = plt.colorbar(shrink = 0.7, pad = 2)
     
-    # Plot fields with special format
-    if variable == "FI":   # Geopotential field
-        field = smoothfield(field, 8)
-        levels = list(np.arange(400,600,8)) 
-        plt.contour(X, Y, field/100, levels = levels, colors = "k", 
-                    linewidths = 2)
-    elif variable == "T":   # Temperature field
-        field = smoothfield(field, 8)
-        #plt.contourf(X, Y, field, alpha = 0.5, zorder = 0.45)
-        #plt.colorbar(shrink = 0.7)
-        plt.contour(X, Y, field, levels = list(np.arange(150, 350, 4)), 
-                     colors = "r", linewidths = 0.5, zorder = 0.45)
-    elif variable in ["TOT_PREC_S", 'CUM_PREC']:   # Precipitation fields
-        cmPrec =( (0    , 0.627 , 1    ),
-                  (0.137, 0.235 , 0.98 ),
-                  (0.1  , 0.1   , 0.784),
-                  (0.392, 0     , 0.627),
-                  (0.784, 0     , 0.627),
-                  (1    , 0.3   , 0.9  ) )   # Tobi's colormap
-        levels = [0.1, 0.3, 1, 3, 10, 100]
-        plt.contourf(X, Y, field, levels, colors=cmPrec, extend='max', 
-                     alpha = 0.8, zorder = 1)
-        cbar = plt.colorbar(shrink = 0.7, pad = 0)
-        cbar.set_label('Precipitation [cm/h]', rotation = 90)
-    elif variable == "PMSL":   # Surface pressure
-        field = smoothfield(field, 8)/100
-        levels = list(np.arange(900, 1100, 5))
-        CS = plt.contour(X, Y, field, levels = levels, colors = 'k', 
-                         linewidths = 1, zorder = 0.5, alpha = 0.5)
-        plt.clabel(CS, fontsize = 7, inline = 1, fmt = "%.0f")
-    elif variable == 'var145_S':   # CAPE
-        field = smoothfield(field, 8)
-        levels = list(np.arange(100, 3000, 100))
-        plt.contourf(X, Y, field, cmap = plt.get_cmap('hot_r'), 
-                     extend = 'max', levels = levels, alpha = 0.8, 
-                     zorder = 0.45)
-        cbar = plt.colorbar(shrink = 0.7)
-        cbar.set_label('CAPE [J/kg]', rotation = 90)
-    elif variable == 'var4':   # PV
-        #field = smoothfield(field, 2)
-        field = field * 1.e6   # PVU
-        levels = list(np.arange(-3, 8, 1))
-        plt.contourf(X, Y, field, cmap = plt.get_cmap('coolwarm'), 
-                     extend = 'both', levels = levels, alpha = 0.5,
-                     zorder = 0.45)
-        cbar = plt.colorbar(shrink = 0.7, pad = 0)
-        cbar.set_label('PV [PVU]', rotation = 90)
-        plt.contour(X, Y, field, color = 'black', levels = [2.], zorder = 0.5, 
-                    linewidth = 4.)
-        
-    else:   # All other fields, unformatted
-        plt.contourf(X, Y, field)
-        #plt.colorbar()
+    elif setting == 3:
+        print 'Setting 3'
+        if variable == "PMSL":   # Surface pressure
+            field = smoothfield(field, 3)/100
+            levels = list(np.arange(900, 1100, 1))
+            CS = m.contour(X, Y, field, levels = levels, colors = 'green', 
+                            linewidths = 1.5, zorder = 0.5)
+            plt.clabel(CS, fontsize = 7, inline = 1, fmt = "%.0f")
+            
+    else:
+        # Plot fields with special format
+        if variable == "FI":   # Geopotential field
+            field = smoothfield(field, 8)
+            levels = list(np.arange(400,600,8)) 
+            plt.contour(X, Y, field/100, levels = levels, colors = "k", 
+                        linewidths = 2)
+        elif variable == "T":   # Temperature field
+            field = smoothfield(field, 8)
+            #plt.contourf(X, Y, field, alpha = 0.5, zorder = 0.45)
+            #plt.colorbar(shrink = 0.7)
+            plt.contour(X, Y, field, levels = list(np.arange(150, 350, 4)), 
+                        colors = "r", linewidths = 0.5, zorder = 0.45)
+        elif variable == 'THETA':
+            plt.contourf(X, Y, field, cmap = 'hot_r') 
+        elif variable in ["TOT_PREC_S", 'CUM_PREC']:   # Precipitation fields
+            cmPrec =( (0    , 0.627 , 1    ),
+                    (0.137, 0.235 , 0.98 ),
+                    (0.1  , 0.1   , 0.784),
+                    (0.392, 0     , 0.627),
+                    (0.784, 0     , 0.627),
+                    (1    , 0.3   , 0.9  ) )   # Tobi's colormap
+            levels = [0.1, 0.3, 1, 3, 10, 100]
+            plt.contourf(X, Y, field, levels, colors=cmPrec, extend='max', 
+                        alpha = 0.8, zorder = 1)
+            cbar = plt.colorbar(shrink = 0.7, pad = 0)
+            cbar.set_label('Precipitation [cm/h]', rotation = 90)
+        elif variable == "PMSL":   # Surface pressure
+            field = smoothfield(field, 8)/100
+            levels = list(np.arange(900, 1100, 5))
+            CS = m.contour(X, Y, field, levels = levels, colors = 'k', 
+                            linewidths = 1, zorder = 0.5, alpha = 0.5)
+            plt.clabel(CS, fontsize = 7, inline = 1, fmt = "%.0f")
+        elif variable == 'var145_S':   # CAPE
+            field = smoothfield(field, 8)
+            levels = list(np.arange(100, 3000, 100))
+            plt.contourf(X, Y, field, cmap = plt.get_cmap('hot_r'), 
+                        extend = 'max', levels = levels, alpha = 0.8, 
+                        zorder = 0.45)
+            cbar = plt.colorbar(shrink = 0.7)
+            cbar.set_label('CAPE [J/kg]', rotation = 90)
+        elif variable == 'var4':   # PV
+            #field = smoothfield(field, 2)
+            field = field * 1.e6   # PVU
+            levels = list(np.arange(-3, 8, 1))
+            plt.contourf(X, Y, field, cmap = plt.get_cmap('coolwarm'), 
+                        extend = 'both', levels = levels, alpha = 0.5,
+                        zorder = 0.45)
+            cbar = plt.colorbar(shrink = 0.7, pad = 0)
+            cbar.set_label('PV [PVU]', rotation = 90)
+            plt.contour(X, Y, field, color = 'black', levels = [2.], zorder = 0.5, 
+                        linewidth = 4.)
+            
+        else:   # All other fields, unformatted
+            plt.contourf(X, Y, field)
+            #plt.colorbar()
     del field
     
     
