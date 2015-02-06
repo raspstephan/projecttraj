@@ -1839,10 +1839,13 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
         print 'Setting 3'
         if variable == "PMSL":   # Surface pressure
             field = smoothfield(field, 3)/100
-            levels = list(np.arange(900, 1100, 1))
+            levels = list(np.arange(900, 1100, 5))
             CS = m.contour(X, Y, field, levels = levels, colors = 'green', 
-                            linewidths = 1.5, zorder = 0.5)
+                            linewidths = 0.5, zorder = 0.5)
             plt.clabel(CS, fontsize = 7, inline = 1, fmt = "%.0f")
+            levels = list(np.arange(900, 1100, 1))
+            CS = m.contour(X, Y, field, levels = levels, colors = 'black', 
+                            linewidths = 0.2, zorder = 0.5)
             
     else:
         # Plot fields with special format
