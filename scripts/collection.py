@@ -407,4 +407,5 @@ for t in range(0, c0.maxmins, 60):
 for t in range(0, c2.maxmins, 60):
     c2.draw_contour(['PMSL'], t, idtext = 'Deepening', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/deepening/', setting = 3)
 
-
+#100215
+c1.draw_hist_stacked(['P600_start', 'P600_start'], ['WCB_Conv', 'WCB_NonConv'], ['WCB_Conv', 'WCB_NonConv'], xlim = (0, 6120 / 60.), bins = 102 / 3 + 1, realdate = True, legpos = 2, idtext = '100215a', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/')

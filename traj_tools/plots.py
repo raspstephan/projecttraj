@@ -655,6 +655,52 @@ def draw_hist_2d(obj, varname1, varname2, loclist, idlist, carray, dplus):
     #plt.gca().set_ylim(-10.e-6, 10.e-6)
 
 
+def draw_hist_stacked(obj, datalist, namelist, idtext = '', savename = None, 
+                      ylim = None, xlim = None, bins = 50, realdate = False,
+                      ylabel = None, legpos = 1):
+    """
+    TODO
+    """
+    fig = plt.figure()
+    ax = plt.gca()
+    bins = np.linspace(xlim[0], xlim[1], bins + 1)
+    
+    blist = []
+    clist = ['#CCCCCC', '#525252', 'y']
+    for i in range(len(datalist)):
+        num, xpos = np.histogram(datalist[i], bins)
+        width = np.diff(xpos)[0]
+        xpos = xpos[:-1] + width
+        if i == 0:
+            bottom = None
+        else:
+            bottom = oldnum
+        blist.append(plt.bar(xpos, num, bottom = bottom, color = clist[i], 
+                             width = width))
+        oldnum = num
+        
+    plt.legend(blist, namelist, loc = legpos)
+    if not ylim == None:
+        ax.set_ylim(ylim)
+        
+    d = timedelta(1)
+    if realdate:
+        datelist = [(obj.date + d*i) for i in range(10)]
+        plt.xticks(np.arange(0, 10 * 24, 24), datelist, rotation = 0, 
+                   fontsize = 6)
+    ax.set_xlim(xlim)
+    plt.ylabel('Frequency')
+    if not ylabel == None:
+        plt.xlabel(ylabel)
+    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
+             fontsize = 6)
+    
+    if savename != None:
+        print 'Save figure as', savename
+        plt.savefig(savename, bbox_inches = 'tight', dpi = 300)
+        plt.close('all')
+
+
 def draw_hist_3d(datalist, namelist, idtext = '', savename = None, ylim = None):
     """
     """
@@ -870,48 +916,64 @@ def draw_avg(dataname, loclist, idlist, idtext = '', centdiff = False,
         
 
 
-def draw_hist(array, idtext = '', xlabel =  None, savename = None, log = False,
-              ylog = False, mintohrs = False, **kwargs):
+def draw_hist(array, xlim, ylim, bins = 50, idtext = '', xlabel =  None, 
+              savename = None, ylog = False, exp = False, mintohrs = False):
     """
-    Returns/Saves a histogram of given array
-    
-    array : np.array
-      Array to be used for histogram
-    idtext : string
-      Text to be displayed in plot
-    xlabel : string
-      Text for xlabel
-    savename : string
-      Full path of file to be saved
+    TODO
       
     """
     # Set up figure
     fig = plt.figure()
-    
+    ax = plt.gca()
     # Convert to np array
     array = np.array(array)
     
     if mintohrs:
         array = array / 60.
     
+    bins = np.linspace(xlim[0], xlim[1], bins + 1)
+    avg = np.average(array)
+    med = np.median(array)
+    
     # Plot histogram, remove nans
-    if log:
-        plt.hist(array[np.isfinite(array)], bins = np.logspace(-1, 3, 144), 
-                 **kwargs)
-        plt.gca().set_xscale('log')
-    else:
-        plt.hist(array[np.isfinite(array)], bins = np.arange(0, 96.5, 0.5), 
-                 align = 'right', **kwargs)
+    num, xpos = np.histogram(array, bins)
+    width = np.diff(xpos)[0]
+    xpos = xpos[:-1]  
+    plt.bar(xpos, num, color = '#CCCCCC', width = width)
     if ylog:
         plt.gca().set_yscale('log')
+    l1, = plt.plot([avg, avg], [ylim[0], ylim[1]], linestyle = '--', 
+                   color = 'black', label = 'Mean', linewidth = 2)
+    l2, = plt.plot([med, med], [ylim[0], ylim[1]], linestyle = ':', 
+                   color = 'black', label = 'Median', linewidth = 2)
+        
+    
+    if not exp == False:
+        xvals = np.linspace(xlim[0], xlim[1], 1000)
+        x0 = exp[0]
+        c = exp[1]
+        yvals = x0 * np.exp(c*xvals)
+        l3, = plt.plot(xvals, yvals, linestyle = '-', color = 'black', 
+                       linewidth = 1.5)
+        plt.legend([l1, l2, l3], ['Mean: {:.2f}'.format(avg) , 
+                                'Median: {:.2f}'.format(med), 
+                                'Exponential fit'])
+    else:
+        plt.legend([l1, l2], ['Mean: {:.2f}'.format(avg) , 
+                                'Median: {:.2f}'.format(med)])
         
     
     # Add labels and text
-    plt.title('Total Number of trajectories: ' + str( array.shape[0]))
-    plt.ylabel("Number of trajectories")
-    plt.xlabel(xlabel)
+    # plt.title('Total Number of trajectories: ' + str( array.shape[0]))
+    plt.ylabel("Frequency")
+    plt.xlabel('Time [h]')
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
              fontsize = 6)
+    if xlim[1] == 48:
+        plt.xticks(np.arange(0, 48 + 4, 4))
+        
+    ax.set_ylim(ylim)
+    ax.set_xlim(xlim)
     
     if savename != None:
         print 'Save figure as', savename

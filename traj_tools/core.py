@@ -1215,8 +1215,9 @@ class TrjObj(object):
     
     
         
-    def draw_hist(self, data, filtername = None, idtext = '', savebase = None,
-                  log = False, ylog = False, mintohrs  = False, **kwargs):
+    def draw_hist(self, data, xlim, ylim, filtername = None, idtext = '', 
+                  savebase = None, log = False, ylog = False, mintohrs  = False,
+                  exp = False, bins = 50):
         """
         Make a histogram of the ratio of two parameters.
         dataname1 / dataname 2 adjusted by multiplication factor.
@@ -1303,8 +1304,27 @@ class TrjObj(object):
             raise Exception('Wrong input for data')
 
         # Pass parameters to plots function
-        plots.draw_hist(array, idtext, xlabel, savename, log, ylog, mintohrs, 
-                        **kwargs)
+        plots.draw_hist(array, xlim, ylim, bins, idtext, xlabel, savename, ylog, 
+                        exp, mintohrs)
+
+    def draw_hist_stacked(self, datalist, filterlist, labellist, idtext = '', 
+                          savebase = None, ylim = None, xlim = None, bins = 50,
+                          realdate = False, ylabel = None, legpos = 1):
+        """
+        TODO
+        """
+        newdatalist = []
+        for i in range(len(datalist)):
+            newdatalist.append(self._mask_array(filterlist[i], datalist[i]) 
+                               / 60.)
+        if savebase != None:    
+            savename = savebase + 'stacked_multi_' + idtext + '.png'
+        else:
+            savename = savebase
+            
+        plots.draw_hist_stacked(self, newdatalist, labellist, idtext, savename, ylim, 
+                                xlim, bins, realdate, ylabel, legpos)
+        
 
 
     def draw_hist_3d(self, datalist, filterlist, idtext = '', 
