@@ -750,7 +750,7 @@ def _centered_mat(obj, loclist, idlist, tracer, carray):
     
     for i in range(len(loclist)):
         istop = len(idlist[i]) + istart
-        print 'Evaluating file', i+1, 'of', len(loclist), loclist[i]
+        print 'Evaluating file', i+1, 'of', len(loclist)
         rootgrp = nc.Dataset(loclist[i], 'r')
         tarray = rootgrp.variables['time'][:] / 60   # Convert to minutes
         

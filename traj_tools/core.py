@@ -930,7 +930,7 @@ class TrjObj(object):
 
     def draw_vs_p(self, tracer, filtername, carray, xlim, savebase = None, 
                   sigma = 1, idtext = '', ylim = None, binwidth = 5., 
-                  ylabel = '', log = False):
+                  ylabel = '', log = False, extobj = None):
         """
         Plots tracer against p in given asc array.
         
@@ -938,23 +938,41 @@ class TrjObj(object):
         ----------
         """
         
-        # Get iterable lists
-        loclist, idlist = self._mask_iter(filtername)
+        loclist = []
+        idlist = []
+        startlist = []
+        stoplist = []
+        objlist = [self]
         
-        starttarray = self._mask_array(filtername, 'startt')
-        startarray = (self._mask_array(filtername, carray + '_start') - 
-                        starttarray) / self.dtrj
-        stoparray = (self._mask_array(filtername, carray + '_stop') - 
-                        starttarray) / self.dtrj
+        if type(filtername) == str:
+            filtername = [filtername]
+            tracer = [tracer]
+            
+        if extobj != None:
+            objlist = [self, extobj]
+        elif len(filtername) == 2:
+            objlist = [self, self]
+            tracer = [tracer, tracer]
+            
+        for filtn, obj in zip(filtername, objlist):
+            tmploclist, tmpidlist = obj._mask_iter(filtn)
+            loclist.append(tmploclist)
+            idlist.append(tmpidlist)
+            
+            starttarray = obj._mask_array(filtn, 'startt')
+            startlist.append((obj._mask_array(filtn, carray + '_start') - 
+                            starttarray) / obj.dtrj)
+            stoplist.append((obj._mask_array(filtn, carray + '_stop') - 
+                            starttarray) / obj.dtrj)
         
         # Create savename and label names
         if savebase != None:
-            savename = (savebase + 'vs_p_' + tracer + '_' +
-                        filtername + '_' + idtext)
+            savename = (savebase + 'vs_p_' + '_' +
+                        '_' + idtext)
         else: 
             savename = savebase
         
-        plots.draw_vs_p(self, tracer, loclist, idlist, startarray, stoparray,
+        plots.draw_vs_p(self, tracer, loclist, idlist, startlist, stoplist,
                         xlim, savename, sigma, idtext, ylim, binwidth, ylabel,
                         log)
         
@@ -964,7 +982,7 @@ class TrjObj(object):
     def draw_centered_vs_t(self, tracer, filtername, carray, 
                            savebase = None, sigma = 1, plottype = 'Smooth', 
                            idtext = '', ylim = None, xlim = None, 
-                           select = False):
+                           select = False, extobj = None):
         """
         Draws evolution of a tracer of all trajectories given by filter,
         centered around midpoint of ascent, as given by carray.
@@ -995,27 +1013,40 @@ class TrjObj(object):
         # Create savename and label names
         if savebase != None:
             savename = (savebase + 'centered_' + tracer + '_' + carray + '_' +
-                        filtername + '_' + str(xlim[0]) + '_' + str(xlim[1]) + 
+                        '_' + str(xlim[0]) + '_' + str(xlim[1]) + 
                         '_' + idtext)
         else: 
             savename = savebase
         
         
-        loclist, idlist = self._mask_iter(filtername)
-        try:
-            startval = self._mask_array(filtername, carray + '_start')
-            stopval = self._mask_array(filtername, carray + '_stop')
-            carray = (startval + stopval) / 2
-            print carray
-        except:
-            starttarray = self._mask_array(filtername, 'startt')
-            carray =  ((self._mask_array(filtername, carray) * self.dtrj) +
-                       starttarray)
-            print carray
+        loclist = []
+        idlist = []
+        clist = []
+        objlist = [self]
             
+        if type(filtername) == str:
+            filtername = [filtername]
+            
+        if extobj != None:
+            objlist = [self, extobj]
+        elif len(filtername) == 2:
+            objlist = [self, self]
+            
+        for filtn, obj in zip(filtername, objlist):
+            tmploclist, tmpidlist = obj._mask_iter(filtn)
+            loclist.append(tmploclist)
+            idlist.append(tmpidlist)
+            try:
+                startval = obj._mask_array(filtn, carray + '_start')
+                stopval = obj._mask_array(filtn, carray + '_stop')
+                clist.append((startval + stopval) / 2)
+            except:
+                starttarray = obj._mask_array(filtn, 'startt')
+                clist.append(((obj._mask_array(filtn, carray) * obj.dtrj) +
+                        starttarray))
+         
         
-        
-        plots.draw_centered_vs_t(self, loclist, idlist, tracer, carray, 
+        plots.draw_centered_vs_t(objlist, loclist, idlist, tracer, clist, 
                                  savename, plottype, idtext, ylim, xlim, sigma,
                                  select)
  
@@ -1309,7 +1340,8 @@ class TrjObj(object):
 
     def draw_hist_stacked(self, datalist, filterlist, labellist, idtext = '', 
                           savebase = None, ylim = None, xlim = None, bins = 50,
-                          realdate = False, ylabel = None, legpos = 1):
+                          realdate = False, ylabel = None, legpos = 1, 
+                          exp = False, ylog = False):
         """
         TODO
         """
@@ -1322,8 +1354,9 @@ class TrjObj(object):
         else:
             savename = savebase
             
-        plots.draw_hist_stacked(self, newdatalist, labellist, idtext, savename, ylim, 
-                                xlim, bins, realdate, ylabel, legpos)
+        plots.draw_hist_stacked(self, newdatalist, labellist, ylim, idtext, 
+                                savename, exp, xlim, bins, realdate, ylabel, 
+                                legpos, ylog)
         
 
 

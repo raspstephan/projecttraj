@@ -36,6 +36,7 @@ from datetime import datetime, timedelta
 import netCDF4 as nc
 import utils
 from mpl_toolkits.mplot3d import Axes3D
+import scipy as sp
 
 
 
@@ -155,73 +156,16 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
     """
     TODO
     """
-    counter = 0
-    total = 0
     
-    # Initialize p array
-    parray = np.arange(0, 1050., binwidth) 
-    nbins = parray.shape[0]
-    tracerlist = [[] for i in range(nbins)]     
+    color = []
+    if len(loclist) == 1:
+        color.append(['lightgray', 'darkgray', 'black', 'black'])
+        hatch = ['X']
+    else:
+        color.append(['#FF9999', '#FF3333', '#CC0000', '#CC0000'])
+        color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+        hatch = ['/', '\\']
     
-    for i in range(len(loclist)):
-        total += len(idlist[i])
-        print 'Plotting file', i+1, 'of', len(loclist)
-        rootgrp = nc.Dataset(loclist[i], 'r')
-        tracemat = rootgrp.variables[tracer][:, :]
-        
-        if tracer in ['POT_VORTIC', 'var4']:
-            tracemat = tracemat * 1.e6
-        pmat = rootgrp.variables['P'][:, :]
-        
-        # Get P data and set zeros to nan
-        zmask = np.ma.mask_or(pmat == 0, np.isnan(pmat))
-        tracemat[zmask] = np.nan
-        tracemat[tracemat == 0] = np.nan
-        
-        # Convert pmat to indices
-        pindmat = np.around((pmat - xlim[0]) / binwidth)
-        
-        for j in idlist[i]:
-            
-            tracearray = tracemat[startarray[counter]:stoparray[counter], j]
-            pindarray = pindmat[startarray[counter]:stoparray[counter], j]
-            
-            for k in range(tracearray.shape[0]):
-                #print pindarray[k], nbins
-                tracerlist[int(pindarray[k])].append(tracearray[k])
-                
-            counter += 1
-    
-    countlist = []
-    meanlist = []
-    per5 = []
-    per25 = []
-    per50 = []
-    per75 = []
-    per95 = []
-    
-    # Set lower density limit TODO 
-    denslim = 0.025 * total
-    
-    for i in range(nbins):
-        tmparray = np.array(tracerlist[i])
-        tmparray = tmparray[np.isfinite(tmparray)]
-        countlist.append(tmparray.shape[0])
-        if tmparray.shape[0] >= denslim:
-            meanlist.append(np.mean(tmparray))
-            per5.append(np.percentile(tmparray, 5))
-            per25.append(np.percentile(tmparray, 25))
-            per50.append(np.percentile(tmparray, 50))
-            per75.append(np.percentile(tmparray, 75))
-            per95.append(np.percentile(tmparray, 95))
-        else:
-            meanlist.append(np.nan)
-            per5.append(np.nan)
-            per25.append(np.nan)
-            per50.append(np.nan)
-            per75.append(np.nan)
-            per95.append(np.nan)
-            
     fig = plt.figure(figsize = (10, 8))
     ax = plt.gca()
     ax.grid(color = 'dimgrey', linestyle = '-')
@@ -229,37 +173,113 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
     plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
                     left = 'off', right = 'off')
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes,
-             fontsize = 6)
-    plt.plot(parray, meanlist)
-    ax.fill_between(parray, per5, per95,
-                    facecolor = 'lightgrey', edgecolor = 'lightgrey',
-                    label = '90%')
-    ax.fill_between(parray, per25, per75,
-                    facecolor = 'darkgrey', edgecolor = 'darkgrey',
-                    label = '50%')
-    l2, = plt.plot(parray, per50, 'black')
-    l1, = plt.plot(parray, meanlist, 'firebrick', linewidth = 2)
-    # Get filled colors as legends
-    r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
-    r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
-    plt.legend([l1, l2, r2, r1], ['mean', 'median', '50%', '90%'], loc = 2)
-    # Plot second axis
+            fontsize = 6)
     ax2 = ax.twinx()
-    ax2.bar(parray, countlist, linewidth = 0, color = 'darkgreen', width = 5, 
-            alpha = 0.8)
+    
+    # Initialize p array
+    parray = np.arange(0, 1050., binwidth) 
+    nbins = parray.shape[0]
+    for n in range(len(loclist)):
+        counter = 0
+        total = 0
+        tracerlist = [[] for j in range(nbins)]     
+        for i in range(len(loclist[n])):
+            total += len(idlist[n][i])
+            print 'Plotting file', i+1, 'of', len(loclist[n])
+            rootgrp = nc.Dataset(loclist[n][i], 'r')
+            tracemat = rootgrp.variables[tracer[n]][:, :]
+            
+            if tracer[n] in ['POT_VORTIC', 'var4']:
+                tracemat = tracemat * 1.e6
+            pmat = rootgrp.variables['P'][:, :]
+            #print pmat
+            #print tracemat
+            
+            # Get P data and set zeros to nan
+            zmask = np.ma.mask_or(pmat == 0, np.isnan(pmat))
+            tracemat[zmask] = np.nan
+            tracemat[tracemat == 0] = np.nan
+            
+            # Convert pmat to indices
+            pindmat = np.around((pmat - xlim[0]) / binwidth)
+            
+            for j in idlist[n][i]:
+                
+                tracearray = tracemat[startarray[n][counter]:
+                                          stoparray[n][counter], j]
+                pindarray = pindmat[startarray[n][counter]:
+                                        stoparray[n][counter], j]
+                
+                for k in range(tracearray.shape[0]):
+                    #print pindarray[k], nbins
+                    tracerlist[int(pindarray[k])].append(tracearray[k])
+                    #print tracearray[k]
+                    
+                counter += 1
+        
+        countlist = []
+        meanlist = []
+        per5 = []
+        per25 = []
+        per50 = []
+        per75 = []
+        per95 = []
+        
+        # Set lower density limit TODO 
+        denslim = 0.001
+        print total
+        
+        for j in range(nbins):
+            tmparray = np.array(tracerlist[j])
+            #print tmparray
+            tmparray = tmparray[np.isfinite(tmparray)]
+            countlist.append(tmparray.shape[0])
+            if tmparray.shape[0] >= denslim:
+                meanlist.append(np.mean(tmparray))
+                per5.append(np.percentile(tmparray, 5))
+                per25.append(np.percentile(tmparray, 25))
+                per50.append(np.percentile(tmparray, 50))
+                per75.append(np.percentile(tmparray, 75))
+                per95.append(np.percentile(tmparray, 95))
+            else:
+                meanlist.append(np.nan)
+                per5.append(np.nan)
+                per25.append(np.nan)
+                per50.append(np.nan)
+                per75.append(np.nan)
+                per95.append(np.nan)
+                
+        plt.plot(parray, meanlist)
+        ax.fill_between(parray, per5, per95,
+                        facecolor = color[n][0], edgecolor = color[n][2],
+                        label = '90%', alpha = 0.5)
+        ax.fill_between(parray, per25, per75,
+                        facecolor = color[n][1], edgecolor = color[n][2],
+                        label = '50%', alpha = 0.5)
+        l2, = ax.plot(parray, per50, color[n][2], linestyle = '--')
+        l1, = ax.plot(parray, meanlist, color[n][2], linewidth = 2)
+        # Get filled colors as legends
+        #r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
+        #r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
+        #plt.legend([l1, l2, r2, r1], ['mean', 'median', '50%', '90%'], loc = 2)
+        # Plot second axis
+        zero = np.zeros(len(countlist))
+        fill_between_steps(parray, np.array(countlist), zero, ax = ax2, linewidth = 1, 
+                alpha = 0.5, edgecolor = color[n][2], 
+                color = 'none', hatch = hatch[n])
+        
+        
     maxbin = np.max(countlist)
-    if maxbin > 100000:
-        inc = 50000
-    else:
-        inc = 5000
-    ax2.set_yticks(np.arange(inc, np.max(countlist) + inc, inc))
+    inc = 10000
+    ax2.set_yticks(np.arange(inc, maxbin + inc, inc))
+    ax2.set_ylim((0, maxbin * 4))
     ax2.set_ylabel('Number of Trajectories', position = (0.1, 0.175))
+        
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
     ax.set_xlabel('Pressure [hPa]')
     ax.set_ylabel(ylabel)
     ax2.set_xlim(xlim)
-    ax2.set_ylim((0, np.max(countlist) * 4))
     ax.invert_xaxis()
     if log:
         ax.set_yscale('log')
@@ -270,10 +290,50 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
         plt.savefig(savename, bbox_inches = 'tight', dpi = 300)
         plt.close('all')
 
+def fill_between_steps(x, y1, y2=0, h_align='mid', ax=None, **kwargs):
+    ''' Fills a hole in matplotlib: fill_between for step plots.
+    Parameters :
+    ------------
+    x : array-like
+    Array/vector of index values. These are assumed to be equally-spaced.
+    If not, the result will probably look weird...
+    y1 : array-like
+    Array/vector of values to be filled under.
+    y2 : array-Like
+    Array/vector or bottom values for filled area. Default is 0.
+    **kwargs will be passed to the matplotlib fill_between() function.
+    '''
+    # If no Axes opject given, grab the current one:
+    if ax is None:
+        ax = plt.gca()
+    # First, duplicate the x values
+    xx = x.repeat(2)[1:]
+    # Now: the average x binwidth
+    xstep = sp.repeat((x[1:] - x[:-1]), 2)
+    xstep = sp.concatenate(([xstep[0]], xstep, [xstep[-1]]))
+    # Now: add one step at end of row.
+    xx = sp.append(xx, xx.max() + xstep[-1])
+    
+    # Make it possible to chenge step alignment.
+    if h_align == 'mid':
+        xx -= xstep / 2.
+    elif h_align == 'right':
+        xx -= xstep
+    
+    # Also, duplicate each y coordinate in both arrays
+    y1 = y1.repeat(2)#[:-1]
+    if type(y2) == sp.ndarray:
+        y2 = y2.repeat(2)#[:-1]
+    
+    # now to the plotting part:
+    ax.fill_between(xx, y1, y2=y2, **kwargs)
+    
+    return ax
+
 
 def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
                        plottype = 'Smooth', idtext = '', ylim = None, 
-                       xlim = None, sigma = 1, select = False):
+                       xlim = None, sigma = 1, select = False, ax2 = True):
     """
     Draws evolution of a tracer of all trajectories given by filter,
     centered around midpoint of ascent, as given by carray.
@@ -306,111 +366,111 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
 
     NOTE: Can use a lot of RAM!
     """
-    
-    totmat, exttarray = utils._centered_mat(obj, loclist, idlist, tracer, 
-                                                carray)
-    #print exttarray.shape
-    if select:
-        # Get start and end indices
-        startind = np.argmin(np.abs(exttarray - (xlim[0] * 60)))
-        stopind = np.argmin(np.abs(exttarray - (xlim[1] * 60)))
-        #print totmat.shape
-        #print startind, stopind
-        totmat = totmat[startind:stopind, :]
-        exttarray = exttarray[startind:stopind]
-        #print totmat.shape
-        selectarray = np.where(np.isfinite(np.sum(totmat, axis = 0)))
-        print selectarray
-        #print selectarray, np.sum(totmat, axis = 0)
-        totmat = totmat[:, selectarray[0]]
-        
-        totmat[totmat == 0] = np.nan
-        #print totmat.shape
-        
-    meanarray = np.nanmean(totmat, axis = 1)
-    countlist = np.sum(np.isfinite(totmat), axis = 1)
-    
-    print "Mean at t = 0:", meanarray[np.round(meanarray.shape[0]/2)]
-    
-    mask = np.isfinite(meanarray)
-    
-    # Convert time array to hours
-    exttarray = exttarray / 60.
+    color = []
+    if len(loclist) == 1:
+        color.append(['lightgray', 'darkgray', 'black', 'black'])
+        hatch = ['X']
+    else:
+        color.append(['#FF9999', '#FF3333', '#CC0000', '#CC0000'])
+        color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+        hatch = ['/', '\\']
     
     # Set up figure
     fig = plt.figure(figsize = (10, 8))
     ax = plt.gca()
-    
+    ax2 = ax.twinx()
     # Set plot properties
-    if ylim == None:
-        ylim = (1.5 * np.nanmin(meanarray), 1.5 * np.nanmax(meanarray))
-    if xlim == None:
-        xlim = [exttarray[mask].min(), exttarray[mask].max()]
     
-    plt.plot([0, 0], ylim, color = 'dimgrey', linewidth = 2)
-    plt.plot(xlim, [0, 0], color = 'dimgrey', linewidth = 2)
+    ax.plot([0, 0], ylim, color = 'dimgrey', linewidth = 2)
+    ax.plot(xlim, [0, 0], color = 'dimgrey', linewidth = 2)
     
+    for i in range(len(loclist)):
     
-    if plottype == 'All':
-        plt.plot(exttarray, totmat, 'grey')
-        plt.plot(exttarray[mask], meanarray[mask], 'r')
-    elif plottype == 'Std':
-        stdarray = np.nanstd(totmat, axis = 1)
-        per5 = nanpercentile(totmat, 5)
-        per95 = nanpercentile(totmat, 95)
-        plt.plot(exttarray[mask], (meanarray - stdarray)[mask], 'grey')
-        plt.plot(exttarray[mask], (meanarray + stdarray)[mask], 'grey')
-        plt.plot(exttarray[mask], meanarray[mask], 'r')
-    elif plottype == 'Range':
-        maxarray = np.nanmax(totmat, axis = 1)
-        minarray = np.nanmin(totmat, axis = 1)
-        plt.plot(exttarray[mask], maxarray[mask], 'grey')
-        plt.plot(exttarray[mask], minarray[mask], 'grey')
-        plt.plot(exttarray[mask], meanarray[mask], 'r')
-    elif plottype == 'Smooth':
-        per5 = nanpercentile(totmat, 5)
-        per95 = nanpercentile(totmat, 95)
-        smoothper5 = ndi.filters.gaussian_filter(per5[mask], sigma)
-        smoothper95 = ndi.filters.gaussian_filter(per95[mask], sigma)
-        plt.plot(exttarray[mask], smoothper5, 'lightgrey')
-        plt.plot(exttarray[mask], smoothper95, 'lightgrey')
-        per25 = nanpercentile(totmat, 25)
-        per75 = nanpercentile(totmat, 75)
-        smoothper25 = ndi.filters.gaussian_filter(per25[mask], sigma)
-        smoothper75 = ndi.filters.gaussian_filter(per75[mask], sigma)
-        plt.plot(exttarray[mask], smoothper25, 'darkgrey')
-        plt.plot(exttarray[mask], smoothper75, 'darkgrey')
-        smootharray = ndi.filters.gaussian_filter(meanarray[mask], sigma)
-        plt.plot(exttarray[mask], smootharray, 'r')
-    elif plottype == 'Fill':
-        per5 = nanpercentile(totmat, 5)
-        per95 = nanpercentile(totmat, 95)
-        smoothper5 = ndi.filters.gaussian_filter(per5[mask], sigma)
-        smoothper95 = ndi.filters.gaussian_filter(per95[mask], sigma)
-        ax.fill_between(exttarray[mask], smoothper5, smoothper95, 
-                        facecolor = 'lightgrey', edgecolor = 'lightgrey',
-                        label = '90%', alpha = 0.5)
+        totmat, exttarray = utils._centered_mat(obj[i], loclist[i], idlist[i], tracer, 
+                                                    carray[i])
+        #print exttarray.shape
+        if select != False:
+            # Get start and end indices
+            startind = np.argmin(np.abs(exttarray - (select[0] * 60)))
+            stopind = np.argmin(np.abs(exttarray - (select[1] * 60)))
+            #print totmat.shape
+            #print startind, stopind
+            #totmat = totmat[startind:stopind, :]
+            #exttarray = exttarray[startind:stopind]
+            #print totmat.shape
+            selectarray = np.where(np.isfinite(np.sum(totmat[startind:stopind, :],
+                                                    axis = 0)))
+            print selectarray
+            #print selectarray, np.sum(totmat, axis = 0)
+            totmat = totmat[:, selectarray[0]]
+            
+            totmat[totmat == 0] = np.nan
+            #print totmat.shape
+            
+        meanarray = np.nanmean(totmat, axis = 1)
+        countlist = np.sum(np.isfinite(totmat), axis = 1)
         
-        per25 = nanpercentile(totmat, 25)
-        per75 = nanpercentile(totmat, 75)
-        smoothper25 = ndi.filters.gaussian_filter(per25[mask], sigma)
-        smoothper75 = ndi.filters.gaussian_filter(per75[mask], sigma)
-        ax.fill_between(exttarray[mask], smoothper25, smoothper75, 
-                        facecolor = 'darkgrey', edgecolor = 'darkgrey',
-                        label = '50%', alpha = 0.5)
+        print "Mean at t = 0:", meanarray[np.round(meanarray.shape[0]/2)]
         
-        per50 = nanpercentile(totmat, 50)
-        smoothper50 = ndi.filters.gaussian_filter(per50[mask], sigma)
-        l2, = plt.plot(exttarray[mask], smoothper50, 'black')
+        mask = np.isfinite(meanarray)
         
-        smootharray = ndi.filters.gaussian_filter(meanarray[mask], sigma)
-        l1, = plt.plot(exttarray[mask], smootharray, 'firebrick', linewidth = 2)
-        # Get filled colors as legends
-        r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
-        r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
-        plt.legend([l1, l2, r2, r1], ['mean', 'median', '50%', '90%'])
-    
-    del totmat
+        # Convert time array to hours
+        exttarray = exttarray / 60.
+
+        if plottype == 'Fill':
+            per5 = nanpercentile(totmat, 5)
+            per95 = nanpercentile(totmat, 95)
+            smoothper5 = ndi.filters.gaussian_filter(per5[mask], sigma)
+            smoothper95 = ndi.filters.gaussian_filter(per95[mask], sigma)
+            ax.fill_between(exttarray[mask], smoothper5, smoothper95, 
+                            facecolor = color[i][0], edgecolor = color[i][2],
+                            label = '90%', alpha = 0.5)
+            
+            per25 = nanpercentile(totmat, 25)
+            per75 = nanpercentile(totmat, 75)
+            smoothper25 = ndi.filters.gaussian_filter(per25[mask], sigma)
+            smoothper75 = ndi.filters.gaussian_filter(per75[mask], sigma)
+            ax.fill_between(exttarray[mask], smoothper25, smoothper75, 
+                            facecolor = color[i][1], edgecolor = color[i][2],
+                            label = '50%', alpha = 0.5)
+            
+            per50 = nanpercentile(totmat, 50)
+            smoothper50 = ndi.filters.gaussian_filter(per50[mask], sigma)
+            l2, = ax.plot(exttarray[mask], smoothper50, color[i][2], 
+                           linestyle = '--')
+            
+            smootharray = ndi.filters.gaussian_filter(meanarray[mask], sigma)
+            l1, = ax.plot(exttarray[mask], smootharray, color[i][2], 
+                           linewidth = 2)
+            # Get filled colors as legends
+            r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
+            r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
+            #plt.legend([l1, l2, r2, r1], ['mean', 'median', '50%', '90%'])
+        else:
+            print 'ERROR'
+        
+        maxbin = np.max(countlist)
+        del totmat
+        if ax2:
+            relcountlist = countlist[mask] / float(maxbin) * 100.
+            zero = np.zeros(relcountlist.shape[0])
+            #ax2.bar(exttarray[mask], countlist[mask], linewidth = 1, 
+                    #color = color[i][2], width = 5, alpha = 0.5)
+            ax2.fill_between(exttarray[mask], relcountlist, zero, 
+                            color = 'none', edgecolor = color[i][2], 
+                            alpha = 0.5, hatch = hatch[i])
+            #ax2.plot(exttarray[mask], relcountlist, c = color[i][2])
+            ax.set_zorder(2)
+            ax2.set_zorder(1)
+            #if maxbin > 15000:
+                #inc = 5000
+            #else:
+                #inc = 1000
+            inc = 10
+            ax2.set_yticks(np.arange(inc, 100 + inc, inc))
+            ax2.set_ylabel('Percent of Trajectories', position = (0.1, 0.175))
+            ax2.set_xlim(xlim)
+            ax2.set_ylim((0, 400))
     
     ax.set_ylim(ylim)
     if tracer == 'P':
@@ -429,28 +489,11 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
                     left = 'off', right = 'off')
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
              fontsize = 6)
-    maxbin = np.max(countlist)
-    # Second axix
-    if not select:
-        ax2 = ax.twinx()
-        ax2.bar(exttarray[mask], countlist[mask], linewidth = 0, color = 'darkgreen', 
-                width = 5, alpha = 0.8)
-        ax.set_zorder(2)
-        ax2.set_zorder(1)
-        if maxbin > 15000:
-            inc = 5000
-        else:
-            inc = 1000
-        ax2.set_yticks(np.arange(inc, np.max(countlist) + inc, inc))
-        ax2.set_ylabel('Number of Trajectories', position = (0.1, 0.175))
-        ax2.set_xlim(xlim)
-        ax2.set_ylim((0, np.max(countlist) * 4))
-    else:
-        plt.title('Number of trajectories: ' + str(maxbin))
+    
     if tracer == 'var4':
         tracer == 'PVU'
     ax.set_ylabel(tracer)
-    ax.set_xlabel('Time [hrs] relative to center') 
+    ax.set_xlabel('Time [h] relative to center') 
     
     
     
@@ -487,6 +530,8 @@ def nanpercentile(a, per):
         else:
             out[i] = np.percentile(b[np.isfinite(b)], per)
     return out
+
+
 
 def draw_centered_integr(obj, loclist, idlist, tracer, carray, savename = None,
                        idtext = '', ylim = None, 
@@ -655,39 +700,72 @@ def draw_hist_2d(obj, varname1, varname2, loclist, idlist, carray, dplus):
     #plt.gca().set_ylim(-10.e-6, 10.e-6)
 
 
-def draw_hist_stacked(obj, datalist, namelist, idtext = '', savename = None, 
-                      ylim = None, xlim = None, bins = 50, realdate = False,
-                      ylabel = None, legpos = 1):
+def draw_hist_stacked(obj, datalist, namelist, ylim, idtext = '', savename = None, 
+                      exp = False, xlim = None, bins = 50, realdate = False,
+                      ylabel = None, legpos = 1, ylog = False):
     """
     TODO
     """
+    
     fig = plt.figure()
     ax = plt.gca()
     bins = np.linspace(xlim[0], xlim[1], bins + 1)
+
+    num1, xpos = np.histogram(datalist[0], bins)
+    avg1 = np.average(datalist[0])
+    med1 = np.median(datalist[0])
     
-    blist = []
-    clist = ['#CCCCCC', '#525252', 'y']
-    for i in range(len(datalist)):
-        num, xpos = np.histogram(datalist[i], bins)
-        width = np.diff(xpos)[0]
-        xpos = xpos[:-1] + width
-        if i == 0:
-            bottom = None
-        else:
-            bottom = oldnum
-        blist.append(plt.bar(xpos, num, bottom = bottom, color = clist[i], 
-                             width = width))
-        oldnum = num
+    width = np.diff(xpos)[0]
+    xpos = xpos[:-1]
+    
+    b1 = plt.bar(xpos, num1, bottom = None, color = '#CCCCCC', 
+                            width = width)
+    l11, = plt.plot([avg1, avg1], [ylim[0], ylim[1]], linestyle = '--', 
+                   color = '#CCCCCC', label = 'Mean', linewidth = 2)
+    l12, = plt.plot([med1, med1], [ylim[0], ylim[1]], linestyle = ':', 
+                   color = '#CCCCCC', label = 'Median', linewidth = 2)
+    
+    num2, xpos2 = np.histogram(datalist[1], bins)
+    avg2 = np.average(datalist[1])
+    med2 = np.median(datalist[1])
+    
+    b2 = plt.bar(xpos, num2, bottom = num1, color = '#525252', 
+                            width = width)
+    l21, = plt.plot([avg2, avg2], [ylim[0], ylim[1]], linestyle = '--', 
+                   color = '#525252', label = 'Mean', linewidth = 2)
+    l22, = plt.plot([med2, med2], [ylim[0], ylim[1]], linestyle = ':', 
+                   color = '#525252', label = 'Median', linewidth = 2)
+    
+    handles = [b1, l11, l12, b2, l21, l22]
+    labels = [namelist[0], 'Mean: {:.2f}h'.format(avg1), 
+              'Median: {:.2f}h'.format(med1), namelist[1], 
+              'Mean: {:.2f}h'.format(avg2), 'Median: {:.2f}h'.format(med2)]
+    
+    if not exp == False:
+        xvals = np.linspace(xlim[0], xlim[1], 1000)
+        x0 = exp[0]
+        c = exp[1]
+        yvals = x0 * np.exp(c*xvals)
+        l3, = plt.plot(xvals, yvals, linestyle = '-', color = 'black', 
+                       linewidth = 1.5) 
+        handles.append(l3)
+        labels.append('Exponential fit')
         
-    plt.legend(blist, namelist, loc = legpos)
-    if not ylim == None:
-        ax.set_ylim(ylim)
+    if ylog:
+        plt.gca().set_yscale('log')
+        
+    plt.legend(handles, labels, loc = legpos)
+    ax.set_ylim(ylim)
+    
+    
         
     d = timedelta(1)
     if realdate:
         datelist = [(obj.date + d*i) for i in range(10)]
         plt.xticks(np.arange(0, 10 * 24, 24), datelist, rotation = 0, 
                    fontsize = 6)
+    else:
+        plt.xlabel('Time [h]')
     ax.set_xlim(xlim)
     plt.ylabel('Frequency')
     if not ylabel == None:
@@ -1409,7 +1487,7 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
     tmpt = int(tmpt.split('_')[1].lstrip('t'))
     
     # Plot contours
-    draw_contour(obj, varlist, tmpt, idtext = idtext)
+    m = draw_contour(obj, varlist, tmpt, idtext = idtext)
     
     # Plot trajectories
     cnt = 0   # continuous counter for startarray and stoparray
@@ -1420,8 +1498,12 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
         latmat = rootgrp.variables['latitude'][:, :]
         pmat = rootgrp.variables[carray][:, :]
     
-        lonmat[:, :] += (180 - pollon)   # Convert to real coordinates
-        latmat[:, :] += (90 - pollat)
+        lonmat, latmat = utils.rcoo_2_gcoo(lonmat, latmat, obj.pollon, 
+                                               obj.pollat)
+        #print lonmat, latmat
+        lonmat, latmat = m(lonmat, latmat)
+        #if i == 0:
+            #print lonmat, latmat
         
         for j in idlist[i]:
             # Filter out zero values!
@@ -1444,11 +1526,14 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
                         carray = carray)
             cnt += 1
 
-    cb = plt.colorbar(lc, shrink = 0.7) 
+    cb = plt.colorbar(lc, orientation = 'horizontal', pad = 0.05, 
+                      fraction = 0.05, shrink = 3) 
+    cb.set_alpha(1)
     cb.set_label(carray)
     if carray == 'P':
         cb.ax.invert_yaxis()
     plt.tight_layout()
+    plt.title('')
     
     
     # Save Plot
@@ -1584,6 +1669,7 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
         latmat[latmat == 0] = np.nan
         lonmat, latmat = utils.rcoo_2_gcoo(lonmat, latmat, obj.pollon, 
                                                obj.pollat)
+        #print lonmat, latmat
         
         if not inrange == None:
             norm = plt.Normalize(inrange[0], inrange[1])
@@ -1613,6 +1699,7 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
         
         if path:
             xmat, ymat = m(lonmat, latmat)
+            #print xmat, ymat
             plt.plot(xmat, ymat, color = 'gray', linewidth = 0.5, alpha = 0.8, 
                      zorder = 0.2)
         
@@ -1620,6 +1707,7 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
         m.scatter(x, y, c = carray, s = 15,
                     cmap = cmap, linewidth = 0.5,
                     norm = norm)
+        #break
         
         
     # Set plot properties
@@ -1817,7 +1905,7 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
         fobj = pwg.getfobj(filelist[cosmoind], variable)
         field = fobj.data
         X, Y = m(fobj.lons, fobj.lats)
-     
+    #print X, Y
     ## Setting up grid
     #ny, nx = field.shape
     #x = np.linspace(xlim[0], xlim[1], nx)
@@ -2005,7 +2093,7 @@ def single_trj(lonarray, latarray, parray, linewidth = 0.7, carray = 'P'):
                                    #'grey'])
         cmap = plt.get_cmap('Spectral')
         norm = plt.Normalize(0, 1000)
-    lc = col.LineCollection(segments, cmap = cmap, norm = norm, alpha = 0.5)
+    lc = col.LineCollection(segments, cmap = cmap, norm = norm, alpha = 0.5, zorder = 100)
     lc.set_array(p)
     lc.set_linewidth(linewidth)
     plt.gca().add_collection(lc)

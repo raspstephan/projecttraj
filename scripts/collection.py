@@ -409,3 +409,24 @@ for t in range(0, c2.maxmins, 60):
 
 #100215
 c1.draw_hist_stacked(['P600_start', 'P600_start'], ['WCB_Conv', 'WCB_NonConv'], ['WCB_Conv', 'WCB_NonConv'], xlim = (0, 6120 / 60.), bins = 102 / 3 + 1, realdate = True, legpos = 2, idtext = '100215a', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/')
+
+c1.draw_hist('P600', [0, 48], [0, 12000], filtername='WCB', mintohrs=True, bins = 100, ylog = False, exp = [3150, -0.072], savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/', idtext='100215b')
+c2.draw_hist('P600', [0, 48], [0, 200], filtername='WCB_Cy1_new', mintohrs=True, bins = 100, ylog = False, idtext = '100215c', savebase='/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
+
+#110215
+c2.create_filter('Wconv', [('P600', 0, 2880), ('P300withinP600', 0, 75), ('-10201025', True)])
+c2.create_filter('Wnonconv', [('P600', 0, 2880), ('P300withinP600', 75, 2880), ('-10201025', True)])
+c0.draw_hist_stacked(['P600', 'P600'], ['Wconv', 'Wnonconv'], ['WCB_Conv', 'WCB_NonConv'], xlim = (0, 48), ylim = (0, 1400), bins = 100, ylog = False, exp = [200, -0.072], idtext = '110215a', savebase='/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+
+c1.draw_hist_stacked(['P600_start', 'P600_start'], ['Wconv', 'Wnonconv'], ['WCB_Conv', 'WCB_NonConv'], xlim = (0, 6120 / 60.), bins = 102 / 3 + 1, realdate = True, legpos = 2, idtext = '110215b', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/', ylim = (0, 15000))
+c2.draw_hist_stacked(['P600_start', 'P600_start'], ['Wconv', 'Wnonconv'], ['WCB_Conv', 'WCB_NonConv'], xlim = (0, c2.maxmins / 60.), bins = 120 / 3 + 1, realdate = True, legpos = 1, ylim = (0,2000), savebase='/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/', idtext = '110215c')
+
+#120215
+
+c0.draw_trj_all([], 'Wconv', thinning = 10, savebase='/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', idtext = '120215a')
+c0.draw_trj_all([], 'Wnonconv', thinning = 10, savebase='/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', idtext = '120215b')
+
+
+
+
+
