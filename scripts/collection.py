@@ -426,6 +426,20 @@ c2.draw_hist_stacked(['P600_start', 'P600_start'], ['Wconv', 'Wnonconv'], ['WCB_
 c0.draw_trj_all([], 'Wconv', thinning = 10, savebase='/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', idtext = '120215a')
 c0.draw_trj_all([], 'Wnonconv', thinning = 10, savebase='/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/', idtext = '120215b')
 
+#180215
+c0.draw_vs_p('THETA', ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '180215a', ylim = (280, 350), ylabel = 'THETA [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', extobj = c1, legnames = ['OCT convective', 'JUL'], legpos = 2, ax2upper = 300)
+c0.draw_vs_p('THETA', ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '180215b', ylim = (275, 335), ylabel = 'THETA [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', extobj = c2, legnames = ['OCT non-convective', 'JAN'], legpos = 2, ax2upper = 500)
+c0.draw_vs_p('THETAE', ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '180215c', ylim = (300, 350), ylabel = 'equivalent potential temperature [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', extobj = c1, legnames = ['OCT convective', 'JUL'], legpos = 2, ax2upper = 300)
+c0.draw_vs_p('THETAE', ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '180215d', ylim = (285, 335), ylabel = 'equivalent potential temperature [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', extobj = c2, legnames = ['OCT nonconvective', 'JAN'], legpos = 2, ax2upper = 500)
+c0.draw_vs_p('QV', ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '180215e', ylim = (-0.005, 0.015), ylabel = 'specific humidity [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', extobj = c1, legnames = ['OCT convective', 'JUL'], legpos = 1, ax2upper = 300)
+c0.draw_vs_p('QV', ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '180215f', ylim = (-0.005, 0.015), ylabel = 'specific humidity [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', extobj = c2, legnames = ['OCT non-convective', 'JAN'], legpos = 1, ax2upper = 500)
+c0.draw_vs_p(['Q1', 'QC'], ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '180215g', ylim = (-0.0003, 0.001), ylabel = 'LWC [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', extobj = c2, legnames = ['OCT non-convective', 'JAN'], legpos = 1, ax2upper = 500)
+c0.draw_vs_p(['Q3', 'QS'], ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '180215h', ylim = (-0.0003, 0.001), ylabel = 'SWC [kg/kg]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', extobj = c2, legnames = ['OCT non-convective', 'JAN'], legpos = 1, ax2upper = 500)
+c0.draw_vs_p(['var4', 'POT_VORTIC'], ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '180215j', ylim = (-5, 5), ylabel = 'potential vorticity [PVU]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', extobj = c2, legnames = ['OCT non-convective', 'JAN'], legpos = 1, ax2upper = 500)
+c0.draw_vs_p(['var4', 'POT_VORTIC'], ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '180215k', ylim = (-7, 7), ylabel = 'potential vorticity [PVU]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', extobj = c1, legnames = ['OCT convective', 'JUL'], legpos = 2, ax2upper = 300)
+
+
+
 
 
 

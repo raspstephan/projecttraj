@@ -930,7 +930,8 @@ class TrjObj(object):
 
     def draw_vs_p(self, tracer, filtername, carray, xlim, savebase = None, 
                   sigma = 1, idtext = '', ylim = None, binwidth = 5., 
-                  ylabel = '', log = False, extobj = None):
+                  ylabel = '', log = False, extobj = None, legnames = None, 
+                  legpos = 1, ax2upper = 300):
         """
         Plots tracer against p in given asc array.
         
@@ -950,6 +951,8 @@ class TrjObj(object):
             
         if extobj != None:
             objlist = [self, extobj]
+            if type(tracer) == str:
+                tracer = [tracer, tracer]
         elif len(filtername) == 2:
             objlist = [self, self]
             tracer = [tracer, tracer]
@@ -974,7 +977,7 @@ class TrjObj(object):
         
         plots.draw_vs_p(self, tracer, loclist, idlist, startlist, stoplist,
                         xlim, savename, sigma, idtext, ylim, binwidth, ylabel,
-                        log)
+                        log, legnames, legpos, ax2upper)
         
         
   
@@ -982,7 +985,7 @@ class TrjObj(object):
     def draw_centered_vs_t(self, tracer, filtername, carray, 
                            savebase = None, sigma = 1, plottype = 'Smooth', 
                            idtext = '', ylim = None, xlim = None, 
-                           select = False, extobj = None):
+                           select = False, extobj = None, legnames = None):
         """
         Draws evolution of a tracer of all trajectories given by filter,
         centered around midpoint of ascent, as given by carray.
@@ -1048,7 +1051,7 @@ class TrjObj(object):
         
         plots.draw_centered_vs_t(objlist, loclist, idlist, tracer, clist, 
                                  savename, plottype, idtext, ylim, xlim, sigma,
-                                 select)
+                                 select, legnames)
  
     def draw_centered_integr(self, tracer, filtername, carray, 
                            savebase = None, sigma = 1, 

@@ -152,18 +152,21 @@ def draw_vs_t(obj, tracer, loclist, idlist, savename = None, sigma = None):
 
 def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim, 
               savename = None, sigma = 1, idtext = '', ylim = None, 
-              binwidth = 5., ylabel = '', log = False):
+              binwidth = 5., ylabel = '', log = False, legnames = None,
+              legpos = 1, ax2upper = 300):
     """
     TODO
     """
+    print tracer
     
     color = []
     if len(loclist) == 1:
         color.append(['lightgray', 'darkgray', 'black', 'black'])
         hatch = ['X']
     else:
-        color.append(['#FF9999', '#FF3333', '#CC0000', '#CC0000'])
-        color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+        color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+        #color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+        color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
         hatch = ['/', '\\']
     
     fig = plt.figure(figsize = (10, 8))
@@ -179,6 +182,7 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
     # Initialize p array
     parray = np.arange(0, 1050., binwidth) 
     nbins = parray.shape[0]
+    leglist = []
     for n in range(len(loclist)):
         counter = 0
         total = 0
@@ -198,10 +202,11 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
             # Get P data and set zeros to nan
             zmask = np.ma.mask_or(pmat == 0, np.isnan(pmat))
             tracemat[zmask] = np.nan
-            tracemat[tracemat == 0] = np.nan
+            if not tracer[n] in ['QV', 'QC', 'QI', 'QR', 'QS', 'Q1', 'Q2', 'Q3']:
+                tracemat[tracemat == 0] = np.nan
             
             # Convert pmat to indices
-            pindmat = np.around((pmat - xlim[0]) / binwidth)
+            pindmat = np.around((pmat) / binwidth)
             
             for j in idlist[n][i]:
                 
@@ -227,11 +232,11 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
         
         # Set lower density limit TODO 
         denslim = 0.001
-        print total
         
         for j in range(nbins):
             tmparray = np.array(tracerlist[j])
             #print tmparray
+            tmparray[tmparray > 1e20] = np.nan
             tmparray = tmparray[np.isfinite(tmparray)]
             countlist.append(tmparray.shape[0])
             if tmparray.shape[0] >= denslim:
@@ -248,32 +253,58 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
                 per50.append(np.nan)
                 per75.append(np.nan)
                 per95.append(np.nan)
-                
-        plt.plot(parray, meanlist)
+        
+        per5 = np.array(per5)
+        per25 = np.array(per25)
+        per50 = np.array(per50)
+        per75 = np.array(per75)
+        per95 = np.array(per95)
+        meanlist = np.array(meanlist)
+        #mask = np.isfinite(meanlist)
+        
+        dashes1 = [1, 1]
+        dashes2 = [3, 1]
         ax.fill_between(parray, per5, per95,
-                        facecolor = color[n][0], edgecolor = color[n][2],
-                        label = '90%', alpha = 0.5)
+                        facecolor = color[n][0], edgecolor = 'none',
+                        label = '90%', alpha = 0.5, zorder = 0.1)
         ax.fill_between(parray, per25, per75,
-                        facecolor = color[n][1], edgecolor = color[n][2],
-                        label = '50%', alpha = 0.5)
-        l2, = ax.plot(parray, per50, color[n][2], linestyle = '--')
+                        facecolor = color[n][1], edgecolor = 'none',
+                        label = '50%', alpha = 0.5, zorder = 0.1)
+        l2, = ax.plot(parray, per50, color[n][2], linestyle = '--', 
+                      linewidth = 2)
         l1, = ax.plot(parray, meanlist, color[n][2], linewidth = 2)
+        leglist.append(l1)
+        l3, = ax.plot(parray, per5, 
+                color = color[n][3], linestyle = ':', linewidth = 1)
+        l4, = ax.plot(parray, per95, color = color[n][3], linestyle = ':', 
+                      linewidth = 1)
+        l5, = ax.plot(parray, per25, color = color[n][3], linestyle = '-.', 
+                      linewidth = 1.5)
+        l6, = ax.plot(parray, per75, color = color[n][3], linestyle = '-.', 
+                      linewidth = 1.5)
+        
+        l3.set_dashes(dashes1)
+        l4.set_dashes(dashes1)
+        l5.set_dashes(dashes2)
+        l6.set_dashes(dashes2)
         # Get filled colors as legends
         #r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
         #r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
         #plt.legend([l1, l2, r2, r1], ['mean', 'median', '50%', '90%'], loc = 2)
         # Plot second axis
         zero = np.zeros(len(countlist))
-        fill_between_steps(parray, np.array(countlist), zero, ax = ax2, linewidth = 1, 
+        relcountlist = np.array(countlist) / float(total) * 100.
+        fill_between_steps(parray, np.array(relcountlist), zero, ax = ax2, linewidth = 1, 
                 alpha = 0.5, edgecolor = color[n][2], 
                 color = 'none', hatch = hatch[n])
-        
-        
+    if legnames != None:
+        plt.legend(leglist, legnames, loc = legpos)  
     maxbin = np.max(countlist)
-    inc = 10000
+    maxbin = ax2upper
+    inc = 50
     ax2.set_yticks(np.arange(inc, maxbin + inc, inc))
     ax2.set_ylim((0, maxbin * 4))
-    ax2.set_ylabel('Number of Trajectories', position = (0.1, 0.175))
+    ax2.set_ylabel('Percent of trajectories in bin', position = (0.1, 0.175))
         
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
@@ -333,7 +364,8 @@ def fill_between_steps(x, y1, y2=0, h_align='mid', ax=None, **kwargs):
 
 def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
                        plottype = 'Smooth', idtext = '', ylim = None, 
-                       xlim = None, sigma = 1, select = False, ax2 = True):
+                       xlim = None, sigma = 1, select = False, ax2 = True,
+                       legnames = None):
     """
     Draws evolution of a tracer of all trajectories given by filter,
     centered around midpoint of ascent, as given by carray.
@@ -367,12 +399,14 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
     NOTE: Can use a lot of RAM!
     """
     color = []
+    leglist = []
     if len(loclist) == 1:
         color.append(['lightgray', 'darkgray', 'black', 'black'])
         hatch = ['X']
     else:
-        color.append(['#FF9999', '#FF3333', '#CC0000', '#CC0000'])
-        color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+        color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+        #color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+        color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
         hatch = ['/', '\\']
     
     # Set up figure
@@ -418,33 +452,49 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         exttarray = exttarray / 60.
 
         if plottype == 'Fill':
+            
+            dashes1 = [1, 1]
+            dashes2 = [3, 1]
             per5 = nanpercentile(totmat, 5)
             per95 = nanpercentile(totmat, 95)
             smoothper5 = ndi.filters.gaussian_filter(per5[mask], sigma)
             smoothper95 = ndi.filters.gaussian_filter(per95[mask], sigma)
             ax.fill_between(exttarray[mask], smoothper5, smoothper95, 
-                            facecolor = color[i][0], edgecolor = color[i][2],
-                            label = '90%', alpha = 0.5)
+                            facecolor = color[i][0], edgecolor = 'none',
+                            label = '90%', alpha = 0.5, zorder = 0.1)
             
             per25 = nanpercentile(totmat, 25)
             per75 = nanpercentile(totmat, 75)
             smoothper25 = ndi.filters.gaussian_filter(per25[mask], sigma)
             smoothper75 = ndi.filters.gaussian_filter(per75[mask], sigma)
             ax.fill_between(exttarray[mask], smoothper25, smoothper75, 
-                            facecolor = color[i][1], edgecolor = color[i][2],
-                            label = '50%', alpha = 0.5)
+                            facecolor = color[i][1], edgecolor = 'none',
+                            label = '50%', alpha = 0.5, zorder = 0.1)
             
             per50 = nanpercentile(totmat, 50)
             smoothper50 = ndi.filters.gaussian_filter(per50[mask], sigma)
             l2, = ax.plot(exttarray[mask], smoothper50, color[i][2], 
-                           linestyle = '--')
+                           linestyle = '--', linewidth = 2)
             
             smootharray = ndi.filters.gaussian_filter(meanarray[mask], sigma)
             l1, = ax.plot(exttarray[mask], smootharray, color[i][2], 
                            linewidth = 2)
+            leglist.append(l1)
+            l3, = ax.plot(exttarray[mask], smoothper5, 
+                color = color[i][3], linestyle = ':', linewidth = 1)
+            l4, = ax.plot(exttarray[mask], smoothper95, color = color[i][3], linestyle = ':', 
+                        linewidth = 1)
+            l5, = ax.plot(exttarray[mask], smoothper25, color = color[i][3], linestyle = '-.', 
+                        linewidth = 1.5)
+            l6, = ax.plot(exttarray[mask], smoothper75, color = color[i][3], linestyle = '-.', 
+                        linewidth = 1.5)
+            l3.set_dashes(dashes1)
+            l4.set_dashes(dashes1)
+            l5.set_dashes(dashes2)
+            l6.set_dashes(dashes2)
             # Get filled colors as legends
-            r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
-            r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
+            #r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
+            #r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
             #plt.legend([l1, l2, r2, r1], ['mean', 'median', '50%', '90%'])
         else:
             print 'ERROR'
@@ -471,7 +521,9 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
             ax2.set_ylabel('Percent of Trajectories', position = (0.1, 0.175))
             ax2.set_xlim(xlim)
             ax2.set_ylim((0, 400))
-    
+            
+    if legnames != None:
+        plt.legend(leglist, legnames)
     ax.set_ylim(ylim)
     if tracer == 'P':
         ax.invert_yaxis()
