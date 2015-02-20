@@ -28,6 +28,7 @@ except KeyError:
 import matplotlib.pyplot as plt
 import matplotlib.colors as clr
 import matplotlib.collections as col
+from matplotlib.colorbar import make_axes
 from mpl_toolkits.basemap import Basemap
 import cosmo_utils.pywgrib as pwg
 import scipy.ndimage as ndi
@@ -37,6 +38,7 @@ import netCDF4 as nc
 import utils
 from mpl_toolkits.mplot3d import Axes3D
 import scipy as sp
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 
@@ -1917,6 +1919,7 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
       Dimensions in y-direction in rotated coordinates
       
     """
+    global cbar1
     print 'Plotting:', variable
     dt = 5. * 60
     dx = 0.025
@@ -1991,8 +1994,14 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             CS.cmap.set_under('#007ACC')
             CS.cmap.set_over('#FFCC00')
             
-            cbar = plt.colorbar(shrink = 0.7, pad = 0)
-            cbar.set_label('PV [PVU]', rotation = 90)
+            #divider = make_axes_locatable(plt.gca())
+            #cax = divider.append_axes("bottom", size="100%", pad=0.05)
+            cax = make_axes(plt.gca(), location = 'bottom')
+            cbar = plt.colorbar(cax = cax)
+            #cbar = plt.colorbar(orientation = 'horizontal', pad = 0.05, 
+                                #shrink = 0.55)
+            #cbar.ax.set_aspect(0.02)
+            cbar.set_label('PV [PVU]')
             #levels = np.arange(-5, 10, 2)
             #CS = plt.contour(X, Y, field, colors = 'black', levels = levels, 
                         #zorder = 0.6, linewidths = 2.)
@@ -2012,8 +2021,11 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             plt.contourf(X, Y, field, cmap = plt.get_cmap('hot_r'), 
                         extend = 'max', levels = levels, alpha = 0.8, 
                         zorder = 0.45)
-            cbar = plt.colorbar(shrink = 1, pad = 0)
-            cbar.set_label('CAPE [J/kg]', rotation = 90)
+            
+            cbar1 = plt.colorbar(orientation = 'horizontal', pad = 0.05, 
+                                shrink = 0.55)
+            cbar1.set_label('CAPE [J/kg]')
+            cbar1.ax.set_aspect(0.02)
         elif variable in ["TOT_PREC_S", 'CUM_PREC']:   # Precipitation fields
             cmPrec =( (0    , 0.627 , 1    ),
                     (0.137, 0.235 , 0.98 ),
@@ -2024,8 +2036,10 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             levels = [0.1, 0.3, 1, 3, 10, 100]
             plt.contourf(X, Y, field, levels, colors=cmPrec, extend='max', 
                         alpha = 0.8, zorder = 1)
-            cbar = plt.colorbar(shrink = 1, pad = 0.01)
-            cbar.set_label('Precipitation [mm/h]', rotation = 90)
+            cbar2 = plt.colorbar(orientation = 'horizontal', cax = cbar1.ax)
+            cbar2.config_axis(pad = 0.1)
+            cbar2.ax.set_aspect(0.02)
+            cbar2.set_label('Precipitation [mm/h]')
         elif variable == 'THETA':
             field = smoothfield(field, 5)
             #levels = np.arange(200, 350, 2)
@@ -2035,7 +2049,9 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             #plt.clabel(CS, inline = 1, fontsize = 7, fmt = "%.0f")
             CS = plt.contourf(X, Y, field, cmap = 'spectral', 
                              zorder = 0.4, alpha = 0.5)
-            cbar = plt.colorbar(shrink = 0.7, pad = 2)
+            cbar = plt.colorbar(orientation = 'horizontal', pad = 0.05, 
+                                shrink = 0.55)
+            cbar.ax.set_aspect(0.02)
     
     elif setting == 3:
         print 'Setting 3'

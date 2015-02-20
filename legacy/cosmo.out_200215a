@@ -1,0 +1,107 @@
+/bin/sh: mc: Zeile 1: Syntax Fehler: Unerwartetes Dateiende.
+/bin/sh: Fehler beim Importieren der Funktionsdefinition für `mc'.
+-catch_rsh /home/opt/ge/default/spool/lx019/active_jobs/854350.1/pe_hostfile
+lx019
+lx019
+lx017
+lx017
+lx017
+lx017
+lx017
+lx017
+lx017
+lx017
+lx017
+lx017
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx020
+lx018
+lx018
+lx018
+lx018
+lx018
+lx018
+lx018
+lx018
+lx018
+lx018
+lx018
+lx018
+lx018
+lx018
+lx018
+lx018
+lx018
+lx018
+lx018
+lx018
+/bin/sh: mc: Zeile 1: Syntax Fehler: Unerwartetes Dateiende.
+/bin/sh: Fehler beim Importieren der Funktionsdefinition für `mc'.
+/bin/sh: mc: Zeile 1: Syntax Fehler: Unerwartetes Dateiende.
+/bin/sh: Fehler beim Importieren der Funktionsdefinition für `mc'.
+/bin/sh: mc: Zeile 1: Syntax Fehler: Unerwartetes Dateiende.
+/bin/sh: Fehler beim Importieren der Funktionsdefinition für `mc'.
+/bin/sh: mc: Zeile 1: Syntax Fehler: Unerwartetes Dateiende.
+/bin/sh: Fehler beim Importieren der Funktionsdefinition für `mc'.
+bash: mc: Zeile 1: Syntax Fehler: Unerwartetes Dateiende.
+bash: Fehler beim Importieren der Funktionsdefinition für `mc'.
+bash: mc: Zeile 1: Syntax Fehler: Unerwartetes Dateiende.
+bash: Fehler beim Importieren der Funktionsdefinition für `mc'.
+bash: mc: Zeile 1: Syntax Fehler: Unerwartetes Dateiende.
+bash: Fehler beim Importieren der Funktionsdefinition für `mc'.
+--------------------------------------------------------------------------
+WARNING: a request was made to bind a process. While the system
+supports binding the process itself, at least one node does NOT
+support binding memory to the process location.
+
+  Node:  lx018.meteo.physik.uni-muenchen.de
+
+This usually is due to not having the required NUMA support installed
+on the node. In some Linux distributions, the required support is
+contained in the libnumactl and libnumactl-devel packages.
+This is a warning only; your job will continue, though performance may be degraded.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+A request was made to bind to that would result in binding more
+processes than cpus on a resource:
+
+   Bind to:     NONE
+   Node:        lx018.meteo.physik.uni-muenchen.de
+   #processes:  2
+   #cpus:       1
+
+You can override this protection by adding the "overload-allowed"
+option to your binding directive.
+--------------------------------------------------------------------------
+/bin/sh: mc: Zeile 1: Syntax Fehler: Unerwartetes Dateiende.
+/bin/sh: Fehler beim Importieren der Funktionsdefinition für `mc'.

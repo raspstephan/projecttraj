@@ -845,7 +845,14 @@ class TrjObj(object):
         
         newlist = utils._interpolate_3d(self, varname, outint)
         self.trjfiles = newlist
+   
+    def interpolate_nan(self, tracer):
+        """
+        TODO
+        """
         
+        utils._interpolate_nan(self, tracer)
+   
                 
     def get_val_start(self, ascname, tracer):
         """

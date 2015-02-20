@@ -1,0 +1,6 @@
+20.02
+- COSMO run error: "A request was made to bind to that would result in binding more
+processes than cpus on a resource" 
+    cosmo.out_200215a
+    run4_cde_trj_case1_q200215a
+    --> Michael (no binding parameter!)

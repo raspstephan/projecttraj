@@ -227,6 +227,49 @@ def _interpolate_3d(obj, varname, outint = 60):
 
     return newlist
 
+def _interpolate_nan(obj, tracer):
+    """
+    TODO
+    """
+    for fn in obj.trjfiles:
+        print 'Opening file:', fn
+        try:
+            rootgrp = nc.Dataset(fn, 'a')
+            pmat = rootgrp.variables['P'][:, :]
+            tracemat = rootgrp.variables[tracer][:, :]
+            for i in range(pmat.shape[1]):
+                tracearray = tracemat[:, i]
+                nans, x = nan_helper(tracearray)
+                tracearray[nans] = np.interp(x(nans), x(~nans), tracearray[~nans])
+                tracemat[:, i] = tracearray
+            
+            tracemat[pmat == 0] = np.nan
+            tracemat[np.isnan(pmat)] = np.nan
+            rootgrp.variables[tracer][:, :] = tracemat
+            rootgrp.close()
+        except RuntimeError:
+            print 'HDF Error for file:', fn
+
+        
+
+def nan_helper(y):
+    """Helper to handle indices and logical indices of NaNs.
+
+    Input:
+        - y, 1d numpy array with possible NaNs
+    Output:
+        - nans, logical indices of NaNs
+        - index, a function, with signature indices= index(logical_indices),
+          to convert logical indices of NaNs to 'equivalent' indices
+    Example:
+        >>> # linear interpolation of NaNs
+        >>> nans, x= nan_helper(y)
+        >>> y[nans]= np.interp(x(nans), x(~nans), y[~nans])
+    """
+
+    return np.isnan(y), lambda z: z.nonzero()[0]
+
+
 def convert_p2std(files):
     """
     Converts Pressure variable in netCDF files to hPa, with np.nan as default 

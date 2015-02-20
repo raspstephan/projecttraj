@@ -10,22 +10,22 @@
 QLabel=cde
 
 #Define directories
-indir=/home/scratch/users/stephan.rasp/Case1_20070720/d3dein_small
-outdir=/home/scratch/users/stephan.rasp/Case1_20070720/d4deout_small
+indir=/home/scratch/users/stephan.rasp/Case1_20070720/d3dein
+outdir=/home/scratch/users/stephan.rasp/Case1_20070720/d4deout_q
 
 #Define time properties
 date=2007071918
 hstart=0
-hstop=24
+hstop=102
 hincbound=3
 
 #Define grid
-startlon=-14; startlat=-12; ie=561; je=481
+startlon=-14; startlat=-12; ie=1121; je=961
 pollon=-170.0; pollat=40.0
 
 #Define parallelization
 NPX=8
-NPY=4
+NPY=8
 NPIO=0
 
 #Define executable
@@ -78,7 +78,7 @@ end_input_org
 
 cat > INPUT_IO  << end_input_io
  &IOCTL
-  lasync_io=.FALSE, ngribout=3, yform_read='apix',
+  lasync_io=.FALSE, ngribout=2, yform_read='apix',
  /
  &DATABASE
  /
@@ -93,7 +93,7 @@ cat > INPUT_IO  << end_input_io
  /
  &GRIBOUT
     hcomb=0,$hstop,1., lanalysis=.false., lcheck=.true.,
-    lwrite_const=.true., l_p_filter=.TRUE., l_z_filter=.TRUE.,
+    lwrite_const=.true.,
     ydir='$outdir', yform_write='api1',
     yvarml='U         ','V         ','W         ','T         ',
 	   'QV        ','QC        ','QI        ','P         ',
@@ -113,27 +113,21 @@ cat > INPUT_IO  << end_input_io
 	   'CLCT_MOD  ','CLDEPTH   ','TDIV_HUM  ','TWATER    ',
 	   'AEVAP_S   ','CAPE_CON  ','TQI       ','TQC       ',
 	   'TQV       ','TQR       ','TQS       ','T_SO      ',
-	   'W_SO      ','W_SO_ICE  ','FRESHSNW  ','TINC_LH   ',
-	   'SNOWLMT   ','RHO_SNOW  ','H_SNOW    ','LCN_ML    ',
+	   'W_SO      ','W_SO_ICE  ','FRESHSNW  ',
+	   'SNOWLMT   ','RHO_SNOW  ','H_SNOW    ',
 	   'RELHUM_2M ','ZHD       ','ZTD       ','ZWD       ',
-	   'CAPE_ML   ','CIN_ML    ','POT_VORTIC','LFC_ML    ',
+	   'CAPE_ML   ','CIN_ML    ','POT_VORTIC',
 	   'T_MNW_LK  ','T_WML_LK  ','T_BOT_LK  ','C_T_LK    ',
 	   'H_ML_LK   ','T_ICE     ','H_ICE     ',
   /
-  &GRIBOUT
-    hcomb=0,$hstop,0.5,lcheck=.FALSE., lwrite_const=.FALSE., l_p_filter=.TRUE., nunit_of_time=1,
-    ysuffix='_30m', ydir='$outdir', yform_write='api1', l_z_filter=.TRUE.,
-    yvarml='POT_VORTIC','T         ','QV        ','P         '  
-  /
  &GRIBOUT
-  ncomb=0,12240,10, lcheck=.FALSE., lwrite_const=.FALSE., l_p_filter=.TRUE., 
+  ncomb=0,12240,10, lcheck=.FALSE., lwrite_const=.FALSE., 
   nunit_of_time=1, ysuffix='_5m', ydir='$outdir', yform_write='api1',
-  l_z_filter=.TRUE.,
   yvarml='TOT_PREC  ','CLCT      ','CAPE_ML   ','CIN_ML    ',
-     'PMSL      ',
+	 'PMSL      ',
   yvarpl='U         ','V         ','OMEGA     ','FI        ',
-     'T         ',
-  plev=500.0,850.0
+	 'T         ',
+  plev=500.0,
  /
  
 end_input_io
@@ -177,14 +171,14 @@ end_input_dia
 cat > INPUT_TRAJ << end_input_traj
   &TRAJCTL
      istart_mode_traj=2,
-     hstop_traj=24.0,
-     hcomb_start_traj=3, 21, 3, 
+     hstop_traj=102.0,
+     hcomb_start_traj=6, 66, 3, 
      ydir_traj='$outdir',
      
 startfile_traj=
-'/usr/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case1_20070720/c1_de_small.sf',
+'/usr/users/stephan.rasp/repositories/projecttraj/cosmo_runfiles/Case1_20070720/coarse.sf',
      ninc_out_traj = 10,
-     tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM', 'U', 'V', 'W'
+     tracevar_traj = 'T', 'P', 'QR', 'QC', 'QV', 'RELHUM','POT_VORTIC', 'QI', 'QS'
   /
 end_input_traj
 
@@ -200,17 +194,19 @@ rm -f YU* M_* l* cosmo.out
 echo "#$ -S /bin/ksh" >> batchjob
 echo "#$ -cwd" >> batchjob
 echo "#$ -N $QLabel" >> batchjob
-echo "#$ -pe mpich $NP" >> batchjob
+# echo "#$ -pe mpich $NP" >> batchjob
 #Infiniband
-# echo "#$ -pe mpiib $NP" >> batchjob
+echo "#$ -pe mpiib $NP" >> batchjob
 echo "#$ -V" >> batchjob
 echo "#$ -j y" >> batchjob
 echo "#$ -R y" >> batchjob
 echo "#$ -q eight">>batchjob
 echo "#$ -M s.rasp@physik.uni-muenchen.de" >> batchjob
 echo "#$ -m n" >> batchjob
+# echo "#$ -binding linear:1" >> batchjob
+echo "#$ -l h_rt=200:00:00" >> batchjob
 echo "#$ -o $outdir/cosmo.out" >> batchjob
-echo /home/opt/openmpi-1.6.4/bin/mpirun -np $NP $COSMOEXE >> batchjob
+echo /home/opt/openmpi-1.8.3/bin/mpirun -mca btl self,tcp -np $NP $COSMOEXE >> batchjob
 
 #execute
 chmod u+x batchjob
