@@ -668,8 +668,10 @@ class TrjObj(object):
           Filelist containing variable
           
         """
-        
-        if len(self.afiles) > 0 and varname in pwg.get_fieldtable(self.afiles[0]).fieldnames:
+        if varname == 'TOT_PREC_S':
+            cosmoind = int(mins / self.dprcosmo)
+            filelist = self.rfiles
+        elif len(self.afiles) > 0 and varname in pwg.get_fieldtable(self.afiles[0]).fieldnames:
             cosmoind = int(mins / self.dacosmo)
             filelist = self.afiles
         elif len(self.halffiles) > 0 and varname in pwg.get_fieldtable(self.halffiles[0]).fieldnames:
@@ -1643,7 +1645,7 @@ class TrjObj(object):
                      filtername = None, savebase = None, trjstart = None,
                      onlyasc = None, idtext = '', inrange = None, 
                      cafter = None, thinning = False, setting = None, 
-                     path = False):
+                     path = False, cbar = True):
         """
         Draws trajectoriy position as dots with correct background plots.
         Tplus is now time after model start!
@@ -1693,7 +1695,7 @@ class TrjObj(object):
                                savename = savename, idtext = idtext,
                                inrange = inrange, cafter = cafter, 
                                thinning = thinning, setting = setting,
-                               path = path)
+                               path = path, cbar = cbar)
     
     def draw_asc_loc(self, dataname, varlist, filtername, tplot, tspan, 
                      idtext = '', savebase = None):
@@ -1762,7 +1764,7 @@ class TrjObj(object):
     
         
     def draw_contour(self, varlist, time, savebase = None, interval = None, 
-                     idtext = '', setting = None):
+                     idtext = '', setting = None, cbar = True):
         """
         Draws a countourplot of given variables.
         
@@ -1796,7 +1798,7 @@ class TrjObj(object):
                 savename = savebase
             print 'Plotting for time:', time
             plots.draw_contour(self, varlist, time, savename = savename, 
-                               idtext = idtext, setting = setting)
+                               idtext = idtext, setting = setting, cbar = cbar)
             
             
     ##################

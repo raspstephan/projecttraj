@@ -25,6 +25,7 @@ except KeyError:
         # interface "Agg" can plot without x-server connection
     print "No X-Server detected, using agg backend for plotting"
 # matplotlib.use('Qt4Agg')   # Use at your own risk
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.colors as clr
 import matplotlib.collections as col
@@ -1418,7 +1419,7 @@ def draw_field(obj, field, fieldname, savename = None):
         
 
 def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False, 
-                 setting = None):
+                 setting = None, cbar = True, title = False):
     """
     Plots a contour plot of the given variables at the specified time.
     
@@ -1462,11 +1463,11 @@ def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False,
                 cosmoind, filelist = obj._get_index(var[0], time)
 
             contour(obj, filelist, var[0], cosmoind, obj.xlim, obj.ylim, var[1], 
-                    m = m, setting = setting)
+                    m = m, setting = setting, cbar = cbar)
         else: 
             cosmoind, filelist = obj._get_index(var, time)
             contour(obj, filelist, var, cosmoind, obj.xlim, obj.ylim, m = m, 
-                    setting = setting)
+                    setting = setting, cbar = cbar)
         
     ## Set plot properties
     #plt.xlim(obj.xlim)
@@ -1475,7 +1476,8 @@ def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False,
     # Set labels and title
     #plt.xlabel('longitude')
     #plt.ylabel('latitude')
-    plt.title(obj.date + timedelta(minutes = time))
+    if title:
+        plt.title(obj.date + timedelta(minutes = time))
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
              fontsize = 6)
     plt.tight_layout()
@@ -1580,9 +1582,7 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
                         carray = carray)
             cnt += 1
 
-    cb = plt.colorbar(lc, orientation = 'horizontal', pad = 0.05, 
-                      fraction = 0.05, shrink = 3) 
-    cb.set_alpha(1)
+    cb = plt.colorbar(lc, orientation = 'horizontal', cax = cax2) 
     cb.set_label(carray)
     if carray == 'P':
         cb.ax.invert_yaxis()
@@ -1692,12 +1692,13 @@ def draw_trj_evo(obj, varlist, loclist, idlist, tplot,
 
 def draw_trj_dot(obj, varlist, loclist, idlist, tplus, 
                  savename = None, idtext = '', inrange = None, cafter = None,
-                 thinning = False, setting = None, path = False):
+                 thinning = False, setting = None, path = False, cbar = True):
     """
     tplus = time after MODEL start
     """
     
-    m = draw_contour(obj, varlist, tplus, idtext = idtext, setting = setting)
+    m = draw_contour(obj, varlist, tplus, idtext = idtext, setting = setting,
+                     cbar = cbar)
     cnt = 0   # continuous counter for startarray and stoparray
     
     # Plot trajectories
@@ -1767,10 +1768,11 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
     # Set plot properties
     #plt.xlim(obj.xlim)
     #plt.ylim(obj.ylim)
-    plt.title(obj.date + timedelta(minutes = tplus))
-    cb = plt.colorbar(shrink = 0.7) 
-    cb.set_label('P')
-    cb.ax.invert_yaxis()
+    #plt.title(obj.date + timedelta(minutes = tplus))
+    if cbar:
+        cb = plt.colorbar(orientation = 'horizontal', cax = cax2)
+        cb.set_label('Pressure [hPa]')
+        cb.ax.invert_yaxis()
     plt.tight_layout()
     
     # Save Plot
@@ -1868,6 +1870,8 @@ def basemap(cfile, xlim, ylim, rcoo = False):
     
     #del field
     
+    mpl.rcParams['font.size'] = 10
+    
     cosobj = pwg.getfobj(cfile, "FR_LAND_S")
     lats = cosobj.lats
     lons = cosobj.lons
@@ -1901,7 +1905,7 @@ def basemap(cfile, xlim, ylim, rcoo = False):
     return m
     
 def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None, 
-            m = None, setting = None):
+            m = None, setting = None, cbar = True):
     """
     Draws contour plot of one variable.
     
@@ -1919,7 +1923,7 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
       Dimensions in y-direction in rotated coordinates
       
     """
-    global cbar1
+    global cbar1, cax2
     print 'Plotting:', variable
     dt = 5. * 60
     dx = 0.025
@@ -1934,7 +1938,6 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
                               #invfile = False)
         #diff = len(filelist)-1 - trjstart/5
         #field = (field2 - field1)/(dt*diff)*3600
-    
     
     
     # Get precipitation difference
@@ -1994,14 +1997,20 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             CS.cmap.set_under('#007ACC')
             CS.cmap.set_over('#FFCC00')
             
-            #divider = make_axes_locatable(plt.gca())
-            #cax = divider.append_axes("bottom", size="100%", pad=0.05)
-            cax = make_axes(plt.gca(), location = 'bottom')
-            cbar = plt.colorbar(cax = cax)
-            #cbar = plt.colorbar(orientation = 'horizontal', pad = 0.05, 
-                                #shrink = 0.55)
-            #cbar.ax.set_aspect(0.02)
-            cbar.set_label('PV [PVU]')
+            ax = plt.gca()
+            if cbar:
+                divider = make_axes_locatable(ax)
+                cax1 = divider.append_axes('bottom', size = '3%', pad = 0.30)
+                if len(obj.trjfiles) != 42:
+                    cax2 = divider.append_axes('bottom', size = '3%', pad = 0.60)
+                cbar1 = plt.colorbar(orientation = 'horizontal', cax = cax1)
+                cbar1.set_label('PV [pvu]')
+            else: 
+                divider = make_axes_locatable(ax)
+                cax1 = divider.append_axes('bottom', size = '3%', pad = 0.30)
+                cbar1 = plt.colorbar(orientation = 'horizontal', cax = cax1)
+                plt.gcf().delaxes(cax1)
+            plt.sca(ax)
             #levels = np.arange(-5, 10, 2)
             #CS = plt.contour(X, Y, field, colors = 'black', levels = levels, 
                         #zorder = 0.6, linewidths = 2.)
@@ -2021,11 +2030,19 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             plt.contourf(X, Y, field, cmap = plt.get_cmap('hot_r'), 
                         extend = 'max', levels = levels, alpha = 0.8, 
                         zorder = 0.45)
-            
-            cbar1 = plt.colorbar(orientation = 'horizontal', pad = 0.05, 
-                                shrink = 0.55)
-            cbar1.set_label('CAPE [J/kg]')
-            cbar1.ax.set_aspect(0.02)
+            ax = plt.gca()
+            if cbar:
+                divider = make_axes_locatable(ax)
+                cax1 = divider.append_axes('bottom', size = '3%', pad = 0.30)
+                cax2 = divider.append_axes('bottom', size = '3%', pad = 0.60)
+                cbar1 = plt.colorbar(orientation = 'horizontal', cax = cax1)
+                cbar1.set_label('CAPE [J/kg]')
+            else: 
+                divider = make_axes_locatable(ax)
+                cax1 = divider.append_axes('bottom', size = '3%', pad = 0.30)
+                cbar1 = plt.colorbar(orientation = 'horizontal', cax = cax1)
+                plt.gcf().delaxes(cax1)
+            plt.sca(ax)
         elif variable in ["TOT_PREC_S", 'CUM_PREC']:   # Precipitation fields
             cmPrec =( (0    , 0.627 , 1    ),
                     (0.137, 0.235 , 0.98 ),
@@ -2036,10 +2053,9 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             levels = [0.1, 0.3, 1, 3, 10, 100]
             plt.contourf(X, Y, field, levels, colors=cmPrec, extend='max', 
                         alpha = 0.8, zorder = 1)
-            cbar2 = plt.colorbar(orientation = 'horizontal', cax = cbar1.ax)
-            cbar2.config_axis(pad = 0.1)
-            cbar2.ax.set_aspect(0.02)
-            cbar2.set_label('Precipitation [mm/h]')
+            if cbar:
+                cbar2 = plt.colorbar(orientation = 'horizontal', cax = cax2)
+                cbar2.set_label('Precipitation [mm/h]')
         elif variable == 'THETA':
             field = smoothfield(field, 5)
             #levels = np.arange(200, 350, 2)
@@ -2049,9 +2065,10 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             #plt.clabel(CS, inline = 1, fontsize = 7, fmt = "%.0f")
             CS = plt.contourf(X, Y, field, cmap = 'spectral', 
                              zorder = 0.4, alpha = 0.5)
-            cbar = plt.colorbar(orientation = 'horizontal', pad = 0.05, 
-                                shrink = 0.55)
-            cbar.ax.set_aspect(0.02)
+            #if cbar:
+            #cbar = plt.colorbar(orientation = 'horizontal', pad = 0.05, 
+                                #shrink = 0.55)
+            #cbar.ax.set_aspect(0.02)
     
     elif setting == 3:
         print 'Setting 3'

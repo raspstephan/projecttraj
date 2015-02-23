@@ -439,6 +439,44 @@ c0.draw_vs_p(['var4', 'POT_VORTIC'], ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 
 c0.draw_vs_p(['var4', 'POT_VORTIC'], ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '180215k', ylim = (-7, 7), ylabel = 'potential vorticity [PVU]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', extobj = c1, legnames = ['OCT convective', 'JUL'], legpos = 2, ax2upper = 300)
 
 
+#230215
+
+c1.draw_contour([ 'PMSL', ['var4', 300]], 1440, setting = 1, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case1/230215a_')
+c1.draw_contour([ 'PMSL', ['var4', 300]], 2880, setting = 1, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case1/230215b_')
+c1.draw_contour([ 'PMSL', ['var4', 300]], 4320, setting = 1, cbar = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case1/230215c_')
+
+c1.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 1440, setting = 2, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case1/230215d_')
+c1.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 2880, setting = 2, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case1/230215e_')
+c1.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 4320, setting = 2, cbar = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case1/230215f_')
+
+c0.draw_trj_dot([['var4', 300], 'PMSL'], 1440, filtername = 'WCB_NonConv', thinning = 10, setting = 1, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case0/230215g_')
+c0.draw_trj_dot([['var4', 300], 'PMSL'], 2880, filtername = 'WCB_NonConv', thinning = 10, setting = 1, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case0/230215h_')
+c0.draw_trj_dot([['var4', 300], 'PMSL'], 4320, filtername = 'WCB_NonConv', thinning = 10, setting = 1, cbar = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case0/230215i_')
+
+c0.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 1440, setting = 2, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case0/230215j_')
+c0.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 2880, setting = 2, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case0/230215k_')
+c0.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 4320, setting = 2, cbar = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case0/230215l_')
+
+c2.draw_trj_dot([['var4', 300], 'PMSL'], 720, filtername = 'WCB_Cy1_new', thinning = 10, setting = 1, cbar = False,
+                savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/230215m_')
+c2.draw_trj_dot([['var4', 300], 'PMSL'], 2160, filtername = 'WCB_Cy1_new', thinning = 10, setting = 1, cbar = False,
+                savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/230215n_')
+c2.draw_trj_dot([['var4', 300], 'PMSL'], 3600, filtername = 'WCB_Cy1_new', thinning = 10, setting = 1, cbar = True,
+                savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/230215o_')
+
+c2.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 720, setting = 2, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/230215p_')
+c2.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 2160, setting = 2, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/230215q_')
+c2.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 3600, setting = 2, cbar = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/230215r_')
+
+
+
+
+
+
+
+
+
+
 
 
 
