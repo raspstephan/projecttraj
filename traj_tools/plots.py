@@ -199,14 +199,10 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
             if tracer[n] in ['POT_VORTIC', 'var4']:
                 tracemat = tracemat * 1.e6
             pmat = rootgrp.variables['P'][:, :]
-            #print pmat
-            #print tracemat
-            
+
             # Get P data and set zeros to nan
-            zmask = np.ma.mask_or(pmat == 0, np.isnan(pmat))
-            tracemat[zmask] = np.nan
-            if not tracer[n] in ['QV', 'QC', 'QI', 'QR', 'QS', 'Q1', 'Q2', 'Q3']:
-                tracemat[tracemat == 0] = np.nan
+            #zmask = np.ma.mask_or(pmat == 0, np.isnan(pmat))
+            #tracemat[zmask] = np.nan
             
             # Convert pmat to indices
             pindmat = np.around((pmat) / binwidth)
@@ -238,7 +234,6 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
         
         for j in range(nbins):
             tmparray = np.array(tracerlist[j])
-            #print tmparray
             tmparray[tmparray > 1e20] = np.nan
             tmparray = tmparray[np.isfinite(tmparray)]
             countlist.append(tmparray.shape[0])
@@ -303,6 +298,7 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
     if legnames != None:
         plt.legend(leglist, legnames, loc = legpos)  
     maxbin = np.max(countlist)
+    print maxbin
     maxbin = ax2upper
     inc = 50
     ax2.set_yticks(np.arange(inc, maxbin + inc, inc))
@@ -367,8 +363,8 @@ def fill_between_steps(x, y1, y2=0, h_align='mid', ax=None, **kwargs):
 
 def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
                        plottype = 'Smooth', idtext = '', ylim = None, 
-                       xlim = None, sigma = 1, select = False, ax2 = True,
-                       legnames = None):
+                       xlim = None, sigma = 1, select = False,
+                       legnames = None, legpos = 2, ax2 = True):
     """
     Draws evolution of a tracer of all trajectories given by filter,
     centered around midpoint of ascent, as given by carray.
@@ -423,7 +419,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
     
     for i in range(len(loclist)):
     
-        totmat, exttarray = utils._centered_mat(obj[i], loclist[i], idlist[i], tracer, 
+        totmat, exttarray = utils._centered_mat(obj[i], loclist[i], idlist[i], tracer[i], 
                                                     carray[i])
         #print exttarray.shape
         if select != False:
@@ -441,14 +437,14 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
             #print selectarray, np.sum(totmat, axis = 0)
             totmat = totmat[:, selectarray[0]]
             
-            totmat[totmat == 0] = np.nan
+            #totmat[totmat == 0] = np.nan
             #print totmat.shape
             
         meanarray = np.nanmean(totmat, axis = 1)
         countlist = np.sum(np.isfinite(totmat), axis = 1)
         
         print "Mean at t = 0:", meanarray[np.round(meanarray.shape[0]/2)]
-        
+
         mask = np.isfinite(meanarray)
         
         # Convert time array to hours
@@ -503,6 +499,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
             print 'ERROR'
         
         maxbin = np.max(countlist)
+        print maxbin
         del totmat
         if ax2:
             relcountlist = countlist[mask] / float(maxbin) * 100.
@@ -526,7 +523,8 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
             ax2.set_ylim((0, 400))
             
     if legnames != None:
-        plt.legend(leglist, legnames)
+        print legnames, leglist
+        ax.legend(leglist, legnames, loc = legpos)
     ax.set_ylim(ylim)
     if tracer == 'P':
         ax.invert_yaxis()

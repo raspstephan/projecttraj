@@ -17,6 +17,7 @@ import cPickle
 import scipy.ndimage as ndi
 from skewt import SkewT
 import mytools
+import matplotlib.pyplot as plt
 
 
 
@@ -517,6 +518,146 @@ def cosmo_ref_p(z, psl=100000.,Tsl=288.15,beta=42.):
     
     return p0
         
+def _calc_lyapunov(obj, loclist, idlist, ntrj, crossarr, name):
+    """
+    TODO
+    """
+    
+    nt = obj.maxmins / obj.dtrj + 1
+    lontotmat = np.empty((nt, ntrj))
+    lontotmat[:, :] = np.nan
+    lattotmat = np.copy(lontotmat)
+    
+    
+    icount = 0
+    print 'Filling big matrices'
+    for i in range(len(loclist)):
+        print i
+        rootgrp = nc.Dataset(loclist[i], 'r')
+        startt = rootgrp.variables['time'][0] / 60.
+        startind = startt / obj.dtrj
+        latmat = rootgrp.variables['latitude'][:, idlist[i]]
+        lonmat = rootgrp.variables['longitude'][:, idlist[i]]
+        pmat = rootgrp.variables['P'][:, idlist[i]]
+        pmask = np.ma.mask_or(pmat == 0, np.isnan(pmat))
+        latmat[pmask] = np.nan
+        lonmat[pmask] = np.nan
+        matlen = latmat.shape[1]
+        lattotmat[startind:, icount:icount+matlen] = latmat
+        lontotmat[startind:, icount:icount+matlen] = lonmat
+        icount += matlen
+        rootgrp.close()
+        del latmat, lonmat
+    
+    #return lattotmat, lontotmat
+    print 'Calculating for each trajectory'
+    icount = 0
+    for i in range(len(loclist)):
+        print loclist[i]
+        rootgrp = nc.Dataset(loclist[i], 'a')
+        startt = rootgrp.variables['time'][0] / 60.
+        # Allocate new variable
+        newvar = rootgrp.createVariable(name, 'f4', ('time', 'id'))
+        newvar[:, :] = np.nan
+        
+        for j in range(len(idlist[i])):
+            
+            
+   
+            crosst = (crossarr[icount] - startt)/ obj.dtrj   # relative index
+            ilat = rootgrp.variables['latitude'][crosst, idlist[i][j]]
+            ilon = rootgrp.variables['longitude'][crosst, idlist[i][j]]
+            iind = crossarr[icount] / obj.dtrj   # totmat index
+            
+            # Fixed t
+            lattarr = lattotmat[iind]
+            lontarr = lontotmat[iind]
+            
+            lattarr = lattarr[np.isfinite(lattarr)]
+            lattarr = lattarr[lattarr != 0]
+            lontarr = lontarr[np.isfinite(lontarr)]
+            lontarr = lontarr[lontarr != 0]
+            
+            qmasklist = []
+            qmasklist.append((lattarr > ilat) & (lontarr > ilon))
+            qmasklist.append((lattarr > ilat) & (lontarr < ilon))
+            qmasklist.append((lattarr < ilat) & (lontarr < ilon))
+            qmasklist.append((lattarr < ilat) & (lontarr > ilon))
+            
+            #print lattarr
+            #print crosst, iind
+            disttarr = np.sqrt((lattarr - ilat)**2 + (lontarr - ilon)**2)
+            #print disttarr
+            
+            qdistarrlist = []
+            for qmask in qmasklist:
+                tmparray = np.copy(disttarr)
+                tmparray[qmask] = np.inf
+                qdistarrlist.append(tmparray)
+                del tmparray
+            
+            distiqlist = []
+            for k in range(len(qdistarrlist)):
+                #print 'q', k
+                #print qdistarrlist[i]
+                errorflag = False
+                if qdistarrlist[k].shape[0] != 0:   
+                    # Take closest from quadrant
+                    qind = np.argmin(qdistarrlist[k])
+                    #print 'a'
+                elif qdistarrlist[k-1].shape[0] != 0: 
+                    # Take second closest from previous quadrant
+                    k = k-1
+                    qind = qdistarrlist[k].argsort()[1::-1][::-1][1]
+                    #print 'b'
+                else:
+                    # Do not consider this quadrant
+                    print 'ERROR'
+                    errorflag = True
+                
+                if not errorflag: 
+                    distiqlist.append(np.sqrt((lattotmat[:, qind] - lattotmat[:, iind])**2 +
+                                (lontotmat[:, qind] - lontotmat[:, iind])**2))
+            
+            #try:
+                #indq1 = np.argmin(q1disttarr)
+                #indq2 = np.argmin(q2disttarr)
+                #indq3 = np.argmin(q3disttarr)
+                #indq4 = np.argmin(q4disttarr)
+                
+                #print indq1, indq2, indq3, indq4
+                #print [disttarr[indq1], disttarr[indq2], disttarr[indq3], 
+                            #disttarr[indq4]]
+                
+                #r0 = np.mean([disttarr[indq1], disttarr[indq2], disttarr[indq3], 
+                            #disttarr[indq4]])
+                
+                ## Fixed i
+                #distiq1 = np.sqrt((lattotmat[:, indq1] - lattotmat[:, iind])**2 +
+                                #(lontotmat[:, indq1] - lontotmat[:, iind])**2)
+                #distiq2 = np.sqrt((lattotmat[:, indq2] - lattotmat[:, iind])**2 +
+                                #(lontotmat[:, indq2] - lontotmat[:, iind])**2)
+                #distiq3 = np.sqrt((lattotmat[:, indq3] - lattotmat[:, iind])**2 +
+                                #(lontotmat[:, indq3] - lontotmat[:, iind])**2)
+                #distiq4 = np.sqrt((lattotmat[:, indq4] - lattotmat[:, iind])**2 +
+                                #(lontotmat[:, indq4] - lontotmat[:, iind])**2) 
+                #rt = np.mean([distiq1, distiq2, distiq3, distiq4], axis = 0)
+                
+                #print rt
+                #plt.plot(rt)
+                #plt.show()
+            #except ValueError:
+                #print 'Not all four quadrants occupied'
+            
+            rt = np.mean(distiqlist, axis = 0)
+
+            # Convert back to relative time
+            relrt = rt[(startt / obj.dtrj):]
+            newvar[:, j] = relrt
+            
+        
+
+
 
 
 def _new_dt(obj, tracer):

@@ -435,6 +435,7 @@ c0.draw_vs_p('QV', ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '180215e', yl
 c0.draw_vs_p('QV', ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '180215f', ylim = (-0.005, 0.015), ylabel = 'specific humidity [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', extobj = c2, legnames = ['OCT non-convective', 'JAN'], legpos = 1, ax2upper = 500)
 c0.draw_vs_p(['Q1', 'QC'], ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '180215g', ylim = (-0.0003, 0.001), ylabel = 'LWC [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', extobj = c2, legnames = ['OCT non-convective', 'JAN'], legpos = 1, ax2upper = 500)
 c0.draw_vs_p(['Q3', 'QS'], ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '180215h', ylim = (-0.0003, 0.001), ylabel = 'SWC [kg/kg]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', extobj = c2, legnames = ['OCT non-convective', 'JAN'], legpos = 1, ax2upper = 500)
+c0.draw_vs_p(['Q2', 'QI'], ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '180215i', ylim = (-0.00004, 0.0001), ylabel = 'IWC [kg/kg]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', extobj = c2, legnames = ['OCT non-convective', 'JAN'], legpos = 1, ax2upper = 500)
 c0.draw_vs_p(['var4', 'POT_VORTIC'], ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '180215j', ylim = (-5, 5), ylabel = 'potential vorticity [PVU]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', extobj = c2, legnames = ['OCT non-convective', 'JAN'], legpos = 1, ax2upper = 500)
 c0.draw_vs_p(['var4', 'POT_VORTIC'], ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '180215k', ylim = (-7, 7), ylabel = 'potential vorticity [PVU]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', extobj = c1, legnames = ['OCT convective', 'JUL'], legpos = 2, ax2upper = 300)
 
@@ -468,15 +469,38 @@ c2.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 720, setting = 2, cbar = Fal
 c2.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 2160, setting = 2, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/230215q_')
 c2.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 3600, setting = 2, cbar = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/230215r_')
 
+#030315
+c0.draw_vs_p(['Q1', 'QC'], ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '030315a', ylim = (-0.0003, 0.001), ylabel = 'LWC [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', extobj = c1, legnames = ['OCT non-convective', 'JAN'], legpos = 1, ax2upper = 500)
+c0.draw_vs_p(['Q3', 'QS'], ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '030315b', ylim = (-0.0003, 0.001), ylabel = 'SWC [kg/kg]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', extobj = c1, legnames = ['OCT non-convective', 'JAN'], legpos = 1, ax2upper = 500)
+c0.draw_vs_p(['Q2', 'QI'], ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '030315c', ylim = (-0.00004, 0.0001), ylabel = 'IWC [kg/kg]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', extobj = c1, legnames = ['OCT non-convective', 'JAN'], legpos = 1, ax2upper = 500)
 
+c0.draw_centered_vs_t('P', ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (200, 1300), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', legnames = ['OCT convective', 'JUL'], idtext = '030315d')
+c0.draw_centered_vs_t('P', ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (200, 1300), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', legnames = ['OCT non-convective', 'JAN'], idtext = '030315e')
 
+c0.draw_centered_vs_t('THETA', ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (270, 340), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', legnames = ['OCT convective', 'JUL'], idtext = '030315f')
+c0.draw_centered_vs_t('THETA', ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (270, 340), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', legnames = ['OCT non-convective', 'JAN'], idtext = '030315g')
 
+c0.draw_centered_vs_t('THETAE', ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (270, 340), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', legnames = ['OCT convective', 'JUL'], idtext = '030315h')
+c0.draw_centered_vs_t('THETAE', ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (270, 340), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', legnames = ['OCT non-convective', 'JAN'], idtext = '030315i')
 
+c0.draw_centered_vs_t('QV', ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (-0.005, 0.015), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', legnames = ['OCT convective', 'JUL'], idtext = '030315j')
+c0.draw_centered_vs_t('QV', ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (-0.005, 0.015), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', legnames = ['OCT non-convective', 'JAN'], idtext = '030315k')
 
+c0.draw_centered_vs_t(['var4', 'POT_VORTIC'], ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (-6, 6), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', legnames = ['OCT convective', 'JUL'], idtext = '030315l')
+c0.draw_centered_vs_t(['var4', 'POT_VORTIC'], ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (-6, 6), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', legnames = ['OCT non-convective', 'JAN'], idtext = '030315m')
 
+c0.draw_centered_vs_t(['Q1', 'QC'], ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (-0.0005, 0.0015), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', legnames = ['OCT convective', 'JUL'], idtext = '030315n')
+c0.draw_centered_vs_t(['Q1', 'QC'], ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (-0.0005, 0.0015), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', legnames = ['OCT non-convective', 'JAN'], idtext = '030315o')
 
+c0.draw_centered_vs_t(['Q3', 'QS'], ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (-0.0005, 0.0015), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', legnames = ['OCT convective', 'JUL'], idtext = '030315p')
+c0.draw_centered_vs_t(['Q3', 'QS'], ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (-0.0005, 0.0015), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', legnames = ['OCT non-convective', 'JAN'], idtext = '030315q')
 
+c0.draw_centered_vs_t(['Q2', 'QI'], ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (-0.00005, 0.0001), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', legnames = ['OCT convective', 'JUL'], idtext = '030315r')
+c0.draw_centered_vs_t(['Q2', 'QI'], ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (-0.00005, 0.0001), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_', legnames = ['OCT non-convective', 'JAN'], idtext = '030315s')
 
+#100315
+c0.draw_centered_vs_t(['var4', 'POT_VORTIC'], ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (-6, 6), xlim = (-6, 72), select=(-6, 36), legnames = ['OCT non-convective', 'JAN'], idtext = '100315a', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_')
+c0.draw_centered_vs_t(['var4', 'POT_VORTIC'], ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (-6, 6), xlim = (-12, 72), select=(-6, 36), idtext = '100315b', legnames = ['OCT convective', 'JUL'], savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_')
 
 
 

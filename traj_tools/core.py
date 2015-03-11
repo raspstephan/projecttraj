@@ -762,6 +762,18 @@ class TrjObj(object):
         self.trjfiles = newlist
         
     
+    def calc_lyapunov(self, filtername, crossname, name):
+        """
+        TODO
+        """
+        starttarray = self._mask_array(filtername, 'startt')
+        crossarr = (self._mask_array(filtername, crossname) * self.dtrj) + starttarray
+        ntrj = self.count_trjs(filtername)
+        loclist, idlist = self._mask_iter(filtername)
+        utils._calc_lyapunov(self, loclist, idlist, ntrj,
+                                                    crossarr, name)
+
+    
     
     def interpolate_2d(self, varname):
         """
@@ -994,7 +1006,8 @@ class TrjObj(object):
     def draw_centered_vs_t(self, tracer, filtername, carray, 
                            savebase = None, sigma = 1, plottype = 'Smooth', 
                            idtext = '', ylim = None, xlim = None, 
-                           select = False, extobj = None, legnames = None):
+                           select = False, extobj = None, legnames = None, 
+                           legpos = 2):
         """
         Draws evolution of a tracer of all trajectories given by filter,
         centered around midpoint of ascent, as given by carray.
@@ -1023,12 +1036,6 @@ class TrjObj(object):
         """
         
         # Create savename and label names
-        if savebase != None:
-            savename = (savebase + 'centered_' + tracer + '_' + carray + '_' +
-                        '_' + str(xlim[0]) + '_' + str(xlim[1]) + 
-                        '_' + idtext)
-        else: 
-            savename = savebase
         
         
         loclist = []
@@ -1038,11 +1045,15 @@ class TrjObj(object):
             
         if type(filtername) == str:
             filtername = [filtername]
+            tracer = [tracer]
             
         if extobj != None:
             objlist = [self, extobj]
+            if type(tracer) == str:
+                tracer = [tracer, tracer]
         elif len(filtername) == 2:
             objlist = [self, self]
+            tracer = [tracer, tracer]
             
         for filtn, obj in zip(filtername, objlist):
             tmploclist, tmpidlist = obj._mask_iter(filtn)
@@ -1057,10 +1068,16 @@ class TrjObj(object):
                 clist.append(((obj._mask_array(filtn, carray) * obj.dtrj) +
                         starttarray))
          
+        if savebase != None:
+            savename = (savebase + 'centered_' + tracer[0] + '_' + carray + '_' +
+                        '_' + str(xlim[0]) + '_' + str(xlim[1]) + 
+                        '_' + idtext)
+        else: 
+            savename = savebase
         
         plots.draw_centered_vs_t(objlist, loclist, idlist, tracer, clist, 
                                  savename, plottype, idtext, ylim, xlim, sigma,
-                                 select, legnames)
+                                 select, legnames, legpos)
  
     def draw_centered_integr(self, tracer, filtername, carray, 
                            savebase = None, sigma = 1, 
