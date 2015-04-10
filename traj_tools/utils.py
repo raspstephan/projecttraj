@@ -271,7 +271,7 @@ def nan_helper(y):
     return np.isnan(y), lambda z: z.nonzero()[0]
 
 
-def convert_p2std(files):
+def convert_p2std(files, reverse = False):
     """
     Converts Pressure variable in netCDF files to hPa, with np.nan as default 
     value
@@ -281,7 +281,10 @@ def convert_p2std(files):
         print "Converting file:", f
         rootgrp = nc.Dataset(f, 'a')
         p = rootgrp.variables['P'][:, :]
-        p = p / 100.
+        if reverse:
+            p = p * 100.
+        else:
+            p = p / 100.
         p[p < 1.] = np.nan
         rootgrp.variables['P'][:, :] = p
         rootgrp.close
@@ -310,7 +313,34 @@ def rcoo_2_gcoo(rlon, rlat, pollon, pollat):
     
     return glon, glat
 
-      
+
+def crop_trjs(obj, xlim, ylim):
+    """
+    TODO
+    """
+    for f in obj.trjfiles:
+        print "Cropping file:", f
+        rootgrp = nc.Dataset(f, 'a')
+        lat = rootgrp.variables['latitude'][:, :]   # y
+        lon = rootgrp.variables['longitude'][:, :]   # x
+        p = rootgrp.variables['P'][:, :]
+        domainmask = ((lat > ylim[0]) * (lat < ylim[1]) * (lon > xlim[0]) *
+                      (lon < xlim[1]))
+        for i in range(domainmask.shape[1]):
+            try:
+                nanind = np.where(domainmask[:, i] == False)[0][0]
+                domainmask[nanind:, i] = False
+            except:
+                pass
+                
+        lat[~domainmask] = np.nan
+        lon[~domainmask] = np.nan
+        p[~domainmask] = np.nan
+        rootgrp.variables['latitude'][:, :] = lat
+        rootgrp.variables['longitude'][:, :] = lon
+        rootgrp.variables['P'][:, :] = p
+        rootgrp.close()
+
 
 def calc_theta(filelist):
     """
@@ -524,6 +554,7 @@ def _calc_lyapunov(obj, loclist, idlist, ntrj, crossarr, name):
     """
     
     nt = obj.maxmins / obj.dtrj + 1
+    print nt, ntrj
     lontotmat = np.empty((nt, ntrj))
     lontotmat[:, :] = np.nan
     lattotmat = np.copy(lontotmat)
@@ -567,7 +598,9 @@ def _calc_lyapunov(obj, loclist, idlist, ntrj, crossarr, name):
             crosst = (crossarr[icount] - startt)/ obj.dtrj   # relative index
             ilat = rootgrp.variables['latitude'][crosst, idlist[i][j]]
             ilon = rootgrp.variables['longitude'][crosst, idlist[i][j]]
+            #print ilat
             iind = crossarr[icount] / obj.dtrj   # totmat index
+            #print lattotmat[iind, icount]
             
             # Fixed t
             lattarr = lattotmat[iind]
@@ -614,10 +647,10 @@ def _calc_lyapunov(obj, loclist, idlist, ntrj, crossarr, name):
                     # Do not consider this quadrant
                     print 'ERROR'
                     errorflag = True
-                
+                #print qind, iind
                 if not errorflag: 
-                    distiqlist.append(np.sqrt((lattotmat[:, qind] - lattotmat[:, iind])**2 +
-                                (lontotmat[:, qind] - lontotmat[:, iind])**2))
+                    distiqlist.append(np.sqrt((lattotmat[:, qind] - lattotmat[:, icount])**2 +
+                                (lontotmat[:, qind] - lontotmat[:, i])**2))
             
             #try:
                 #indq1 = np.argmin(q1disttarr)
@@ -653,7 +686,9 @@ def _calc_lyapunov(obj, loclist, idlist, ntrj, crossarr, name):
 
             # Convert back to relative time
             relrt = rt[(startt / obj.dtrj):]
-            newvar[:, j] = relrt
+            newvar[:, idlist[i][j]] = relrt
+            icount += 1
+
             
         
 
@@ -664,27 +699,52 @@ def _new_dt(obj, tracer):
     """
     TODO
     """
+    hdflist = []
+    for fn in obj.trjfiles:
+        print 'Opening file', fn
+        try:
+            rootgrp = nc.Dataset(fn, 'a')
+            
+            tracemat = rootgrp.variables[tracer][:, :]
+            pmat = rootgrp.variables['P'][:, :]
+            tracemat[np.isnan(pmat)] = np.nan 
+            tracemat[pmat == 0] = np.nan
+            gradmat = np.gradient(tracemat)[0] / (obj.dtrj * 60.)   # 1/s
+            
+            try:
+                newvar = rootgrp.createVariable(tracer + '_dt', 'f4', ('time', 'id'))
+                newvar[:, :] = gradmat
+            except RuntimeError:
+                rootgrp.variables[tracer + '_dt'][:, :] = gradmat
+            rootgrp.close()
+            
+        except: 
+            #print 'HDF:', fn
+            #hdflist.append(fn)
+            raise Exception('HDF Error')
+        
+    print hdflist
+    
+        
+def _new_avg(obj, tracer, steps):
+    """
+    TODO
+    """
     
     for fn in obj.trjfiles:
         print 'Opening file', fn
         rootgrp = nc.Dataset(fn, 'a')
-        
         tracemat = rootgrp.variables[tracer][:, :]
-        pmat = rootgrp.variables['P'][:, :]
-        tracemat[np.isnan(pmat)] = np.nan 
-        tracemat[pmat == 0] = np.nan
-        gradmat = np.gradient(tracemat)[0] / (obj.dtrj * 60.)   # 1/s
+        newmat = np.empty(tracemat.shape)
+        newmat.fill(np.nan)
         
-        try:
-            newvar = rootgrp.createVariable(tracer + '_dt', 'f4', ('time', 'id'))
-            newvar[:, :] = gradmat
-        except RuntimeError:
-            rootgrp.variables[tracer + '_dt'][:, :] = gradmat
-        
+        for i in range(tracemat.shape[0]-steps):
+            newmat[i + steps/2, :] = np.mean(tracemat[i:i+steps+1, :], axis = 0)
+                                    
+        newvar = rootgrp.createVariable(tracer + '_avg_' + str(int(steps*obj.dtrj)) + 'min',
+                                        'f4', ('time', 'id'))
+        newvar[:, :] = newmat
         rootgrp.close()
-        
-        
-        
 
 
 
@@ -693,8 +753,11 @@ def _get_level(obj, filename, varname, level, leveltype = 'PS'):
     TODO
     NOTE: For now only pressure, not height!
     """
-    
+    thetaflag = False
     # Get pressure field
+    if leveltype == 'THETA':
+        leveltype = 'PS'
+        thetaflag = True
     try:
         print filename
         fobj = pwg.getfobj(filename, leveltype)
@@ -733,6 +796,13 @@ def _get_level(obj, filename, varname, level, leveltype = 'PS'):
     else:
         varmat = pwg.getfield(filename, varname)
     
+    if thetaflag:
+        tmat = pwg.getfield(filename, 'T')
+        P0 = 1.e5   # reference pressure [Pa]
+        R = 287.    # specific gas constant dry air [J K-1 kg-1]
+        CP = 1004.  # specific heat at constant pressure [J K-1 kg-1]
+        levmat = tmat * ((P0 / levmat / 100) ** (R / CP))
+    
     # Get indices
     minmat = levmat - level
     posinf = np.copy(minmat)
@@ -757,7 +827,7 @@ def _get_level(obj, filename, varname, level, leveltype = 'PS'):
             posweight = negval[i, j] / diff 
             array[i, j] = (varmat[negind[i, j], i, j] * negweight + 
                            varmat[posind[i, j], i, j] * posweight)
-    return array, lons, lats
+    return array, lons, lats, fobj
 
     
 
@@ -919,7 +989,7 @@ def _write2netcdf(conmat, tstart, savebase, fcount):
 # Functions used in plots
 ####################################################
 
-def _centered_mat(obj, loclist, idlist, tracer, carray):
+def _centered_mat(obj, loclist, idlist, tracer, carray, mult):
     """
     TODO
     """
@@ -967,7 +1037,7 @@ def _centered_mat(obj, loclist, idlist, tracer, carray):
         # Filter out very large values
         tracemat[tracemat > 1e20] = np.nan
         #tracemat[tracemat == 0] = np.nan
-        
+        tracemat = tracemat * mult
         if tracer in ['var4', 'POT_VORTIC', 'var4_dt', 'POT_VORTIC_dt']:
             tracemat = tracemat * 1.e6   # PVU
         tmat = np.array([tarray] * len(idlist[i])).transpose()
@@ -988,24 +1058,29 @@ def _centered_mat(obj, loclist, idlist, tracer, carray):
 # Functions used in core
 ####################################################
 
-def _max_cd(obj, tracer, flip = False):
+def _max_cd(obj, tracer, start, stop, flip = False):
     """
     TODO
     """
     
     cdlist = []
+    count = 0
     for fn in obj.trjfiles:
         print 'Opening ', fn
         rootgrp = nc.Dataset(fn, 'r')
         mat = rootgrp.variables[tracer][:, :]
-        
+        if tracer == 'P':
+            mat = -mat
         for i in range(mat.shape[1]):
-            array = mat[:, i][mat[:,i] != 0]
-            if flip:
-                max_cd = np.gradient(array).min()
+            if np.isfinite(start[count]):
+                #print start[count], stop[count]
+                array = mat[start[count]:stop[count]+1, i]
+
+                cdlist.append(np.amax(np.gradient(array)))
             else:
-                max_cd = np.gradient(array).max()
-            difflist.append(max_cd)
+                cdlist.append(np.nan)
+            count += 1
+            
     return np.array(cdlist) / obj.dtrj / 60   # in s^-1
 
 def _cross_level(obj, tracer, ascdata, startdata, stopdata, level):
@@ -1074,6 +1149,45 @@ def _get_val_start(obj, ascstart, tracer, span = 2):
     return np.array(vallist)
 
 
+def _get_cross_pos(obj, lon1, lon2, lat, time1, time2, loclist, idlist,
+                   path = False, cfull = None):
+    """
+    TODO
+    """
+    zlist = []
+    lonlist = []
+    clist= []
+    
+    count = 0
+    for j in range(len(loclist)):
+        print 'Opening ', loclist[j]
+        rootgrp = nc.Dataset(loclist[j], 'r')
+        startt = rootgrp.variables['time'][0] / 60   # Convert to minutes
+        start = int((time1 - startt) / 5.)
+        stop = int((time2 - startt) / 5.)
+        lonmat = rootgrp.variables['longitude'][:, :]
+        latmat = rootgrp.variables['latitude'][:, :]
+        zmat = rootgrp.variables['z'][:, :]
+                
+        for i in idlist[j]:
+            
+            if start >= 0:
+                if ((latmat[start, i] < lat) * (latmat[stop, i] > lat) *
+                    (lonmat[start, i] > lon1) * (lonmat[start, i] < lon2)):
+                    if path:
+                        zlist.append(zmat[start:stop, i])
+                        lonlist.append(lonmat[start:stop, i])
+                    else:
+                        zlist.append((zmat[start, i] + zmat[stop, i]) / 2)
+                        lonlist.append((lonmat[start, i] + lonmat[stop, i]) / 2)
+                        clist.append(cfull[count])
+                count +=1
+    if path:
+        return zlist, lonlist
+    else:
+        return np.array(zlist), np.array(lonlist), np.array(clist)
+
+
 def _loc_filter(filelist, xmin, xmax, ymin, ymax, tmin = None, tmax = None):
     """
     Returns a boolian array of all trajecories in filelist, indicating if the
@@ -1107,9 +1221,11 @@ def _loc_filter(filelist, xmin, xmax, ymin, ymax, tmin = None, tmax = None):
         stop = int((tmax - startt) / 5.)
         lon = rootgrp.variables['longitude'][:, :]
         lat = rootgrp.variables['latitude'][:, :]
-        
+        if start < 0:
+            start = 0
         for j in range(lon.shape[1]):
-            if start >= 0:
+            
+            if stop >= 0:
                 m =  (lon[start:stop, j] > xmin) & (lon[start:stop, j] < xmax)
                 m &= (lat[start:stop, j] > ymin) & (lat[start:stop, j] < ymax)
                 boollist.append(np.any(m))
@@ -1594,6 +1710,9 @@ def _allxspan(array, yspan, xmax, flip = False):
     # Loop
     if slices == None:
         return ()
+    elif type(slices) == slice:
+        return ()
+        
     else:
         for s in slices:
             istart = s.start

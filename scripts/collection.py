@@ -465,9 +465,9 @@ c2.draw_trj_dot([['var4', 300], 'PMSL'], 2160, filtername = 'WCB_Cy1_new', thinn
 c2.draw_trj_dot([['var4', 300], 'PMSL'], 3600, filtername = 'WCB_Cy1_new', thinning = 10, setting = 1, cbar = True,
                 savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/230215o_')
 
-c2.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 720, setting = 2, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/230215p_')
-c2.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 2160, setting = 2, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/230215q_')
-c2.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 3600, setting = 2, cbar = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/230215r_')
+c2.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 720, setting = 5, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/230215p_')
+c2.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 2160, setting = 5, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/230215q_')
+c2.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 3600, setting = 5, cbar = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/230215r_')
 
 #030315
 c0.draw_vs_p(['Q1', 'QC'], ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '030315a', ylim = (-0.0003, 0.001), ylabel = 'LWC [K]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_', extobj = c1, legnames = ['OCT non-convective', 'JAN'], legpos = 1, ax2upper = 500)
@@ -501,6 +501,552 @@ c0.draw_centered_vs_t(['Q2', 'QI'], ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', ex
 #100315
 c0.draw_centered_vs_t(['var4', 'POT_VORTIC'], ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (-6, 6), xlim = (-6, 72), select=(-6, 36), legnames = ['OCT non-convective', 'JAN'], idtext = '100315a', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/nonconv_')
 c0.draw_centered_vs_t(['var4', 'POT_VORTIC'], ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (-6, 6), xlim = (-12, 72), select=(-6, 36), idtext = '100315b', legnames = ['OCT convective', 'JUL'], savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/conv_')
+
+#120315
+returnlist = c0.draw_vs_p('THETA', ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (280, 350), ylabel = r'$\theta\,[\mathrm{K}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/120315a_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None)
+color = []
+color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+#color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
+hatch = ['/', '\\']
+fig = plt.figure(figsize = (10, 3))
+ax = plt.gca()
+ax.grid(color = 'dimgrey', linestyle = '-')
+plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+zero = np.zeros(returnlist[1].shape[0])
+for n in range(len(returnlist)-1):
+    trj.plots.fill_between_steps(returnlist[0], np.array(returnlist[n+1]), zero, 
+                             ax = ax, linewidth = 1, 
+                alpha = 0.5, edgecolor = color[n][2], 
+                color = 'none', hatch = hatch[n])
+maxbin = 500
+inc = 100
+ax.set_yticks(np.arange(inc, maxbin + inc, inc))
+ax.set_ylim((0, maxbin))
+ax.set_ylabel('%')
+ax.set_xlabel('p [hPa]')
+ax.set_xlim(200, 1000)
+ax.invert_xaxis()
+plt.subplots_adjust(left = 0.075, right = 0.95, top = 0.95, bottom = 0.2)
+plt.savefig('/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/120315b_p_density.png')
+    
+returnlist = c0.draw_vs_p('THETA', ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '', ylim = (280, 350), ylabel = r'$\theta\,[\mathrm{K}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/120315c', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None)  
+color = []
+color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+#color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
+hatch = ['/', '\\']
+fig = plt.figure(figsize = (10, 3))
+ax = plt.gca()
+ax.grid(color = 'dimgrey', linestyle = '-')
+plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+zero = np.zeros(returnlist[1].shape[0])
+for n in range(len(returnlist)-1):
+    trj.plots.fill_between_steps(returnlist[0], np.array(returnlist[n+1]), zero, 
+                             ax = ax, linewidth = 1, 
+                alpha = 0.5, edgecolor = color[n][2], 
+                color = 'none', hatch = hatch[n])
+maxbin = 500
+inc = 100
+ax.set_yticks(np.arange(inc, maxbin + inc, inc))
+ax.set_ylim((0, maxbin))
+ax.set_ylabel('%')
+ax.set_xlabel('p [hPa]')
+ax.set_xlim(200, 1000)
+ax.invert_xaxis()
+plt.subplots_adjust(left = 0.075, right = 0.95, top = 0.95, bottom = 0.2)
+plt.savefig('/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/120315d_p_density.png')    
+    
+c0.draw_vs_p('THETAE', ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (290, 350), ylabel = r'$\theta_e\,[\mathrm{K}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/120315e_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None, letter = '(d)')    
+    
+c0.draw_vs_p('THETAE', ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '', ylim = (290, 350), ylabel = r'$\theta_e\,[\mathrm{K}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/120315f', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, letter = '(c)')    
+    
+c0.draw_vs_p('QV', ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (0, 15), ylabel = r'$q\,[\mathrm{g\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/120315g_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None, letter = '(f)', mult = 1000)    
+    
+c0.draw_vs_p('QV', ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '', ylim = (0, 15), ylabel = r'$q\,[\mathrm{g\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/120315h', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, letter = '(e)', mult = 1000)      
+    
+c0.draw_vs_p(['var4', 'POT_VORTIC'], ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (-6, 6), ylabel = 'PV [pvu]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/120315i_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None, letter = '(b)')    
+    
+c0.draw_vs_p(['var4', 'POT_VORTIC'], ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '', ylim = (-6, 6), ylabel = 'PV [pvu]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/120315j', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, letter = '(a)')     
+
+c0.draw_vs_p(['Q1', 'QC'], ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (0, 1000), ylabel = r'$\mathrm{LWC}\,[\mathrm{mg\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/120315k_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None, letter = '(d)', mult = 1000000)    
+    
+c0.draw_vs_p(['Q1', 'QC'], ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '', ylim = (0, 1000), ylabel = r'$\mathrm{LWC}\,[\mathrm{mg\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/120315l', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, letter = '(c)', mult = 1000000)
+    
+c0.draw_vs_p(['Q3', 'QS'], ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (0, 1000), ylabel = r'$\mathrm{SWC}\,[\mathrm{mg\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/120315m_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None, letter = '(f)', mult = 1000000)    
+    
+c0.draw_vs_p(['Q3', 'QS'], ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '', ylim = (0, 1000), ylabel = r'$\mathrm{SWC}\,[\mathrm{mg\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/120315n', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, letter = '(e)', mult = 1000000)   
+    
+c0.draw_vs_p(['Q2', 'QI'], ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (0, 100), ylabel = r'$\mathrm{IWC}\,[\mathrm{mg\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/120315o_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None, letter = '(h)', mult = 1000000)    
+    
+c0.draw_vs_p(['Q2', 'QI'], ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '', ylim = (0, 100), ylabel = r'$\mathrm{IWC}\,[\mathrm{mg\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/120315p', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, letter = '(g)', mult = 1000000)     
+
+#130315 vs_t plots 
+
+returnlist = c0.draw_centered_vs_t('P', ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (200, 1000), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/130315a_', legnames = ['OCTnc', 'JAN'], letter = '(b)', ax2 = None, ylabel = 'p [hPa]')
+color = []
+color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+#color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
+hatch = ['/', '\\']
+fig = plt.figure(figsize = (10, 3))
+ax = plt.gca()
+ax.grid(color = 'dimgrey', linestyle = '-')
+plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+for n in range(len(returnlist) / 2):
+    zero = np.zeros(returnlist[n * 2].shape[0])
+    trj.plots.fill_between_steps(returnlist[n * 2], np.array(returnlist[n*2+1]), zero, 
+                             ax = ax, linewidth = 1, 
+                alpha = 0.5, edgecolor = color[n][2], 
+                color = 'none', hatch = hatch[n])
+maxbin = 100
+inc = 20
+ax.set_yticks(np.arange(inc, maxbin + inc, inc))
+ax.xaxis.set_ticks(np.arange(-120, 120, 6))
+ax.set_ylim((0, maxbin))
+ax.set_ylabel('%')
+ax.set_xlabel('time [h] relative to center')
+ax.set_xlim(-36, 36)
+plt.subplots_adjust(left = 0.075, right = 0.95, top = 0.95, bottom = 0.2)
+plt.savefig('/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/130315b_t_density.png')    
+
+returnlist = c0.draw_centered_vs_t('P', ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (200, 1000), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/130315c_', legnames = ['OCTc', 'JUL'], letter = '(a)', ax2 = None, ylabel = 'p [hPa]')
+color = []
+color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+#color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
+hatch = ['/', '\\']
+fig = plt.figure(figsize = (10, 3))
+ax = plt.gca()
+ax.grid(color = 'dimgrey', linestyle = '-')
+plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+for n in range(len(returnlist) / 2):
+    zero = np.zeros(returnlist[n * 2].shape[0])
+    trj.plots.fill_between_steps(returnlist[n * 2], np.array(returnlist[n*2+1]), zero, 
+                             ax = ax, linewidth = 1, 
+                alpha = 0.5, edgecolor = color[n][2], 
+                color = 'none', hatch = hatch[n])
+maxbin = 100
+inc = 20
+ax.set_yticks(np.arange(inc, maxbin + inc, inc))
+ax.xaxis.set_ticks(np.arange(-120, 120, 6))
+ax.set_ylim((0, maxbin))
+ax.set_ylabel('%')
+ax.set_xlabel('time [h] relative to center')
+ax.set_xlim(-12, 12)
+plt.subplots_adjust(left = 0.075, right = 0.95, top = 0.95, bottom = 0.2)
+plt.savefig('/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/130315d_t_density.png')  
+
+c0.draw_centered_vs_t('THETA', ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (280, 350), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/130315e_', legnames = ['OCTnc', 'JAN'], letter = '(d)', ax2 = None, ylabel = r'$\theta\,[\mathrm{K}]$')
+
+c0.draw_centered_vs_t('THETA', ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (280, 350), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/130315f_', legnames = ['OCTc', 'JUL'], letter = '(c)', ax2 = None, ylabel = r'$\theta\,[\mathrm{K}]$')
+
+c0.draw_centered_vs_t('THETAE', ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (290, 350), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/130315g_', legnames = ['OCTnc', 'JAN'], letter = '(f)', ax2 = None, ylabel = r'$\theta_e\,[\mathrm{K}]$')
+
+c0.draw_centered_vs_t('THETAE', ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (290, 350), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/130315h_', legnames = ['OCTc', 'JUL'], letter = '(e)', ax2 = None, ylabel = r'$\theta_e\,[\mathrm{K}]$')
+
+c0.draw_centered_vs_t('QV', ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (0, 15), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/130315i_', legnames = ['OCTnc', 'JAN'], letter = '(h)', ax2 = None, ylabel = r'$q\,[\mathrm{g\,kg^{-1}}]$', mult = 1000)
+
+c0.draw_centered_vs_t('QV', ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (0, 15), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/130315j_', legnames = ['OCTc', 'JUL'], letter = '(g)', ax2 = None, ylabel = r'$q\,[\mathrm{g\,kg^{-1}}]$', mult = 1000)
+
+c0.draw_centered_vs_t(['var4', 'POT_VORTIC'], ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (-6, 6), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/130315k_', legnames = ['OCTnc', 'JAN'], letter = '(b)', ax2 = None, ylabel = 'PV [pvu]', mult = 1)
+
+c0.draw_centered_vs_t(['var4', 'POT_VORTIC'], ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (-6, 6), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/130315l_', legnames = ['OCTc', 'JUL'], letter = '(a)', ax2 = None, ylabel = 'PV [pvu]', mult = 1)
+
+c0.draw_centered_vs_t(['Q1', 'QC'], ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (0, 1000), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/130315m_', legnames = ['OCTnc', 'JAN'], letter = '(d)', ax2 = None, ylabel = r'$\mathrm{LWC}\,[\mathrm{mg\,kg^{-1}}]$', mult = 1000000)
+
+c0.draw_centered_vs_t(['Q1', 'QC'], ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (0, 1000), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/130315n_', legnames = ['OCTc', 'JUL'], letter = '(c)', ax2 = None, ylabel = r'$\mathrm{LWC}\,[\mathrm{mg\,kg^{-1}}]$', mult = 1000000)
+
+c0.draw_centered_vs_t(['Q3', 'QS'], ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (0, 1500), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/130315o_', legnames = ['OCTnc', 'JAN'], letter = '(f)', ax2 = None, ylabel = r'$\mathrm{SWC}\,[\mathrm{mg\,kg^{-1}}]$', mult = 1000000)
+
+c0.draw_centered_vs_t(['Q3', 'QS'], ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (0, 1500), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/130315p_', legnames = ['OCTc', 'JUL'], letter = '(e)', ax2 = None, ylabel = r'$\mathrm{SWC}\,[\mathrm{mg\,kg^{-1}}]$', mult = 1000000)
+
+c0.draw_centered_vs_t(['Q2', 'QI'], ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (0, 100), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/130315q_', legnames = ['OCTnc', 'JAN'], letter = '(h)', ax2 = None, ylabel = r'$\mathrm{IWC}\,[\mathrm{mg\,kg^{-1}}]$', mult = 1000000)
+
+c0.draw_centered_vs_t(['Q2', 'QI'], ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (0, 100), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/130315r_', legnames = ['OCTc', 'JUL'], letter = '(g)', ax2 = None, ylabel = r'$\mathrm{IWC}\,[\mathrm{mg\,kg^{-1}}]$', mult = 1000000)
+
+#190315
+c1.draw_hist('P600', [0, 48], [0, 12000], filtername='WCB', mintohrs=True, bins = 100, ylog = False, exp = [3150, -0.072], savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/', idtext='')
+
+c2.draw_hist('P600', [0, 48], [0, 200], filtername='WCB_Cy1_new', mintohrs=True, bins = 100, ylog = False, idtext = '', savebase='/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
+
+c0.draw_hist_stacked(['P600', 'P600'], ['Wconv', 'Wnonconv'], ['OCTc', 'OCTnc'], xlim = (0, 48), ylim = (0, 1400), bins = 100, ylog = False, exp = [200, -0.072], idtext = '', savebase='/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+
+returnlist = c0.draw_centered_vs_t(['var4', 'POT_VORTIC'], ['Wnonconv', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (-6, 6), xlim = (-12, 72), select=(-6, 36), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/190315a', legnames = ['OCTnc', 'JAN'], letter = '(b)', ax2 = None, ylabel = 'PV [PVU]')
+color = []
+color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+#color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
+hatch = ['/', '\\']
+fig = plt.figure(figsize = (10, 3))
+ax = plt.gca()
+ax.grid(color = 'dimgrey', linestyle = '-')
+plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+for n in range(len(returnlist) / 2):
+    zero = np.zeros(returnlist[n * 2].shape[0])
+    trj.plots.fill_between_steps(returnlist[n * 2], np.array(returnlist[n*2+1]), zero, 
+                             ax = ax, linewidth = 1, 
+                alpha = 0.5, edgecolor = color[n][2], 
+                color = 'none', hatch = hatch[n])
+maxbin = 100
+inc = 20
+ax.set_yticks(np.arange(inc, maxbin + inc, inc))
+ax.xaxis.set_ticks(np.arange(-120, 120, 6))
+ax.set_ylim((0, maxbin))
+ax.set_ylabel('%')
+ax.set_xlabel('time [h] relative to center')
+ax.set_xlim(-36, 36)
+plt.subplots_adjust(left = 0.075, right = 0.95, top = 0.95, bottom = 0.2)
+plt.savefig('/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/190315b_t_density_long.png')    
+
+returnlist = c0.draw_centered_vs_t(['var4', 'POT_VORTIC'], ['Wconv', 'WCB'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (-6, 6), xlim = (-12, 72), select=(-6, 36), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/190315c_', legnames = ['OCTc', 'JUL'], letter = '(a)', ax2 = None, ylabel = 'PV [PVU]')
+color = []
+color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+#color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
+hatch = ['/', '\\']
+fig = plt.figure(figsize = (10, 3))
+ax = plt.gca()
+ax.grid(color = 'dimgrey', linestyle = '-')
+plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+for n in range(len(returnlist) / 2):
+    zero = np.zeros(returnlist[n * 2].shape[0])
+    trj.plots.fill_between_steps(returnlist[n * 2], np.array(returnlist[n*2+1]), zero, 
+                             ax = ax, linewidth = 1, 
+                alpha = 0.5, edgecolor = color[n][2], 
+                color = 'none', hatch = hatch[n])
+maxbin = 100
+inc = 20
+ax.set_yticks(np.arange(inc, maxbin + inc, inc))
+ax.xaxis.set_ticks(np.arange(-120, 120, 6))
+ax.set_ylim((0, maxbin))
+ax.set_ylabel('%')
+ax.set_xlabel('time [h] relative to center')
+ax.set_xlim(-12, 12)
+plt.subplots_adjust(left = 0.075, right = 0.95, top = 0.95, bottom = 0.2)
+plt.savefig('/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/190315d_t_density_long.png') 
+
+c0.draw_trj_dot(["PMSL", "TOT_PREC_S"], tplus = 3600, filtername=['Wconv', 'Wnonconv'], thinning = 10, savebase='/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/dot/')
+
+#190315
+#c0.draw_centered_vs_t('P_dt', 'WCB_NonConv', 'Pcross600', plottype = 'Fill', ylim = (-0.10, 0.1), xlim = (-6, 6), select=True, idtext = '190315e', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+#c0.draw_centered_vs_t('P_dt', 'WCB_Conv', 'Pcross600', plottype = 'Fill', ylim = (-0.50, 0.1), xlim = (-6, 6), select=True, idtext = '190315f', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/')
+#c1.draw_centered_vs_t('P_dt', 'WCB', 'Pcross600', plottype = 'Fill', ylim = (-0.5, 0.1), xlim = (-6, 6), select=True, idtext = '190315g', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/')
+#c2.draw_centered_vs_t('P_dt', 'WCB_Cy1_new', 'Pcross600', plottype = 'Fill', ylim = (-0.1, 0.1), xlim = (-6, 6), select=True, idtext = '190315h', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/')
+
+c0.draw_vs_p('P_dt', ['Wnonconv', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (-0.1, 0.05), ylabel = r'$\omega\,[\mathrm{hPa\,s^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/190315e_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None, letter = '(b)')    
+    
+c0.draw_vs_p('P_dt', ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '', ylim = (-0.1, 0.05), ylabel = r'$\omega\,[\mathrm{hPa\,s^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/190315f_', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, letter = '(a)')    
+
+for i in range(10):
+    for tracer in ['P', 'QV', 'QC', 'QS', 'QI', 'POT_VORTIC']:
+        plt.close('all')
+        c2.draw_spaghetti(tracer, 'WCB_pick4', limit = [i * 6, i * 6 + 6])
+        plt.xlim(0, 40)
+        plt.savefig('/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/spaghetti/'+str(i)+tracer)
+
+#200315
+c2.draw_centered_vs_t('P', ['WCB_pick6', 'WCB_pick8'], 'Pcross600', plottype = 'Fill', ylim = (200, 1000), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/200315a_', legnames = ['WCB_pick6', 'WCB_pick8'], ylabel = 'p [hPa]')
+
+c2.draw_centered_vs_t('POT_VORTIC', ['WCB_pick6', 'WCB_pick8'], 'Pcross600', plottype = 'Fill', ylim = (-6, 6), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/200315b_', legnames = ['WCB_pick6', 'WCB_pick8'], ylabel = 'PV [pvu]')
+
+for i in range(10):
+    for tracer in ['P', 'QV', 'QC', 'QS', 'QI', 'POT_VORTIC']:
+        plt.close('all')
+        c2.draw_spaghetti(tracer, 'WCB_pick6', limit = [i * 6, i * 6 + 6])
+        plt.xlim(0, 40)
+        plt.savefig('/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/spaghetti/WCB_pick6'+str(i)+tracer)
+for i in range(10):
+    for tracer in ['P', 'QV', 'QC', 'QS', 'QI', 'POT_VORTIC']:
+        plt.close('all')
+        c2.draw_spaghetti(tracer, 'WCB_pick8', limit = [i * 6, i * 6 + 6])
+        plt.xlim(0, 40)
+        plt.savefig('/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/spaghetti/WCB_pick8'+str(i)+tracer)
+
+for i in range(10):
+    for tracer in ['P', 'QV', 'QC', 'QS', 'QI', 'POT_VORTIC']:
+        plt.close('all')
+        c2.draw_spaghetti(tracer, 'WCB', limit = [i * 6, i * 6 + 6])
+        plt.xlim(0, 40)
+        plt.savefig('/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/spaghetti/WCB'+str(i)+tracer)
+
+
+
+#250315
+
+c2.draw_trj_dot([['var4', 310, 'THETA'], 'PMSL'], 720, filtername = 'WCB_Cy1_new', thinning = 10, setting = 1, diffobj = c2eu, diffvar = 'var4', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/250315a_diff_', ctracer = 'THETA')
+c2.draw_trj_dot([['var4', 310, 'THETA'], 'PMSL'], 2160, filtername = 'WCB_Cy1_new', thinning = 10, setting = 1, diffobj = c2eu, diffvar = 'var4', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/250315b_diff_', ctracer = 'THETA')
+c2.draw_trj_dot([['var4', 310, 'THETA'], 'PMSL'], 3600, filtername = 'WCB_Cy1_new', thinning = 10, setting = 1, diffobj = c2eu, diffvar = 'var4', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/250315c_diff_', ctracer = 'THETA')
+
+c2eu.draw_contour([['var4', 310, 'THETA'], 'PMSL'], 720+360, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/250315d_eu_')
+c2eu.draw_contour([['var4', 310, 'THETA'], 'PMSL'], 2160+360, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/250315e_eu_')
+c2eu.draw_contour([['var4', 310, 'THETA'], 'PMSL'], 3600+360, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/250315f_eu_')
+
+c2.draw_contour([['var4', 310, 'THETA'], 'PMSL'], 720, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/250315d_de_')
+c2.draw_contour([['var4', 310, 'THETA'], 'PMSL'], 2160, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/250315e_de_')
+c2.draw_contour([['var4', 310, 'THETA'], 'PMSL'], 3600, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/250315f_de_')
+
+c1.draw_trj_dot([['var4', 330, 'THETA'], 'PMSL'], 1440, filtername = 'WCB', thinning = 20, setting = 1, diffobj = c1eu, diffvar = 'var4')
+
+#300315
+c0.draw_vs_p('THETA_dt', ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '', ylim = (-5, 30), ylabel = 'DHR [K/h]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/310315a_', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, mult = 3600)
+
+c0.draw_vs_p('THETA_dt', ['Wconv', 'WCB'], 'P600', (200, 1000), idtext = '', ylim = (-5, 30), ylabel = 'DHR [K/h]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/310315b_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None, mult = 3600)
+
+
+c2.draw_trj_dot([['var4', 310, 'THETA'], 'PMSL'], 2160, filtername = 'WCB_Cy1_new', thinning = 2, setting = 1, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/300315a_', ctracer = 'THETA')
+
+c2eu.draw_trj_dot([['var4', 310, 'THETA'], 'PMSL'], 2160+360, filtername = 'WCB_Cy1_cropped', thinning = 2, setting = 1, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/300315b_eu_', ctracer = 'THETA')
+
+#020415
+# New synop PV plots
+
+c0.draw_trj_dot([['var4', 310, 'THETA'], 'PMSL'], 1440, filtername = 'WCB', thinning = 10, setting = 1, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case0/020415a_')
+c0.draw_trj_dot([['var4', 310, 'THETA'], 'PMSL'], 2880, filtername = 'WCB', thinning = 10, setting = 1, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case0/020415b_')
+c0.draw_trj_dot([['var4', 310, 'THETA'], 'PMSL'], 4320, filtername = 'WCB', thinning = 10, setting = 1, cbar = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case0/020415c_')
+
+c2.draw_trj_dot([['var4', 310, 'THETA'], 'PMSL'], 720, filtername = 'WCB_Cy1_new', thinning = 10, setting = 1, cbar = False,
+                savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/020415d_')
+c2.draw_trj_dot([['var4', 310, 'THETA'], 'PMSL'], 2160, filtername = 'WCB_Cy1_new', thinning = 10, setting = 1, cbar = False,
+                savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/020415e_')
+c2.draw_trj_dot([['var4', 310, 'THETA'], 'PMSL'], 3600, filtername = 'WCB_Cy1_new', thinning = 10, setting = 1, cbar = True,
+                savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case2/020415f_')
+
+
+#070415
+c1new.draw_hist('P600', [0, 48], [0, 5000], filtername='WCB_Cy1', mintohrs=True, bins = 96, exp = [1500, -0.105], ylog = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/070415a_')
+c1new.draw_hist('P600', [0, 48], [0, 500], filtername='WCB_start2', mintohrs=True, bins = 96, exp = [140, -0.085], ylog = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/070415b_')
+
+c1eu.draw_hist('P600', [0, 48], [0, 5000], filtername='WCB_Cy1', mintohrs=True, bins = 96, exp = [1500, -0.105], ylog = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/070415c_eu_')
+c1eu.draw_hist('P600', [0, 48], [0, 500], filtername='WCB_start2', mintohrs=True, bins = 96, exp = [140, -0.085], ylog = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/070415d_eu_')
+
+c0.draw_trj_all([], 'Wconv2', thinning = 10, savebase='/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/070415e_', idtext = '')
+c0.draw_trj_all([], 'Wnonconv2', thinning = 10, savebase='/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/070415f_', idtext = '')
+
+# vs_t
+c1 = trj.loadme('c1new.trj')
+
+returnlist = c0.draw_centered_vs_t('P', ['Wnonconv2', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (200, 1000), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_t/070415g_', legnames = ['OCTnc', 'JAN'], letter = '(b)', ax2 = None, ylabel = 'p [hPa]')
+color = []
+color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+#color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
+hatch = ['/', '\\']
+fig = plt.figure(figsize = (10, 3))
+ax = plt.gca()
+ax.grid(color = 'dimgrey', linestyle = '-')
+plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+for n in range(len(returnlist) / 2):
+    zero = np.zeros(returnlist[n * 2].shape[0])
+    trj.plots.fill_between_steps(returnlist[n * 2], np.array(returnlist[n*2+1]), zero, 
+                             ax = ax, linewidth = 1, 
+                alpha = 0.5, edgecolor = color[n][2], 
+                color = 'none', hatch = hatch[n])
+maxbin = 100
+inc = 20
+ax.set_yticks(np.arange(inc, maxbin + inc, inc))
+ax.xaxis.set_ticks(np.arange(-120, 120, 6))
+ax.set_ylim((0, maxbin))
+ax.set_ylabel('%')
+ax.set_xlabel('time [h] relative to center')
+ax.set_xlim(-36, 36)
+plt.subplots_adjust(left = 0.075, right = 0.95, top = 0.95, bottom = 0.2)
+plt.savefig('/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_t/070415h_t_density.png')    
+
+returnlist = c0.draw_centered_vs_t('P', ['Wconv2', 'WCB_Cy1'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (200, 1000), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_t/070415i_', legnames = ['OCTc', 'JUL'], letter = '(a)', ax2 = None, ylabel = 'p [hPa]')
+color = []
+color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+#color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
+hatch = ['/', '\\']
+fig = plt.figure(figsize = (10, 3))
+ax = plt.gca()
+ax.grid(color = 'dimgrey', linestyle = '-')
+plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+for n in range(len(returnlist) / 2):
+    zero = np.zeros(returnlist[n * 2].shape[0])
+    trj.plots.fill_between_steps(returnlist[n * 2], np.array(returnlist[n*2+1]), zero, 
+                             ax = ax, linewidth = 1, 
+                alpha = 0.5, edgecolor = color[n][2], 
+                color = 'none', hatch = hatch[n])
+maxbin = 100
+inc = 20
+ax.set_yticks(np.arange(inc, maxbin + inc, inc))
+ax.xaxis.set_ticks(np.arange(-120, 120, 6))
+ax.set_ylim((0, maxbin))
+ax.set_ylabel('%')
+ax.set_xlabel('time [h] relative to center')
+ax.set_xlim(-12, 12)
+plt.subplots_adjust(left = 0.075, right = 0.95, top = 0.95, bottom = 0.2)
+plt.savefig('/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_t/070415j_t_density.png')  
+
+c0.draw_centered_vs_t('THETA', ['Wnonconv2', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (280, 350), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_t/070415k_', legnames = ['OCTnc', 'JAN'], letter = '(d)', ax2 = None, ylabel = r'$\theta\,[\mathrm{K}]$')
+
+c0.draw_centered_vs_t('THETA', ['Wconv2', 'WCB_Cy1'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (280, 350), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_t/070415l_', legnames = ['OCTc', 'JUL'], letter = '(c)', ax2 = None, ylabel = r'$\theta\,[\mathrm{K}]$')
+
+c0.draw_centered_vs_t('THETAE', ['Wnonconv2', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (290, 350), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_t/07041m_', legnames = ['OCTnc', 'JAN'], letter = '(f)', ax2 = None, ylabel = r'$\theta_e\,[\mathrm{K}]$')
+
+c0.draw_centered_vs_t('THETAE', ['Wconv2', 'WCB_Cy1'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (290, 350), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_t/070415n_', legnames = ['OCTc', 'JUL'], letter = '(e)', ax2 = None, ylabel = r'$\theta_e\,[\mathrm{K}]$')
+
+c0.draw_centered_vs_t('QV', ['Wnonconv2', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (0, 15), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_t/070415o_', legnames = ['OCTnc', 'JAN'], letter = '(h)', ax2 = None, ylabel = r'$q\,[\mathrm{g\,kg^{-1}}]$', mult = 1000)
+
+c0.draw_centered_vs_t('QV', ['Wconv2', 'WCB_Cy1'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (0, 15), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_t/070415p_', legnames = ['OCTc', 'JUL'], letter = '(g)', ax2 = None, ylabel = r'$q\,[\mathrm{g\,kg^{-1}}]$', mult = 1000)
+
+c0.draw_centered_vs_t(['var4', 'POT_VORTIC'], ['Wnonconv2', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (-6, 6), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_t/070415q_', legnames = ['OCTnc', 'JAN'], letter = '(b)', ax2 = None, ylabel = 'PV [pvu]', mult = 1)
+
+c0.draw_centered_vs_t(['var4', 'POT_VORTIC'], ['Wconv2', 'WCB_Cy1'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (-6, 6), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_t/070415r_', legnames = ['OCTc', 'JUL'], letter = '(a)', ax2 = None, ylabel = 'PV [pvu]', mult = 1)
+
+c0.draw_centered_vs_t(['Q1', 'QC'], ['Wnonconv2', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (0, 1000), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_t/070415s_', legnames = ['OCTnc', 'JAN'], letter = '(d)', ax2 = None, ylabel = r'$\mathrm{LWC}\,[\mathrm{mg\,kg^{-1}}]$', mult = 1000000)
+
+c0.draw_centered_vs_t(['Q1', 'QC'], ['Wconv2', 'WCB_Cy1'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (0, 1000), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_t/070415t_', legnames = ['OCTc', 'JUL'], letter = '(c)', ax2 = None, ylabel = r'$\mathrm{LWC}\,[\mathrm{mg\,kg^{-1}}]$', mult = 1000000)
+
+c0.draw_centered_vs_t(['Q3', 'QS'], ['Wnonconv2', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (0, 1500), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_t/070415u_', legnames = ['OCTnc', 'JAN'], letter = '(f)', ax2 = None, ylabel = r'$\mathrm{SWC}\,[\mathrm{mg\,kg^{-1}}]$', mult = 1000000)
+
+c0.draw_centered_vs_t(['Q3', 'QS'], ['Wconv2', 'WCB_Cy1'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (0, 1500), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_t/070415v_', legnames = ['OCTc', 'JUL'], letter = '(e)', ax2 = None, ylabel = r'$\mathrm{SWC}\,[\mathrm{mg\,kg^{-1}}]$', mult = 1000000)
+
+c0.draw_centered_vs_t(['Q2', 'QI'], ['Wnonconv2', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Fill', ylim = (0, 100), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_t/070415w_', legnames = ['OCTnc', 'JAN'], letter = '(h)', ax2 = None, ylabel = r'$\mathrm{IWC}\,[\mathrm{mg\,kg^{-1}}]$', mult = 1000000)
+
+c0.draw_centered_vs_t(['Q2', 'QI'], ['Wconv2', 'WCB_Cy1'], 'Pcross600', extobj = c1, plottype = 'Fill', ylim = (0, 100), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_t/070415x_', legnames = ['OCTc', 'JUL'], letter = '(g)', ax2 = None, ylabel = r'$\mathrm{IWC}\,[\mathrm{mg\,kg^{-1}}]$', mult = 1000000)
+
+
+# JUL synop
+c1.draw_trj_dot([ 'PMSL', ['var4', 325, 'THETA']], 900, filtername = 'WCB_Cy1', thinning = 10, setting = 1, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case1/070415y_')
+c1.draw_trj_dot([ 'PMSL', ['var4', 325, 'THETA']], 2340, filtername = 'WCB_Cy1', thinning = 10, setting = 1, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case1/070415z_')
+c1.draw_trj_dot([ 'PMSL', ['var4', 325, 'THETA']], 3780, filtername = 'WCB_Cy1', thinning = 10, setting = 1, cbar = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case1/070415aa_')
+
+c1.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 900, setting = 2, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case1/070415ab_')
+c1.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 2340, setting = 2, cbar = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case1/070415ac_')
+c1.draw_contour(['PMSL', 'var145_S', "TOT_PREC_S"], 3780, setting = 2, cbar = True, savebase = '/usr/users/stephan.rasp/Dropbox/figures/thesis/Case1/070415ad_')
+
+#OCThist
+c0.draw_hist_stacked(['P600', 'P600'], ['Wconv2', 'Wnonconv2'], ['WCB_Conv', 'WCB_NonConv'], xlim = (0, 48), ylim = (0, 1400), bins = 96, ylog = False, exp = [200, -0.072], idtext = '', savebase='/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/070415ae_')
+
+
+#080415
+returnlist = c0.draw_vs_p('THETA', ['Wnonconv2', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (280, 350), ylabel = r'$\theta\,[\mathrm{K}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_p/080415a_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None)
+color = []
+color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+#color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
+hatch = ['/', '\\']
+fig = plt.figure(figsize = (10, 3))
+ax = plt.gca()
+ax.grid(color = 'dimgrey', linestyle = '-')
+plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+zero = np.zeros(returnlist[1].shape[0])
+for n in range(len(returnlist)-1):
+    trj.plots.fill_between_steps(returnlist[0], np.array(returnlist[n+1]), zero, 
+                             ax = ax, linewidth = 1, 
+                alpha = 0.5, edgecolor = color[n][2], 
+                color = 'none', hatch = hatch[n])
+maxbin = 500
+inc = 100
+ax.set_yticks(np.arange(inc, maxbin + inc, inc))
+ax.set_ylim((0, maxbin))
+ax.set_ylabel('%')
+ax.set_xlabel('p [hPa]')
+ax.set_xlim(200, 1000)
+ax.invert_xaxis()
+plt.subplots_adjust(left = 0.075, right = 0.95, top = 0.95, bottom = 0.2)
+plt.savefig('/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_p/080415b_p_density.png')
+    
+returnlist = c0.draw_vs_p('THETA', ['Wconv', 'WCB_Cy1'], 'P600', (200, 1000), idtext = '', ylim = (280, 350), ylabel = r'$\theta\,[\mathrm{K}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_p/080415c', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None)  
+color = []
+color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+#color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
+hatch = ['/', '\\']
+fig = plt.figure(figsize = (10, 3))
+ax = plt.gca()
+ax.grid(color = 'dimgrey', linestyle = '-')
+plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+zero = np.zeros(returnlist[1].shape[0])
+for n in range(len(returnlist)-1):
+    trj.plots.fill_between_steps(returnlist[0], np.array(returnlist[n+1]), zero, 
+                             ax = ax, linewidth = 1, 
+                alpha = 0.5, edgecolor = color[n][2], 
+                color = 'none', hatch = hatch[n])
+maxbin = 500
+inc = 100
+ax.set_yticks(np.arange(inc, maxbin + inc, inc))
+ax.set_ylim((0, maxbin))
+ax.set_ylabel('%')
+ax.set_xlabel('p [hPa]')
+ax.set_xlim(200, 1000)
+ax.invert_xaxis()
+plt.subplots_adjust(left = 0.075, right = 0.95, top = 0.95, bottom = 0.2)
+plt.savefig('/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_p/080415d_p_density.png')    
+    
+c0.draw_vs_p('THETAE', ['Wnonconv2', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (290, 350), ylabel = r'$\theta_e\,[\mathrm{K}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_p/080415e_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None, letter = '(d)')    
+    
+c0.draw_vs_p('THETAE', ['Wconv2', 'WCB_Cy1'], 'P600', (200, 1000), idtext = '', ylim = (290, 350), ylabel = r'$\theta_e\,[\mathrm{K}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_p/080415f', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, letter = '(c)')    
+    
+c0.draw_vs_p('QV', ['Wnonconv2', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (0, 15), ylabel = r'$q\,[\mathrm{g\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_p/080415g_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None, letter = '(f)', mult = 1000)    
+    
+c0.draw_vs_p('QV', ['Wconv2', 'WCB_Cy1'], 'P600', (200, 1000), idtext = '', ylim = (0, 15), ylabel = r'$q\,[\mathrm{g\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_p/080415h', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, letter = '(e)', mult = 1000)      
+    
+c0.draw_vs_p(['var4', 'POT_VORTIC'], ['Wnonconv2', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (-6, 6), ylabel = 'PV [pvu]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_p/080415i_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None, letter = '(b)')    
+    
+c0.draw_vs_p(['var4', 'POT_VORTIC'], ['Wconv2', 'WCB_Cy1'], 'P600', (200, 1000), idtext = '', ylim = (-6, 6), ylabel = 'PV [pvu]', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_p/080415j', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, letter = '(a)')     
+
+c0.draw_vs_p(['Q1', 'QC'], ['Wnonconv2', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (0, 1000), ylabel = r'$\mathrm{LWC}\,[\mathrm{mg\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_p/080415k_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None, letter = '(d)', mult = 1000000)    
+    
+c0.draw_vs_p(['Q1', 'QC'], ['Wconv2', 'WCB_Cy1'], 'P600', (200, 1000), idtext = '', ylim = (0, 1000), ylabel = r'$\mathrm{LWC}\,[\mathrm{mg\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_p/080415l', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, letter = '(c)', mult = 1000000)
+    
+c0.draw_vs_p(['Q3', 'QS'], ['Wnonconv2', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (0, 1000), ylabel = r'$\mathrm{SWC}\,[\mathrm{mg\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_p/080415m_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None, letter = '(f)', mult = 1000000)    
+    
+c0.draw_vs_p(['Q3', 'QS'], ['Wconv2', 'WCB_Cy1'], 'P600', (200, 1000), idtext = '', ylim = (0, 1000), ylabel = r'$\mathrm{SWC}\,[\mathrm{mg\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_p/080415n', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, letter = '(e)', mult = 1000000)   
+    
+c0.draw_vs_p(['Q2', 'QI'], ['Wnonconv2', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (0, 100), ylabel = r'$\mathrm{IWC}\,[\mathrm{mg\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_p/080415o_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None, letter = '(h)', mult = 1000000)    
+    
+c0.draw_vs_p(['Q2', 'QI'], ['Wconv2', 'WCB_Cy1'], 'P600', (200, 1000), idtext = '', ylim = (0, 100), ylabel = r'$\mathrm{IWC}\,[\mathrm{mg\,kg^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_p/080415p', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, letter = '(g)', mult = 1000000)     
+
+#090415
+c1.draw_scatter('P_max', 'P600', carray='P100withinP600', filtername = 'WCB_Cy1', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/090415a_')
+
+c2.draw_scatter('P_max', 'P600', carray='P100withinP600', filtername = 'WCB_Cy1_new', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/090415b_')
+
+c0.draw_scatter('P_max', 'P600', carray='P600', filtername = 'Wconv2', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/090415c_')
+c0.draw_scatter('P_max', 'P600', carray='P600', filtername = 'Wnonconv2', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/090415d_')
+
+
+
+c2.draw_hist('P_max', (0, 1), (0, 1000), filtername='WCB_Cy1_new', bins = 100, xlabel = 'Maximum ascent time [hPa/s]', legend = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/090415e_')
+
+c1.draw_hist('P_max', (0, 1), (0, 1000), filtername='WCB_Cy1', bins = 100, xlabel = 'Maximum ascent time [hPa/s]', legend = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/090415f_')
+
+c0.draw_hist('P_max', (0, 1), (0, 1000), filtername='Wnonconv2', bins = 100, xlabel = 'Maximum ascent time [hPa/s]', legend = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/090415g_')
+c0.draw_hist('P_max', (0, 1), (0, 500), filtername='Wconv2', bins = 100, xlabel = 'Maximum ascent time [hPa/s]', legend = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/090415h_')
+
+
+c0.draw_vs_p('P_dt', ['Wnonconv2', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (-0.05, 0.1), ylabel = r'$\omega\,[\mathrm{hPa\,s^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/vs_p/090415i_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 2, ax2upper = None, letter = '', mult = -1)    
+    
+c0.draw_vs_p('P_dt', ['Wconv2', 'WCB_Cy1'], 'P600', (200, 1000), idtext = '', ylim = (-0.1, 0.5), ylabel = r'$\omega\,[\mathrm{hPa\,s^{-1}}]$', savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/vs_p/0', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, letter = '', mult = -1) 
+
+
+
+#100415
+c1.draw_spaghetti('P', 'WCB_Cy1', limit = (0, 20), locind = 14, xlim = (25, 45), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case1_20070720/100415a_')
+
+c0.draw_spaghetti('P', 'Wconv2', limit = (0, 20), locind = 130, xlim = (60, 80), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/100415b_')
+c0.draw_spaghetti('P', 'Wnonconv2', limit = (0, 20), locind = 36, xlim = (35, 75), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case0_20121013/100415c_')
+
+c2.draw_spaghetti('P', 'WCB_Cy1_new', limit = (0, 20), locind = 1, xlim = (5, 35), savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/100415d_')
+
+
+
+
+
 
 
 

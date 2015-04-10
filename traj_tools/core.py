@@ -134,7 +134,7 @@ class TrjObj(object):
         self.pfiles = sorted(pfiles)
         self.rfiles = [x for x in rfiles if x not in pfiles]
         self.cfile = glob.glob(self.datadir + '*00c*')[0]
-        halffiles = glob.glob(self.datadir + "*" + halfsuff)
+        halffiles = glob.glob(self.datadir + "*0" + halfsuff)
         self.halffiles = sorted(halffiles)
         tmpcfiles = glob.glob(self.datadir + '*00c*')
         afiles = sorted(glob.glob(self.datadir + "lfff*"))
@@ -165,6 +165,8 @@ class TrjObj(object):
             self.date = dt.datetime(tmprg.ref_year, tmprg.ref_month, 
                                     tmprg.ref_day, tmprg.ref_hour)
             self.dtrj = int(tmprg.output_timestep_in_sec / 60)   # Minutes
+            self.maxmins = (tmprg.variables['time'][0] + 
+                            len(tmprg.dimensions['time']) * 5 * 60) / 60.
         except IndexError:
             print 'No trajectory files found. Set date to default'
             self.date = dt.datetime(2000, 01, 01, 00)
@@ -176,7 +178,7 @@ class TrjObj(object):
         self.filtdict = dict()
         self.filtlist = []
         
-        self.maxmins = (len(self.pfiles) - 1) * self.dprcosmo
+        #self.maxmins = (len(self.pfiles) - 1) * self.dprcosmo
         
         
         # Looping over all files, initializing lists instead of np.arrays
@@ -316,7 +318,7 @@ class TrjObj(object):
         print code, 'has been added.' 
     
     
-    def new_max_cd(self, tracer, flip = False):
+    def new_max_cd(self, tracer, within, flip = False):
         """
         Adds maximum centered difference velocity in m/s to data.
         
@@ -329,9 +331,17 @@ class TrjObj(object):
         
         """
         
-        diffarray = utils._max_cd(self, tracer, flip)
+        starttarray = self._mask_array(None, 'startt')
+        startarray = (self._mask_array(None, within + '_start') - 
+                        starttarray) / self.dtrj
+        stoparray = (self._mask_array(None, within + '_stop') - 
+                        starttarray) / self.dtrj
         
-        code = tracer + '_max_cd'
+        
+        diffarray = utils._max_cd(self, tracer, startarray, stoparray, flip)
+        
+        
+        code = tracer + '_max'
         self.datadict[code] = len(self.data)
         
         self.data.append(diffarray)
@@ -391,6 +401,9 @@ class TrjObj(object):
         print code, 'has been added.'
     
     
+    
+    
+    
     def new_dt(self, tracer):
         """
         Adds a variable to netCDF files with D/Dt values in [s^-1].
@@ -404,7 +417,12 @@ class TrjObj(object):
         utils._new_dt(self, tracer)
     
     
-    
+    def new_avg(self, tracer, steps):
+        """
+        TODO
+        """
+        
+        utils._new_avg(self, tracer, steps)
     
         
     def new_loc_filter(self, xmin, xmax, ymin, ymax, tmin = None, tmax = None):
@@ -421,6 +439,11 @@ class TrjObj(object):
         ymax : float
           Upper y boundary
         """
+        if tmin == None:
+            tmin = 0
+        if tmax == None:
+            tmax = self.maxmins
+        
         
         boolarr = utils._loc_filter(self.trjfiles, xmin, xmax, ymin, ymax, tmin,
                                     tmax)
@@ -739,13 +762,20 @@ class TrjObj(object):
         utils.calc_theta(self.trjfiles)
     
     
-    def convert_p2std(self):
+    def convert_p2std(self, reverse = False):
         """
         Converts Pressure variable in netCDF files to hPa, with np.nan as default 
         value
         """
-        utils.convert_p2std(self.trjfiles)
-        
+        utils.convert_p2std(self.trjfiles, reverse = reverse)
+     
+     
+    def crop_trjs(self, xlim, ylim):
+        """
+        TODO
+        """
+        utils.crop_trjs(self, xlim, ylim)
+    
     
     def calc_cape(self, filterlim, debug = False, getp = False):
         """
@@ -895,6 +925,24 @@ class TrjObj(object):
         print code, 'has been added.'
         
     
+    def get_cross_pos(self, lon1, lon2, lat, time1, time2, filtername = None, 
+                      path = False, cname = None):
+        """
+        TODO
+        """
+        
+        loclist, idlist = self._mask_iter(filtername)
+        if cname != None:
+            cfull = self._mask_array(filtername, cname)
+        else:
+            cfull = None
+        zarray, lonarray, carray = utils._get_cross_pos(self, lon1, lon2, lat, time1, 
+                                                time2, loclist, idlist, path,
+                                                cfull)
+        
+        return zarray, lonarray, carray
+    
+    
     
     def interpolate_value(self, totind, time, trjtracer, cosmotracer):
         """
@@ -949,10 +997,27 @@ class TrjObj(object):
                         savename = savename, sigma = sigma)
 
 
+    def draw_spaghetti(self, tracer, filtername, savename = None, 
+                       limit = (0, 50), locind = False, xlim = None,
+                       savebase = None):
+        """
+        TODO
+        """
+        
+        loclist, idlist = self._mask_iter(filtername)
+        
+        if savebase != None:
+            savename = savebase + 'spaghetti_' + filtername
+        
+        plots.draw_spaghetti(self, tracer, loclist, idlist, 
+                             savename = savename, limit = limit, locind = locind,
+                             xlim = xlim)
+
+
     def draw_vs_p(self, tracer, filtername, carray, xlim, savebase = None, 
                   sigma = 1, idtext = '', ylim = None, binwidth = 5., 
                   ylabel = '', log = False, extobj = None, legnames = None, 
-                  legpos = 1, ax2upper = 300):
+                  legpos = 1, ax2upper = 300, mult = 1, letter = ''):
         """
         Plots tracer against p in given asc array.
         
@@ -996,10 +1061,10 @@ class TrjObj(object):
         else: 
             savename = savebase
         
-        plots.draw_vs_p(self, tracer, loclist, idlist, startlist, stoplist,
+        returnlist = plots.draw_vs_p(self, tracer, loclist, idlist, startlist, stoplist,
                         xlim, savename, sigma, idtext, ylim, binwidth, ylabel,
-                        log, legnames, legpos, ax2upper)
-        
+                        log, legnames, legpos, ax2upper, mult, letter)
+        return returnlist
         
   
   
@@ -1007,7 +1072,8 @@ class TrjObj(object):
                            savebase = None, sigma = 1, plottype = 'Smooth', 
                            idtext = '', ylim = None, xlim = None, 
                            select = False, extobj = None, legnames = None, 
-                           legpos = 2):
+                           legpos = 2, ax2 = True, mult = 1, letter = '',
+                           ylabel = ''):
         """
         Draws evolution of a tracer of all trajectories given by filter,
         centered around midpoint of ascent, as given by carray.
@@ -1075,9 +1141,11 @@ class TrjObj(object):
         else: 
             savename = savebase
         
-        plots.draw_centered_vs_t(objlist, loclist, idlist, tracer, clist, 
+        returnlist = plots.draw_centered_vs_t(objlist, loclist, idlist, tracer, clist, 
                                  savename, plottype, idtext, ylim, xlim, sigma,
-                                 select, legnames, legpos)
+                                 select, legnames, legpos, ax2, mult, letter, 
+                                 ylabel)
+        return returnlist
  
     def draw_centered_integr(self, tracer, filtername, carray, 
                            savebase = None, sigma = 1, 
@@ -1170,7 +1238,7 @@ class TrjObj(object):
     
     def draw_scatter(self, dataname1, dataname2, factor1 = 1, factor2 = 1, 
                      carray = None, filtername = None, idtext = '', 
-                     savebase = None):
+                     savebase = None, xmax = 1, ymax = 1):
         """
         Make a scatter plot of two data arrays, multiplied by factors.
         
@@ -1220,7 +1288,7 @@ class TrjObj(object):
         
         # Create savename and label names
         if savebase != None:
-            savename = (savebase + '/scatter_' + dataname1 + '_' + dataname2 
+            savename = (savebase + 'scatter_' + dataname1 + '_' + dataname2 
                         + '_' + str(filtername) + '_' + str(idtext))
         else: 
             savename = savebase
@@ -1277,7 +1345,7 @@ class TrjObj(object):
         
     def draw_hist(self, data, xlim, ylim, filtername = None, idtext = '', 
                   savebase = None, log = False, ylog = False, mintohrs  = False,
-                  exp = False, bins = 50):
+                  exp = False, bins = 50, xlabel = None, legend = True):
         """
         Make a histogram of the ratio of two parameters.
         dataname1 / dataname 2 adjusted by multiplication factor.
@@ -1315,7 +1383,7 @@ class TrjObj(object):
                     stopval = self.data[self.datadict[dataname + '_stop_val']]
                 array = (startval + stopval) / 2
                 if savebase != None:
-                    savename = (savebase + '/hist_' + dataname + '_loc' 
+                    savename = (savebase + 'hist_' + dataname + '_loc' 
                                 + '_' + str(filtername) + '_' + str(idtext))
                 else:
                     savename = savebase
@@ -1329,11 +1397,11 @@ class TrjObj(object):
                     array = self.data[self.datadict[data]]
                 # Create savename and label names
                 if savebase != None:
-                    savename = (savebase + '/hist_' + data 
+                    savename = (savebase + 'hist_' + data 
                                 + '_' + str(filtername) + '_' + str(idtext))
                 else:
                     savename = savebase
-                xlabel = data
+                #xlabel = data
                     
         # Histogram of ratio of two arrays            
         elif len(data) == 4:
@@ -1354,7 +1422,7 @@ class TrjObj(object):
             array2 = array2 * factor2
             array = array1 / array2
             # Create savename and label names
-            savename = (savebase + '/hist_' + dataname1 + 'vs' + dataname2 + '_' 
+            savename = (savebase + 'hist_' + dataname1 + 'vs' + dataname2 + '_' 
                         + str(filtername) + '_' + str(idtext))
             xlabel = ('Ratio ' + dataname1 + ' x ' + str(factor1) + ' / ' + 
                       dataname2 + ' x ' + str(factor2))
@@ -1365,7 +1433,7 @@ class TrjObj(object):
 
         # Pass parameters to plots function
         plots.draw_hist(array, xlim, ylim, bins, idtext, xlabel, savename, ylog, 
-                        exp, mintohrs)
+                        exp, mintohrs, legend)
 
     def draw_hist_stacked(self, datalist, filterlist, labellist, idtext = '', 
                           savebase = None, ylim = None, xlim = None, bins = 50,
@@ -1658,11 +1726,12 @@ class TrjObj(object):
                                savename = savename, inrange = inrange, 
                                linewidth = linewidth, limited = limited)
     
-    def draw_trj_dot(self, varlist, tplus = None, interval = None, 
+    def draw_trj_dot(self, varlist, tplus = 0, interval = None, 
                      filtername = None, savebase = None, trjstart = None,
                      onlyasc = None, idtext = '', inrange = None, 
                      cafter = None, thinning = False, setting = None, 
-                     path = False, cbar = True):
+                     path = False, cbar = True, ctracer = 'P', diffobj = None,
+                     diffvar = None):
         """
         Draws trajectoriy position as dots with correct background plots.
         Tplus is now time after model start!
@@ -1674,7 +1743,8 @@ class TrjObj(object):
         if interval == None:
             tlist = [tplus]
         else:
-            tlist = range(0, self.maxmins, interval)
+            tlist = range(tplus, self.maxmins, interval)
+        
             
         # if trjstart is given, create temporary mask
         tmpmask1 = None
@@ -1691,7 +1761,15 @@ class TrjObj(object):
                 loclist, idlist = self._mask_iter(filtername, 
                                                   addmask = tmpmask2)
             else: 
-                loclist, idlist = self._mask_iter(filtername) 
+                loclist = []
+                idlist = []
+                if type(filtername) != list:
+                    filtername = [filtername]
+                for filtern in filtername:
+                    tmploc, tmpid = self._mask_iter(filtern)
+                    loclist.append(tmploc)
+                    idlist.append(tmpid)
+
                 if cafter != None:
                     starttarray = self._mask_array(filtername, 'startt')
                     startval = (self._mask_array(filtername, cafter + '_start') -
@@ -1703,7 +1781,7 @@ class TrjObj(object):
             
             if savebase != None:  
                 # TODO Change name
-                savename = (savebase + 'xy_' + filtername + '_' + 
+                savename = (savebase + 'xy_' + filtername[0] + '_' + 
                             str(t).zfill(4) + '.png')
             else:
                 savename = savebase
@@ -1712,7 +1790,8 @@ class TrjObj(object):
                                savename = savename, idtext = idtext,
                                inrange = inrange, cafter = cafter, 
                                thinning = thinning, setting = setting,
-                               path = path, cbar = cbar)
+                               path = path, cbar = cbar, ctracer = ctracer,
+                               diffobj = diffobj, diffvar = diffvar)
     
     def draw_asc_loc(self, dataname, varlist, filtername, tplot, tspan, 
                      idtext = '', savebase = None):
@@ -1781,7 +1860,8 @@ class TrjObj(object):
     
         
     def draw_contour(self, varlist, time, savebase = None, interval = None, 
-                     idtext = '', setting = None, cbar = True):
+                     idtext = '', setting = None, cbar = True, diffobj = None,
+                     diffvar = None, crop = False, dot = None):
         """
         Draws a countourplot of given variables.
         
@@ -1815,7 +1895,9 @@ class TrjObj(object):
                 savename = savebase
             print 'Plotting for time:', time
             plots.draw_contour(self, varlist, time, savename = savename, 
-                               idtext = idtext, setting = setting, cbar = cbar)
+                               idtext = idtext, setting = setting, cbar = cbar,
+                               diffobj = diffobj, diffvar = diffvar, crop = crop,
+                               dot = dot)
             
             
     ##################
