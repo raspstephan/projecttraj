@@ -167,6 +167,7 @@ class TrjObj(object):
             self.dtrj = int(tmprg.output_timestep_in_sec / 60)   # Minutes
             self.maxmins = (tmprg.variables['time'][0] + 
                             len(tmprg.dimensions['time']) * 5 * 60) / 60.
+            tmprg.close()
         except IndexError:
             print 'No trajectory files found. Set date to default'
             self.date = dt.datetime(2000, 01, 01, 00)
@@ -195,6 +196,7 @@ class TrjObj(object):
             self.data[0].extend(range(ntmp))
             self.data[1].extend([tmpt] * ntmp)
             ntot += ntmp
+            rootgrp.close()
             
         # Convert lists to np.array
         self.ntrj = ntot
@@ -486,6 +488,25 @@ class TrjObj(object):
         print code, 'has been added.'
         
     
+    def new_plus_val(self, tracer, plus, plusarray):
+        """
+        TODO
+        """
+        
+        loclist, idlist = self._mask_iter(None)
+        #starttarray = self._mask_array(None, 'startt') / self.dtrj
+        cross = self._mask_array(None, plusarray)
+        
+        newarray = utils._new_plus_val(self, loclist, idlist, tracer, cross, 
+                                       plus)
+        
+        code = tracer + 'plus' + str(plus)
+        assert (newarray.shape[0] == self.ntrj), \
+                'Array shapes do not match. Look for error in source code.'
+        self.datadict[code] = len(self.data)
+        self.data.append(newarray)
+        print code, 'has been added.'
+    
     
        
     def create_filter(self, name, filters):
@@ -633,6 +654,28 @@ class TrjObj(object):
             idlist.append(list((self.data[0][locmask & mask])))
         
         return list(uniqueloc), idlist
+    
+    
+    def _mask_array_iter(self, filtername, dataname, addmask = None):
+        """
+        TODO
+        """
+        if filtername == None:
+            mask = np.array([True] * self.ntrj)  # New mask
+        else:
+            maskid = self.filtdict[filtername]
+            mask = np.array(self.filtlist[maskid], copy = True)
+        
+        if addmask != None:
+            mask &= addmask
+        
+        uniqueloc= np.unique(self.filename[mask])
+        idlist = []
+        for i in range(len(uniqueloc)):
+            locmask = (self.filename == uniqueloc[i])
+            dataid = self.datadict[dataname]
+            idlist.append(list((self.data[dataid][locmask & mask])))
+        return idlist
     
     
     def _mask_array(self, filtername, dataname, addmask = None):
@@ -1012,7 +1055,29 @@ class TrjObj(object):
         plots.draw_spaghetti(self, tracer, loclist, idlist, 
                              savename = savename, limit = limit, locind = locind,
                              xlim = xlim)
-
+    
+    
+    def draw_slice_hist(self, tracer, threshold, filtername, savebase = None, 
+                        mult = -1, onlyasc = 'P600'):
+        """
+        TODO
+        """
+        loclist, idlist = self._mask_iter(filtername)
+        starttarray = self._mask_array(filtername, 'startt')
+        startarray = (self._mask_array(filtername, onlyasc + '_start') - 
+                        starttarray) / self.dtrj
+        stoparray = (self._mask_array(filtername, onlyasc + '_stop') - 
+                        starttarray) / self.dtrj
+        
+        if savebase != None:
+            savename = savebase + 'slice_hist_' + filtername
+        else:
+            savename = None
+        
+        plots.draw_slice_hist(self, tracer, loclist, idlist, threshold, 
+                              startarray, stoparray, mult = mult, 
+                              savename = savename)
+    
 
     def draw_vs_p(self, tracer, filtername, carray, xlim, savebase = None, 
                   sigma = 1, idtext = '', ylim = None, binwidth = 5., 
@@ -1172,7 +1237,7 @@ class TrjObj(object):
                                  savename, idtext, ylim, xlim, sigma, middleval)
 
     def draw_hist_2d(self, varname1, varname2, filtername = 'WCB', 
-                       after = 'P600', plus = 1440):
+                       after = 'P600', plus = 1440, savebase = None):
         """
         Draws a 2D histogram of two variables in filter.
         'plus' mins after 'after' ascent.
@@ -1194,18 +1259,18 @@ class TrjObj(object):
         
         loclist, idlist = self._mask_iter(filtername)
         if not after == None:
-            starttarray = self._mask_array(filtername, 'startt')
-            stoparray = (self._mask_array(filtername, after + '_stop') - 
-                            starttarray) / self.dtrj   # in time steps
-            startarray = (self._mask_array(filtername, after + '_start') - 
-                          starttarray) / self.dtrj
-            carray = (startarray + stoparray) / 2.
+            carray = self._mask_array(filtername, after)
         else:
             stoparray = None
+            
+        if savebase != None:
+            savename = (savebase + 'hist2d')
+        else: 
+            savename = savebase
         
         dplus = plus / self.dtrj
         plots.draw_hist_2d(self, varname1, varname2, loclist, idlist, 
-                             carray, dplus)
+                             carray, dplus, savename)
         
         
     def draw_scatter_3(self, varname, filtername = 'WCB', 
@@ -1654,7 +1719,38 @@ class TrjObj(object):
                         trjstart = trjstart, idtext = idtext, 
                         linewidth = linewidth, carray = carray,
                         centdiff = centdiff, sigma = sigma, thinning = thinning)
+    
+    
+    def draw_trj_path(self, filtlist, stopname, thinning = 10, savebase = None):
+        """
+        TODO
+        """
         
+        filelist = []
+        idlist = []
+        stop = []
+        
+        if savebase != None:    
+            savename = savebase + 'origin.png'
+        else:
+            savename = savebase
+        
+        for fname in filtlist:
+            ftmp, itmp = self._mask_iter(fname)
+            filelist.append(ftmp)
+            idlist.append(itmp)
+            starttarray = self._mask_array(fname, 'startt')
+            stop.append((self._mask_array(fname, stopname) - starttarray) / 
+                         self.dtrj)
+        
+        plots.draw_trj_path(self, filelist, idlist, stop, thinning, savename)
+                    
+            
+            
+        
+    
+    
+    
     def draw_trj_evo(self, varlist, filtername = None, tafter = None, 
                      interval = None, idtext = '', onlyasc = None, 
                      savebase = None, inrange = None, linewidth = 0.7, 
@@ -1743,7 +1839,7 @@ class TrjObj(object):
         if interval == None:
             tlist = [tplus]
         else:
-            tlist = range(tplus, self.maxmins, interval)
+            tlist = range(tplus, int(self.maxmins), interval)
         
             
         # if trjstart is given, create temporary mask
@@ -1756,28 +1852,39 @@ class TrjObj(object):
         for t in tlist:
             
             if not onlyasc == None:
+                ascind = self.datadict[onlyasc]
                 tmpmask2 = (t > self.data[ascind+1]) & (t < self.data[ascind+2])
-                masklist = [x for x in masklist if not x == None]
-                loclist, idlist = self._mask_iter(filtername, 
-                                                  addmask = tmpmask2)
-            else: 
-                loclist = []
-                idlist = []
-                if type(filtername) != list:
-                    filtername = [filtername]
-                for filtern in filtername:
-                    tmploc, tmpid = self._mask_iter(filtern)
-                    loclist.append(tmploc)
-                    idlist.append(tmpid)
+                ##masklist = [x for x in masklist if not x == None]
+                #loclist, idlist = self._mask_iter(filtername, 
+                                                  #addmask = tmpmask2)
+                #starttarray = self._mask_array(filtername, 'startt')
+                #startval = (self._mask_array(filtername, cafter + '_start') -
+                            #starttarray) / self.dtrj
+                #stopval = (self._mask_array(filtername, cafter + '_stop') -
+                            #starttarray) / self.dtrj 
+                #onlyasc = [startval, stopval]
+                
+            else:
+                tmpmask2 = None
+            loclist = []
+            idlist = []
+            if type(filtername) != list:
+                filtername = [filtername]
+            for filtern in filtername:
+                tmploc, tmpid = self._mask_iter(filtern, tmpmask2)
+                loclist.append(tmploc)
+                idlist.append(tmpid)
 
-                if cafter != None:
-                    starttarray = self._mask_array(filtername, 'startt')
-                    startval = (self._mask_array(filtername, cafter + '_start') -
-                                starttarray) / self.dtrj
-                    stopval = (self._mask_array(filtername, cafter + '_stop') -
-                               starttarray) / self.dtrj
-                    cafter = (startval + stopval) / 2
+            if cafter != None:
+                starttarray = self._mask_array(filtername, 'startt')
+                startval = (self._mask_array(filtername, cafter + '_start') -
+                            starttarray) / self.dtrj
+                stopval = (self._mask_array(filtername, cafter + '_stop') -
+                            starttarray) / self.dtrj
+                cafter = (startval + stopval) / 2
             
+            if 'P600' in ctracer:
+                ctracer = self._mask_array_iter(filtern, ctracer, tmpmask2)
             
             if savebase != None:  
                 # TODO Change name
@@ -1861,7 +1968,7 @@ class TrjObj(object):
         
     def draw_contour(self, varlist, time, savebase = None, interval = None, 
                      idtext = '', setting = None, cbar = True, diffobj = None,
-                     diffvar = None, crop = False, dot = None):
+                     diffvar = None, crop = False, dot = None, line = None):
         """
         Draws a countourplot of given variables.
         
@@ -1887,7 +1994,7 @@ class TrjObj(object):
         if interval == None:
             timelist = [time]
         else:
-            timelist = range(time, self.maxmins, interval)
+            timelist = range(time, int(self.maxmins), interval)
         for time in timelist:
             if savebase != None:    
                 savename = savebase + 'contour_' + str(time).zfill(5)
@@ -1897,7 +2004,7 @@ class TrjObj(object):
             plots.draw_contour(self, varlist, time, savename = savename, 
                                idtext = idtext, setting = setting, cbar = cbar,
                                diffobj = diffobj, diffvar = diffvar, crop = crop,
-                               dot = dot)
+                               dot = dot, line = line)
             
             
     ##################

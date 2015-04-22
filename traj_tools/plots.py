@@ -41,6 +41,8 @@ import scipy as sp
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.interpolate import RectBivariateSpline
 import random
+mpl.rcParams['font.size'] = 8
+mpl.rcParams['font.family'] = 'sans-serif'
 
 
 
@@ -69,6 +71,9 @@ def draw_vs_t(obj, tracer, loclist, idlist, savename = None, sigma = None):
         
         # Convert zeros to nans
         tracemat[tracemat == 0] = np.nan
+        
+
+            
         
         # Write in file
         exttracemat[tstart:] = tracemat[:, idlist[i]]
@@ -194,6 +199,88 @@ def draw_spaghetti(obj, tracer, loclist, idlist, savename = None,
         plt.savefig(savename, dpi = 300, bbox_inches = 'tight')
         plt.close('all')
     
+
+def draw_slice_hist(obj, tracer, loclist, idlist, threshold, startarray, 
+                    stoparray, savename = None, mult = -1):
+    """
+    TODO
+    """
+    
+    startlist = []
+    stoplist = []
+    cnt = 0
+    #print loclist
+    for i in range(len(loclist)):
+        print 'Opening file:', loclist[i]
+        rootgrp = nc.Dataset(loclist[i], 'r')
+        tracemat = rootgrp.variables[tracer][:, idlist[i]]
+        pmat = rootgrp.variables['P'][:, idlist[i]]
+        
+        for j in range(tracemat.shape[1]):
+            #print j
+            tracearray = tracemat[startarray[cnt]:stoparray[cnt], j] * mult
+            parray = pmat[startarray[cnt]:stoparray[cnt]+1, j]
+            
+            mask = np.ma.masked_where(tracearray < threshold, tracearray)
+            slices = np.ma.notmasked_contiguous(mask)
+            
+            if type(slices) == list:
+                for s in slices:
+                    istart = s.start
+                    istop = s.stop - 1
+                    diff = istop - istart
+                    if diff > 1:
+                        startlist.append(parray[istart])
+                        stoplist.append(parray[istop])
+            elif slices != None:
+                istart = slices.start
+                istop = slices.stop - 1
+                diff = istart- istop
+                if diff > 1:
+                    startlist.append(parray[istart])
+                    stoplist.append(parray[istop])
+            cnt += 1  
+        rootgrp.close()
+    #print 'Plotting'        
+    fig = plt.figure(figsize = (3.15, 3.15))
+    ax = plt.gca()
+    ax.set_aspect('equal')
+    H, _, _ = np.histogram2d(startlist, stoplist, bins = 45, 
+                         range = [[150, 1050], [150, 1050]])
+    normmax = int(np.max(H))
+    plt.hist2d(startlist, stoplist, bins = 45, range = [[150, 1050], [150, 1050]],
+              norm = plt.Normalize(1, normmax), cmin = 1)
+    plt.xlabel('Start of ascent [hPa]')
+    plt.ylabel('End of ascent [hPa]')
+    #ax.set_xlim(300, 1050)
+    #ax.set_ylim(300, 1050)
+    ax.invert_xaxis()
+    ax.invert_yaxis()
+    cb = plt.colorbar(shrink = 0.78)
+    cb.set_label('Frequency')
+    if savename != None:
+        print 'Save figure as', savename
+        fig.subplots_adjust(left = 0.17, right = 0.95, top = 0.95, bottom = 0.15)
+        fig.savefig(savename, dpi = 400, bbox_inches = 'tight')
+        plt.close('all')
+    
+    
+    fig2 = plt.figure(figsize = (3.15, 2.3))
+    diff = np.array(startlist) - np.array(stoplist)
+    plt.hist(diff, bins = 50, range = [0, 1000], color = '#CCCCCC', 
+             linewidth = 0.3)
+    plt.xlabel('Ascent range [hPa]')
+    plt.ylabel('Frequency')
+    if savename != None:
+        savename = savename + 'diffhist'
+        print 'Save figure as', savename
+        plt.subplots_adjust(left = 0.15, right = 0.925, top = 0.95, bottom = 0.19)
+        fig2.savefig(savename, dpi = 400)
+        plt.close('all')
+    
+     
+
+
         
 
 def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim, 
@@ -216,16 +303,16 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
         color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
         hatch = ['/', '\\']
     
-    fig = plt.figure(figsize = (10, 8))
+    fig = plt.figure(figsize = (3.15, 2.5))
     ax = plt.gca()
-    ax.grid(color = 'dimgrey', linestyle = '-')
+    ax.grid(color = 'dimgrey', linestyle = '-', zorder = 0.01)
     #ax.set_frame_on(False)
     plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
                     left = 'off', right = 'off')
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes,
             fontsize = 6)
-    plt.text(0.96, 0.96, letter, transform = plt.gca().transAxes,
-            fontsize = 16)
+    plt.text(0.93, 0.93, letter, transform = plt.gca().transAxes,
+            fontsize = 8)
     if not ax2upper == None:
         ax2 = ax.twinx()
     
@@ -317,17 +404,17 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
                         facecolor = color[n][1], edgecolor = 'none',
                         label = '50%', alpha = 0.5, zorder = 0.1)
         l2, = ax.plot(parray, per50, color[n][2], linestyle = '--', 
-                      linewidth = 2)
-        l1, = ax.plot(parray, meanlist, color[n][2], linewidth = 2)
+                      linewidth = 1.5)
+        l1, = ax.plot(parray, meanlist, color[n][2], linewidth = 1.5)
         leglist.append(l1)
         l3, = ax.plot(parray, per5, 
                 color = color[n][3], linestyle = ':', linewidth = 1)
         l4, = ax.plot(parray, per95, color = color[n][3], linestyle = ':', 
                       linewidth = 1)
         l5, = ax.plot(parray, per25, color = color[n][3], linestyle = '-.', 
-                      linewidth = 1.5)
+                      linewidth = 1)
         l6, = ax.plot(parray, per75, color = color[n][3], linestyle = '-.', 
-                      linewidth = 1.5)
+                      linewidth = 1)
         
         l3.set_dashes(dashes1)
         l4.set_dashes(dashes1)
@@ -346,7 +433,7 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
                 alpha = 0.5, edgecolor = color[n][2], 
                 color = 'none', hatch = hatch[n])
     if legnames != None:
-        plt.legend(leglist, legnames, loc = legpos)  
+        plt.legend(leglist, legnames, loc = legpos, fontsize = 8)  
     maxbin = np.max(countlist)
     print maxbin
     if not ax2upper == None:
@@ -369,8 +456,8 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
 
     if savename != None:
         print 'Save figure as', savename
-        plt.subplots_adjust(left = 0.075, right = 0.95, top = 0.95, bottom = 0.075)
-        plt.savefig(savename, dpi = 300)
+        plt.subplots_adjust(left = 0.17, right = 0.95, top = 0.95, bottom = 0.15)
+        plt.savefig(savename, dpi = 400)
         plt.close('all')
     
     return returnlist
@@ -466,7 +553,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         hatch = ['/', '\\']
     
     # Set up figure
-    fig = plt.figure(figsize = (10, 8))
+    fig = plt.figure(figsize = (3.15, 2.5))
     ax = plt.gca()
     if ax2:
         ax2 = ax.twinx()
@@ -531,20 +618,20 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
             per50 = nanpercentile(totmat, 50)
             smoothper50 = ndi.filters.gaussian_filter(per50[mask], sigma)
             l2, = ax.plot(exttarray[mask], smoothper50, color[i][2], 
-                           linestyle = '--', linewidth = 2)
+                           linestyle = '--', linewidth = 1.5)
             
             smootharray = ndi.filters.gaussian_filter(meanarray[mask], sigma)
             l1, = ax.plot(exttarray[mask], smootharray, color[i][2], 
-                           linewidth = 2)
+                           linewidth = 1.5)
             leglist.append(l1)
             l3, = ax.plot(exttarray[mask], smoothper5, 
                 color = color[i][3], linestyle = ':', linewidth = 1)
             l4, = ax.plot(exttarray[mask], smoothper95, color = color[i][3], linestyle = ':', 
                         linewidth = 1)
             l5, = ax.plot(exttarray[mask], smoothper25, color = color[i][3], linestyle = '-.', 
-                        linewidth = 1.5)
+                        linewidth = 1)
             l6, = ax.plot(exttarray[mask], smoothper75, color = color[i][3], linestyle = '-.', 
-                        linewidth = 1.5)
+                        linewidth = 1)
             l3.set_dashes(dashes1)
             l4.set_dashes(dashes1)
             l5.set_dashes(dashes2)
@@ -584,7 +671,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
             
     if legnames != None:
         print legnames, leglist
-        ax.legend(leglist, legnames, loc = legpos)
+        ax.legend(leglist, legnames, loc = legpos, fontsize = 8)
     ax.set_ylim(ylim)
     if tracer[0] == 'P':
         ax.invert_yaxis()
@@ -593,17 +680,17 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
     elif (xlim[1] - xlim[0]) < 48:
         dtick = 6
     else:
-        dtick = 6
+        dtick = 12
     ax.xaxis.set_ticks(np.arange(-120, 120, dtick))
     ax.set_xlim(xlim)
-    ax.grid(color = 'dimgrey', linestyle = '-')
+    ax.grid(color = 'dimgrey', linestyle = '-', zorder = 0.01)
     #ax.set_frame_on(False)
     plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
                     left = 'off', right = 'off')
     plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
              fontsize = 6)
-    plt.text(0.96, 0.96, letter, transform = plt.gca().transAxes,
-            fontsize = 16)
+    plt.text(0.93, 0.93, letter, transform = plt.gca().transAxes,
+            fontsize = 8)
     if tracer == 'var4':
         tracer == 'PVU'
     ax.set_ylabel(ylabel)
@@ -613,8 +700,8 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
     
     if savename != None:
         print 'Save figure as', savename
-        plt.subplots_adjust(left = 0.075, right = 0.95, top = 0.95, bottom = 0.075)
-        plt.savefig(savename, dpi = 300)
+        plt.subplots_adjust(left = 0.17, right = 0.95, top = 0.95, bottom = 0.15)
+        plt.savefig(savename, dpi = 400)
         plt.close('all')
     #returnlist = [returnlist[i] for i in [0, 1, 3]]
     return returnlist
@@ -750,7 +837,8 @@ def draw_centered_integr(obj, loclist, idlist, tracer, carray, savename = None,
         plt.savefig(savename, bbox_inches = 'tight', dpi = 300)
         plt.close('all')
 
-def draw_hist_2d(obj, varname1, varname2, loclist, idlist, carray, dplus):
+def draw_hist_2d(obj, varname1, varname2, loclist, idlist, carray, dplus,
+                 savename = None):
     """
     Draws a 2D histogram of two variables in filter.
     'plus' mins after 'after' ascent.
@@ -808,13 +896,23 @@ def draw_hist_2d(obj, varname1, varname2, loclist, idlist, carray, dplus):
     #plt.scatter(varlist1, varlist2)
     x_edges = np.arange(0, 1000 + 20, 20)
     y_edges = np.arange(-25, 25 + 1., 1.)
+    
+    fig = plt.figure(figsize = (3.15, 3.15))
+    plt.gca().set_aspect(1000 / 50)
     plt.hist2d(varlist1, varlist2, cmin = 1, 
                norm = clr.LogNorm(1, 1000),
                bins = [x_edges, y_edges], zorder = 10)
-    plt.colorbar(use_gridspec = True)
+    cb = plt.colorbar(use_gridspec = True, shrink = 0.75)
+    cb.set_label('Frequency')
     plt.tight_layout()
     plt.gcf().subplots_adjust(bottom = 0.1, left = 0.1)
-    #plt.gca().set_ylim(-10.e-6, 10.e-6)
+    plt.xlabel('Pressure [hPa]')
+    plt.ylabel('PV [pvu]')
+    plt.grid()
+    if savename != None:
+        print 'Save figure as', savename
+        plt.savefig(savename, bbox_inches = 'tight', dpi = 300)
+        plt.close('all')
 
 
 def draw_hist_stacked(obj, datalist, namelist, ylim, idtext = '', savename = None, 
@@ -824,7 +922,7 @@ def draw_hist_stacked(obj, datalist, namelist, ylim, idtext = '', savename = Non
     TODO
     """
     
-    fig = plt.figure()
+    fig = plt.figure(figsize = (3.15, 3))
     ax = plt.gca()
     bins = np.linspace(xlim[0], xlim[1], bins + 1)
 
@@ -836,22 +934,22 @@ def draw_hist_stacked(obj, datalist, namelist, ylim, idtext = '', savename = Non
     xpos = xpos[:-1]
     
     b1 = plt.bar(xpos, num1, bottom = None, color = '#CCCCCC', 
-                            width = width)
+                            width = width, linewidth = 0.3)
     l11, = plt.plot([avg1, avg1], [ylim[0], ylim[1]], linestyle = '--', 
-                   color = '#CCCCCC', label = 'Mean', linewidth = 2)
+                   color = '#CCCCCC', label = 'Mean', linewidth = 1)
     l12, = plt.plot([med1, med1], [ylim[0], ylim[1]], linestyle = ':', 
-                   color = '#CCCCCC', label = 'Median', linewidth = 2)
+                   color = '#CCCCCC', label = 'Median', linewidth = 1)
     
     num2, xpos2 = np.histogram(datalist[1], bins)
     avg2 = np.average(datalist[1])
     med2 = np.median(datalist[1])
     
     b2 = plt.bar(xpos, num2, bottom = num1, color = '#525252', 
-                            width = width)
+                            width = width, linewidth = 0.3)
     l21, = plt.plot([avg2, avg2], [ylim[0], ylim[1]], linestyle = '--', 
-                   color = '#525252', label = 'Mean', linewidth = 2)
+                   color = '#525252', label = 'Mean', linewidth = 1)
     l22, = plt.plot([med2, med2], [ylim[0], ylim[1]], linestyle = ':', 
-                   color = '#525252', label = 'Median', linewidth = 2)
+                   color = '#525252', label = 'Median', linewidth = 1)
     
     handles = [b1, l11, l12, b2, l21, l22]
     labels = [namelist[0], 'Mean: {:.2f}h'.format(avg1), 
@@ -864,7 +962,7 @@ def draw_hist_stacked(obj, datalist, namelist, ylim, idtext = '', savename = Non
         c = exp[1]
         yvals = x0 * np.exp(c*xvals)
         l3, = plt.plot(xvals, yvals, linestyle = '-', color = 'black', 
-                       linewidth = 1.5) 
+                       linewidth = 1) 
         handles.append(l3)
         labels.append('Exponential fit')
         
@@ -894,7 +992,8 @@ def draw_hist_stacked(obj, datalist, namelist, ylim, idtext = '', savename = Non
     
     if savename != None:
         print 'Save figure as', savename
-        plt.savefig(savename, bbox_inches = 'tight', dpi = 300)
+        plt.subplots_adjust(left = 0.175, right = 0.975, top = 0.95, bottom = 0.125)
+        plt.savefig(savename, dpi = 300)
         plt.close('all')
 
 
@@ -1130,7 +1229,7 @@ def draw_hist(array, xlim, ylim, bins = 50, idtext = '', xlabel =  None,
       
     """
     # Set up figure
-    fig = plt.figure()
+    fig = plt.figure(figsize = (3.15, 3))
     ax = plt.gca()
     # Convert to np array
     array = np.array(array)
@@ -1146,14 +1245,14 @@ def draw_hist(array, xlim, ylim, bins = 50, idtext = '', xlabel =  None,
     num, xpos = np.histogram(array, bins)
     width = np.diff(xpos)[0]
     xpos = xpos[:-1]  
-    plt.bar(xpos, num, color = '#CCCCCC', width = width)
+    plt.bar(xpos, num, color = '#CCCCCC', width = width, linewidth = 0.3)
     #plt.hist(array[np.isfinite(array)], bins = 100)
     if ylog:
         plt.gca().set_yscale('log')
     l1, = plt.plot([avg, avg], [ylim[0], ylim[1]], linestyle = '--', 
-                   color = 'black', label = 'Mean', linewidth = 2)
+                   color = 'black', label = 'Mean', linewidth = 1)
     l2, = plt.plot([med, med], [ylim[0], ylim[1]], linestyle = ':', 
-                   color = 'black', label = 'Median', linewidth = 2)
+                   color = 'black', label = 'Median', linewidth = 1)
         
     
     if not exp == False:
@@ -1162,7 +1261,7 @@ def draw_hist(array, xlim, ylim, bins = 50, idtext = '', xlabel =  None,
         c = exp[1]
         yvals = x0 * np.exp(c*xvals)
         l3, = plt.plot(xvals, yvals, linestyle = '-', color = 'black', 
-                       linewidth = 1.5)
+                       linewidth = 1)
         if legend:
             plt.legend([l1, l2, l3], ['Mean: {:.2f}h'.format(avg) , 
                                     'Median: {:.2f}h'.format(med), 
@@ -1187,10 +1286,12 @@ def draw_hist(array, xlim, ylim, bins = 50, idtext = '', xlabel =  None,
         
     ax.set_ylim(ylim)
     ax.set_xlim(xlim)
+    #ax.yaxis.labelpad = 5
     
     if savename != None:
         print 'Save figure as', savename
-        plt.savefig(savename, bbox_inches = 'tight')
+        plt.subplots_adjust(left = 0.175, right = 0.975, top = 0.95, bottom = 0.125)
+        plt.savefig(savename, dpi = 300)
         plt.close('all')
         plt.clf()
 
@@ -1504,7 +1605,7 @@ def draw_field(obj, field, fieldname, savename = None):
 
 def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False, 
                  setting = None, cbar = True, title = False, diffobj = None, 
-                 diffvar = None, crop = False, dot = None):
+                 diffvar = None, crop = False, dot = None, line = None):
     """
     Plots a contour plot of the given variables at the specified time.
     
@@ -1524,9 +1625,9 @@ def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False,
     """
     
     # Setting up figure
-    fig = plt.figure(figsize = (10,10))
+    fig = plt.figure(figsize = (3.15,10))
     ax = plt.gca()   
-    ax.set_aspect('equal')
+    #ax.set_aspect('equal')
     
     # Draw basemap
     m = basemap(obj.cfile, obj.xlim, obj.ylim, rcoo)
@@ -1582,19 +1683,22 @@ def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False,
     #plt.ylabel('latitude')
     
     if not dot == None:
-        if len(dot) == 2:
-            dotlon = dot[0]
-            dotlat = dot[1]
-        elif len(dot) == 4:
-            dotlon = [dot[0], dot[2]]
-            dotlat = [dot[1], dot[3]]
+        dotlon = dot[0]
+        dotlat = dot[1]
         dotlon, dotlat = utils.rcoo_2_gcoo(dotlon, dotlat, obj.pollon, 
                                            obj.pollat)
         dotx, doty = m(dotlon, dotlat)
-        if len(dot) == 2:
-            m.scatter(dotx, doty, s = 40, c = 'lightgreen')
-        elif len(dot) == 4:
-            m.plot(dotx, doty, linewidth = 2.5, color = 'black')
+        m.scatter(dotx, doty, s = 40, c = 'limegreen', linewidth = 0, 
+                  zorder = 100)
+
+    if not line == None:
+        dotlon = [line[0], line[2]]
+        dotlat = [line[1], line[3]]
+        dotlon, dotlat = utils.rcoo_2_gcoo(dotlon, dotlat, obj.pollon, 
+                                           obj.pollat)
+        dotx, doty = m(dotlon, dotlat)
+        m.plot(dotx, doty, linewidth = 2.5, color = 'red')
+        
     
     if title:
         plt.title(obj.date + timedelta(minutes = time))
@@ -1718,6 +1822,51 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
         plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
         plt.close('all')
         plt.clf()
+
+def draw_trj_path(obj, filelist, idlist, stop, thinning = 10, savename = None):
+    """
+    TODO
+    """
+    tmpt = 360  # Not used!
+    m = draw_contour(obj, [], tmpt, '')
+    clist = ['red', 'blue']
+    
+    
+    
+    for n in range(len(filelist)):
+        cnt = 0
+        lonlist = []
+        latlist = []
+        
+        for i in range(len(filelist[n])):
+            print 'Plotting file', i+1, 'of', len(filelist[n])
+            #print filelist[n], i
+            rootgrp = nc.Dataset(filelist[n][i], 'r')
+            lonmat = rootgrp.variables['longitude'][:, :]
+            latmat = rootgrp.variables['latitude'][:, :]
+            lonmat, latmat = utils.rcoo_2_gcoo(lonmat, latmat, obj.pollon, 
+                                               obj.pollat)
+            #print lonmat, latmat
+            lonmat, latmat = m(lonmat, latmat)
+            
+            for j in idlist[n][i]:
+                ind = stop[n][cnt]-(360 / obj.dtrj)
+                if ind >= 0 and cnt % thinning == 0:
+                    lonlist.append(lonmat[ind, j])
+                    latlist.append(latmat[ind, j])
+                
+                #if cnt % thinning == 0:
+                    #m.plot(lonarray, latarray, color = clist[n])
+                cnt += 1
+        m.scatter(lonlist, latlist, color = clist[n], s = 1)
+                
+    if savename != None:
+        print "Saving figure as", savename
+        plt.savefig(savename, dpi = 300, bbox_inches = 'tight')
+        plt.close('all')
+        plt.clf()
+            
+    
 
 
 def draw_trj_evo(obj, varlist, loclist, idlist, tplot, 
@@ -1844,8 +1993,11 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
             latmat = latmat[:, idlist[j][i]]
             lonarray = lonmat[trjind, :]
             latarray = latmat[trjind, :]
-            carray = rootgrp.variables[ctracer][:, :]
-            carray = carray[trjind, idlist[j][i]]
+            if type(ctracer) == str:
+                carray = rootgrp.variables[ctracer][:, :]
+                carray = carray[trjind, idlist[j][i]]
+            else:
+                carray = ctracer[i]
 
             lonarray, latarray = utils.rcoo_2_gcoo(lonarray, latarray, obj.pollon, 
                                                 obj.pollat)
@@ -1870,12 +2022,15 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
                 norm = plt.Normalize(100, 1000)
             
             cmap = 'Spectral'
-            cblabel = 'pressure [hPa]'
+            cblabel = 'Pressure [hPa]'
             if 'P_dt' in ctracer:
                 norm = plt.Normalize(0, 0.1)
-                cmap = 'CMRmap_r'
+                cmap = 'Spectral_r'
                 carray = carray * (-1)
-           
+                lonarray = lonarray[carray > 0.1]
+                latarray = latarray[carray > 0.1]
+                carray = carray[carray > 0.1]
+                
             if ctracer == 'THETA':
                 cmap = 'nipy_spectral'
                 norm = plt.Normalize(280, 340)
@@ -1898,8 +2053,13 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
                          alpha = 0.8, zorder = 0.2)
             
             x, y = m(lonarray, latarray)
-            m.scatter(x, y, c = carray, s = 20,
-                        cmap = cmap, linewidth = 1,
+            #print len(carray), x.shape
+            if not type(ctracer) == str:
+                carray = 1 / np.array(carray) / 60 * 300
+                norm = plt.Normalize(0, 0.2)
+                cmap = 'Spectral_r'
+            m.scatter(x, y, c = carray, s = 5,
+                        cmap = cmap, linewidth = 0.2,
                         norm = norm, edgecolor = colorlist[j])
             didplot = True
         #break
@@ -1909,13 +2069,14 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
     #plt.xlim(obj.xlim)
     #plt.ylim(obj.ylim)
     #plt.title(obj.date + timedelta(minutes = tplus))
-
+    #plt.colorbar(shrink = 0.3)
     if cbar:
         cb = ColorbarBase(cax2, orientation = 'horizontal', cmap = cmap, 
-                       norm = norm)
+                       norm = norm, ticks = [100, 200, 300, 400, 500, 600, 700, 
+                                             800, 900])
         cb.set_label(cblabel)
         cb.ax.invert_yaxis()
-    plt.tight_layout()
+    #plt.tight_layout()
     
     # Save Plot
     if savename != None:
@@ -2012,7 +2173,7 @@ def basemap(cfile, xlim, ylim, rcoo = False):
     
     #del field
     
-    mpl.rcParams['font.size'] = 10
+    
     
     cosobj = pwg.getfobj(cfile, "FR_LAND_S")
     lats = cosobj.lats
@@ -2031,18 +2192,18 @@ def basemap(cfile, xlim, ylim, rcoo = False):
     m = Basemap(projection="stere", lon_0=lonmid, lat_0=latmid, 
                 llcrnrlat=lllat, urcrnrlat=urlat, llcrnrlon=lllon, 
                 urcrnrlon=urlon, resolution='i')
-    m.drawcoastlines(color = 'black')
-    m.drawcountries(color = 'grey')
+    m.drawcoastlines(color = 'black', linewidth = 0.5)
+    m.drawcountries(color = 'grey', linewidth = 0.1)
     
     npars = 5
     nmers = 5
     if npars>0 and nmers>0:
         #parallels = np.arange(int(lllat), int(urlat)+1, (int(urlat)+1-int(lllat))/float(npars))
-        parallels = np.arange(-100, 100, 5)
-        m.drawparallels(parallels, labels = [1,0,0,0])
+        parallels = np.arange(-100, 100, 10)
+        m.drawparallels(parallels, labels = [0,0,0,0], linewidth = 0.3)
         #meridians = np.arange(int(lllon), int(urlon)+1, (int(urlon)+1-int(lllon))/float(nmers))
-        meridians = np.arange(-100, 100, 5)
-        m.drawmeridians(meridians, labels = [0,0,0,1])
+        meridians = np.arange(-100, 100, 10)
+        m.drawmeridians(meridians, labels = [0,0,0,0], linewidth = 0.3)
     
     return m
     
@@ -2152,8 +2313,8 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             field = smoothfield(field, 3)/100
             levels = list(np.arange(900, 1100, 5))
             CS = m.contour(X, Y, field, levels = levels, colors = 'green', 
-                            linewidths = 1.5, zorder = 0.5)
-            plt.clabel(CS, fontsize = 7, inline = 1, fmt = "%.0f")
+                            linewidths = 0.5, zorder = 0.5)
+            plt.clabel(CS, fontsize = 4, inline = 1, fmt = "%.0f")
         elif variable == 'THETA':
             field = smoothfield(field, 5)
             levels = np.arange(200, 350, 2)
@@ -2193,14 +2354,14 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             ax = plt.gca()
             if cbar:
                 divider = make_axes_locatable(ax)
-                cax1 = divider.append_axes('bottom', size = '3%', pad = 0.30)
+                cax1 = divider.append_axes('bottom', size = '3%', pad = 0.20)
                 #if len(obj.trjfiles) != 42:
-                cax2 = divider.append_axes('bottom', size = '3%', pad = 0.60)
+                cax2 = divider.append_axes('bottom', size = '3%', pad = 0.40)
                 cbar1 = plt.colorbar(orientation = 'horizontal', cax = cax1)
                 cbar1.set_label('PV [pvu]')
             else: 
                 divider = make_axes_locatable(ax)
-                cax1 = divider.append_axes('bottom', size = '3%', pad = 0.30)
+                cax1 = divider.append_axes('bottom', size = '3%', pad = 0.20)
                 cbar1 = plt.colorbar(orientation = 'horizontal', cax = cax1)
                 plt.gcf().delaxes(cax1)
             plt.sca(ax)
@@ -2215,27 +2376,31 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             field = smoothfield(field, 3)/100
             levels = list(np.arange(900, 1100, 5))
             CS = m.contour(X, Y, field, levels = levels, colors = 'green', 
-                            linewidths = 1.5, zorder = 0.5)
-            plt.clabel(CS, fontsize = 7, inline = 1, fmt = "%.0f")
+                            linewidths = 0.5, zorder = 0.5)
+            plt.clabel(CS, fontsize = 4, inline = 1, fmt = "%.0f")
         elif variable == 'var145_S':   # CAPE
             field = smoothfield(field, 3)
             if setting == 2:
                 levels = list(np.arange(100, 3000, 100))
+                ticks = [100, 500, 1000, 1500, 2000, 2500, 3000]
             elif setting == 5:
                 levels = list(np.arange(10, 1000, 100))
+                ticks = [10, 250, 500, 750, 1000]
             plt.contourf(X, Y, field, cmap = plt.get_cmap('hot_r'), 
                         extend = 'max', levels = levels, alpha = 0.8, 
                         zorder = 0.45)
             ax = plt.gca()
             if cbar:
                 divider = make_axes_locatable(ax)
-                cax1 = divider.append_axes('bottom', size = '3%', pad = 0.30)
-                cax2 = divider.append_axes('bottom', size = '3%', pad = 0.60)
-                cbar1 = plt.colorbar(orientation = 'horizontal', cax = cax1)
+                cax1 = divider.append_axes('bottom', size = '3%', pad = 0.20)
+                cax2 = divider.append_axes('bottom', size = '3%', pad = 0.40)
+                cbar1 = plt.colorbar(orientation = 'horizontal', cax = cax1,
+                                     ticks  = ticks)
                 cbar1.set_label('CAPE [J/kg]')
+                cbar1.ax.set_xticklabels
             else: 
                 divider = make_axes_locatable(ax)
-                cax1 = divider.append_axes('bottom', size = '3%', pad = 0.30)
+                cax1 = divider.append_axes('bottom', size = '3%', pad = 0.20)
                 cbar1 = plt.colorbar(orientation = 'horizontal', cax = cax1)
                 plt.gcf().delaxes(cax1)
             plt.sca(ax)
@@ -2303,6 +2468,7 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
                 cax2 = divider.append_axes('bottom', size = '3%', pad = 0.60)
                 plt.sca(ax)
                 cbar2 = plt.colorbar(orientation = 'horizontal', cax = cax1)
+                
                 cbar2.set_label('Precipitation [mm/h]')
     
     else:
@@ -2379,6 +2545,15 @@ def single_trj(lonarray, latarray, parray, linewidth = 0.7, carray = 'P'):
     x = lonarray
     y = latarray
     p = parray
+    
+    # Filter for zero
+    x = x[p != 0]
+    y = y[p != 0]
+    p = p[p != 0]
+    # Filter for nan
+    x = x[np.isfinite(p)]
+    y = y[np.isfinite(p)]
+    p = p[np.isfinite(p)]
 
     points = np.array([x,y]).T.reshape(-1,1,2)
     segments = np.concatenate([points[:-1], points[1:]], axis=1)

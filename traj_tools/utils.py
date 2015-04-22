@@ -747,6 +747,33 @@ def _new_avg(obj, tracer, steps):
         rootgrp.close()
 
 
+def _new_plus_val(obj, loclist, idlist, tracer, cross, plus):
+    """
+    TODO
+    """
+    
+    cnt = 0
+    plus = plus / obj.dtrj
+    newlist = []
+    for i in range(len(loclist)):
+        print 'Opening file', loclist[i]
+        rootgrp = nc.Dataset(loclist[i], 'r')
+        tracemat = rootgrp.variables[tracer][:, :]
+        
+        for j in idlist[i]:
+            ind = cross[cnt] + plus
+            #print cross[cnt], plus
+            if ind < tracemat[:, j].shape[0]:
+                newlist.append(tracemat[ind, j])
+            else:
+                newlist.append(np.nan)
+            cnt += 1
+    return np.array(newlist)
+            
+
+
+
+
 
 def _get_level(obj, filename, varname, level, leveltype = 'PS'):
     """
@@ -1027,7 +1054,16 @@ def _centered_mat(obj, loclist, idlist, tracer, carray, mult):
             #print tracemat
         else:
             tracemat = rootgrp.variables[tracer][:, idlist[i]]
-            if tracer == 'var4':
+            if tracer == 'latitude':
+                _, tracemat = rcoo_2_gcoo(rootgrp.variables['longitude'][:, idlist[i]],
+                                                tracemat, obj.pollon, obj.pollat)
+            elif tracer == 'longitude':
+                tracemat, _ = rcoo_2_gcoo(tracemat,
+                                          rootgrp.variables['latitude'][:, idlist[i]], 
+                                          obj.pollon, obj.pollat)
+                if np.nanmean(tracemat) > 200:
+                    tracemat = tracemat - 360.
+            elif tracer == 'var4':
                 tracemat[np.isnan(tracemat)] = 0
         
         # Get P data and set zeros to nan
@@ -1718,7 +1754,7 @@ def _allxspan(array, yspan, xmax, flip = False):
             istart = s.start
             istop = s.stop
             tuplist.append( (istart, istop, array[istart], 
-                            array[istop - 1 + xspan[istop -1]]) )
+                            array[istop - 1 + xspan[istop - 1]]) )
         return tuplist   
 
 
