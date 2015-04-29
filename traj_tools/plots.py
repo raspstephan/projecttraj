@@ -1605,7 +1605,8 @@ def draw_field(obj, field, fieldname, savename = None):
 
 def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False, 
                  setting = None, cbar = True, title = False, diffobj = None, 
-                 diffvar = None, crop = False, dot = None, line = None):
+                 diffvar = None, crop = False, dot = None, line = None, 
+                 animation = False):
     """
     Plots a contour plot of the given variables at the specified time.
     
@@ -1625,7 +1626,10 @@ def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False,
     """
     
     # Setting up figure
-    fig = plt.figure(figsize = (3.15,10))
+    if animation:
+        fig = plt.figure(figsize = (6.3,10))
+    else:
+        fig = plt.figure(figsize = (3.15,10))
     ax = plt.gca()   
     #ax.set_aspect('equal')
     
@@ -1663,7 +1667,7 @@ def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False,
             contour(obj, filelist, var[0], cosmoind, obj.xlim, obj.ylim, var[1], 
                     m = m, setting = setting, cbar = cbar, diffobj = diffobj,
                     diffind = diffind, difflist = difflist, 
-                    leveltype = leveltype, crop = crop)
+                    leveltype = leveltype, crop = crop, animation = animation)
         else: 
             cosmoind, filelist = obj._get_index(var, time)
             if not diffobj == None and var == diffvar:
@@ -1672,7 +1676,8 @@ def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False,
                 
             contour(obj, filelist, var, cosmoind, obj.xlim, obj.ylim, m = m, 
                     setting = setting, cbar = cbar, diffobj = diffobj,
-                    diffind = diffind, difflist = difflist, crop = crop)
+                    diffind = diffind, difflist = difflist, crop = crop, 
+                    animation = animation)
         
     ## Set plot properties
     #plt.xlim(obj.xlim)
@@ -1964,13 +1969,14 @@ def draw_trj_evo(obj, varlist, loclist, idlist, tplot,
 def draw_trj_dot(obj, varlist, loclist, idlist, tplus, 
                  savename = None, idtext = '', inrange = None, cafter = None,
                  thinning = False, setting = None, path = False, cbar = True,
-                 ctracer = 'P', diffobj = None, diffvar = None):
+                 ctracer = 'P', diffobj = None, diffvar = None, animation = False):
     """
     tplus = time after MODEL start
     """
     
     m = draw_contour(obj, varlist, tplus, idtext = idtext, setting = setting,
-                     cbar = cbar, diffobj = diffobj, diffvar = diffvar)
+                     cbar = cbar, diffobj = diffobj, diffvar = diffvar, 
+                     animation = animation)
     cnt = 0   # continuous counter for startarray and stoparray
     if len(loclist) == 1:
         colorlist = ['gray']
@@ -1996,8 +2002,11 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
             if type(ctracer) == str:
                 carray = rootgrp.variables[ctracer][:, :]
                 carray = carray[trjind, idlist[j][i]]
+                if ctracer == 'P_dt':
+                    parray = rootgrp.variables['P'][trjind, idlist[j][i]]
             else:
                 carray = ctracer[i]
+            rootgrp.close()
 
             lonarray, latarray = utils.rcoo_2_gcoo(lonarray, latarray, obj.pollon, 
                                                 obj.pollat)
@@ -2023,13 +2032,19 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
             
             cmap = 'Spectral'
             cblabel = 'Pressure [hPa]'
+            size = 5
+            ticks = [100, 200, 300, 400, 500, 600, 700, 
+                                             800, 900]
             if 'P_dt' in ctracer:
-                norm = plt.Normalize(0, 0.1)
-                cmap = 'Spectral_r'
+                #norm = plt.Normalize(0.1, 1)
+                #cmap = 'summer_r'
                 carray = carray * (-1)
                 lonarray = lonarray[carray > 0.1]
                 latarray = latarray[carray > 0.1]
-                carray = carray[carray > 0.1]
+                carray = parray[carray > 0.1]
+                size = 8
+                #cblabel = r'$\omega$ [hPa s$^{-1}$]'
+                #ticks = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
                 
             if ctracer == 'THETA':
                 cmap = 'nipy_spectral'
@@ -2058,9 +2073,9 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
                 carray = 1 / np.array(carray) / 60 * 300
                 norm = plt.Normalize(0, 0.2)
                 cmap = 'Spectral_r'
-            m.scatter(x, y, c = carray, s = 5,
+            SCA  = m.scatter(x, y, c = carray, s = size,
                         cmap = cmap, linewidth = 0.2,
-                        norm = norm, edgecolor = colorlist[j])
+                        norm = norm, edgecolor = colorlist[j], zorder = 1000)
             didplot = True
         #break
         
@@ -2068,14 +2083,24 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
     # Set plot properties
     #plt.xlim(obj.xlim)
     #plt.ylim(obj.ylim)
-    #plt.title(obj.date + timedelta(minutes = tplus))
+    if animation:
+        plt.title(obj.date + timedelta(minutes = tplus))
     #plt.colorbar(shrink = 0.3)
     if cbar:
+
         cb = ColorbarBase(cax2, orientation = 'horizontal', cmap = cmap, 
-                       norm = norm, ticks = [100, 200, 300, 400, 500, 600, 700, 
-                                             800, 900])
+                       norm = norm, ticks = ticks)
         cb.set_label(cblabel)
         cb.ax.invert_yaxis()
+    elif animation:
+        cb = ColorbarBase(cax3, cmap = cmap, 
+                       norm = norm, ticks = ticks)
+        cb.set_label(cblabel)
+        cb.ax.invert_yaxis()
+        plt.setp(cax3.get_yticklabels(), rotation=90)
+        
+        
+            
     #plt.tight_layout()
     
     # Save Plot
@@ -2209,7 +2234,8 @@ def basemap(cfile, xlim, ylim, rcoo = False):
     
 def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None, 
             m = None, setting = None, cbar = True, diffobj = None, 
-            diffind = None, difflist = None, leveltype = 'PS', crop = False):
+            diffind = None, difflist = None, leveltype = 'PS', crop = False, 
+            animation = False):
     """
     Draws contour plot of one variable.
     
@@ -2227,7 +2253,7 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
       Dimensions in y-direction in rotated coordinates
       
     """
-    global cbar1, cax2
+    global cbar1, cax2, cax3
     print 'Plotting:', variable
     dt = 5. * 60
     dx = 0.025
@@ -2314,7 +2340,8 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             levels = list(np.arange(900, 1100, 5))
             CS = m.contour(X, Y, field, levels = levels, colors = 'green', 
                             linewidths = 0.5, zorder = 0.5)
-            plt.clabel(CS, fontsize = 4, inline = 1, fmt = "%.0f")
+            if not animation:
+                plt.clabel(CS, fontsize = 4, inline = 1, fmt = "%.0f")
         elif variable == 'THETA':
             field = smoothfield(field, 5)
             levels = np.arange(200, 350, 2)
@@ -2372,12 +2399,14 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
 
     elif setting in [2, 5]:
         print 'Setting 2'
+        cbarflag = False
         if variable == "PMSL":   # Surface pressure
             field = smoothfield(field, 3)/100
             levels = list(np.arange(900, 1100, 5))
             CS = m.contour(X, Y, field, levels = levels, colors = 'green', 
                             linewidths = 0.5, zorder = 0.5)
-            plt.clabel(CS, fontsize = 4, inline = 1, fmt = "%.0f")
+            if not animation:
+                plt.clabel(CS, fontsize = 4, inline = 1, fmt = "%.0f")
         elif variable == 'var145_S':   # CAPE
             field = smoothfield(field, 3)
             if setting == 2:
@@ -2398,6 +2427,17 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
                                      ticks  = ticks)
                 cbar1.set_label('CAPE [J/kg]')
                 cbar1.ax.set_xticklabels
+                cbarflag = True
+            elif animation:
+                divider = make_axes_locatable(ax)
+                cax1 = divider.append_axes('right', size = '3%', pad = 0.05)
+                cax2 = divider.append_axes('right', size = '3%', pad = 0.40)
+                cax3 = divider.append_axes('right', size = '3%', pad = 0.45)
+                cbar1 = plt.colorbar(cax = cax1,
+                                     ticks  = ticks)
+                cbar1.set_label('CAPE [J/kg]')
+                plt.setp(cax1.get_yticklabels(), rotation=90)
+                
             else: 
                 divider = make_axes_locatable(ax)
                 cax1 = divider.append_axes('bottom', size = '3%', pad = 0.20)
@@ -2414,9 +2454,23 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             levels = [0.1, 0.3, 1, 3, 10, 100]
             plt.contourf(X, Y, field, levels, colors=cmPrec, extend='max', 
                         alpha = 0.8, zorder = 1)
+            ax = plt.gca()
             if cbar:
-                cbar2 = plt.colorbar(orientation = 'horizontal', cax = cax2)
+                if cbarflag:
+                    cbar2 = plt.colorbar(orientation = 'horizontal', cax = cax2)
+                    cbar2.set_label('Precipitation [mm/h]')
+                else:
+                    divider = make_axes_locatable(ax)
+                    cax1 = divider.append_axes('bottom', size = '3%', pad = 0.20)
+                    cax2 = divider.append_axes('bottom', size = '3%', pad = 0.40)
+                    cbar1 = plt.colorbar(orientation = 'horizontal', cax = cax1)
+                    cbar1.set_label('Precipitation [mm/h]')
+            elif animation:
+                cbar2 = plt.colorbar( cax = cax2)
                 cbar2.set_label('Precipitation [mm/h]')
+                plt.setp(cax2.get_yticklabels(), rotation=90)
+                #cbar2.ax.set_xticklabels(rotation = 90)
+            plt.sca(ax)
         elif variable == 'THETA':
             field = smoothfield(field, 5)
             #levels = np.arange(200, 350, 2)

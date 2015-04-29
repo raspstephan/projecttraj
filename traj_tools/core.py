@@ -737,10 +737,14 @@ class TrjObj(object):
         if varname == 'TOT_PREC_S':
             cosmoind = int(mins / self.dprcosmo)
             filelist = self.rfiles
-        elif len(self.afiles) > 0 and varname in pwg.get_fieldtable(self.afiles[0]).fieldnames:
+        elif (len(self.afiles) > 0 and 
+              varname in pwg.get_fieldtable(self.afiles[0]).fieldnames and 
+              mins%60 == 0):
             cosmoind = int(mins / self.dacosmo)
             filelist = self.afiles
-        elif len(self.halffiles) > 0 and varname in pwg.get_fieldtable(self.halffiles[0]).fieldnames:
+        elif (len(self.halffiles) > 0 and 
+              varname in pwg.get_fieldtable(self.halffiles[0]).fieldnames and 
+              mins%30 == 0):
             cosmoind = int(mins / self.dhalfcosmo)
             filelist = self.halffiles
         elif varname in pwg.get_fieldtable(self.rfiles[0]).fieldnames:
@@ -1483,14 +1487,17 @@ class TrjObj(object):
                 array1 = self.data[self.datadict[dataname1]]
                 array2 = self.data[self.datadict[dataname2]]
             # Multiply by factor if given and get ratio
+            if dataname2 == 'P600':
+                print array2
+                array2 = (1. / array2) * 10.
             array1 = array1 * factor1
             array2 = array2 * factor2
+            print array1, array2
             array = array1 / array2
             # Create savename and label names
             savename = (savebase + 'hist_' + dataname1 + 'vs' + dataname2 + '_' 
                         + str(filtername) + '_' + str(idtext))
-            xlabel = ('Ratio ' + dataname1 + ' x ' + str(factor1) + ' / ' + 
-                      dataname2 + ' x ' + str(factor2))
+            
             
         # Unknown input
         else:
@@ -1827,7 +1834,7 @@ class TrjObj(object):
                      onlyasc = None, idtext = '', inrange = None, 
                      cafter = None, thinning = False, setting = None, 
                      path = False, cbar = True, ctracer = 'P', diffobj = None,
-                     diffvar = None):
+                     diffvar = None, animation = False):
         """
         Draws trajectoriy position as dots with correct background plots.
         Tplus is now time after model start!
@@ -1898,7 +1905,8 @@ class TrjObj(object):
                                inrange = inrange, cafter = cafter, 
                                thinning = thinning, setting = setting,
                                path = path, cbar = cbar, ctracer = ctracer,
-                               diffobj = diffobj, diffvar = diffvar)
+                               diffobj = diffobj, diffvar = diffvar, 
+                               animation = animation)
     
     def draw_asc_loc(self, dataname, varlist, filtername, tplot, tspan, 
                      idtext = '', savebase = None):
