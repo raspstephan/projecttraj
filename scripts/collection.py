@@ -838,7 +838,7 @@ color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
 #color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
 color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
 hatch = ['/', '\\']
-fig = plt.figure(figsize = (3.15, 1))
+fig = plt.figure(figsize = (95./25.4, 1))
 ax = plt.gca()
 ax.grid(color = 'dimgrey', linestyle = '-')
 plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
@@ -1212,8 +1212,220 @@ c2.draw_hist('P_max', (0, 1), (0, 800), filtername='WCB_Cy1_new', bins = 100, xl
 c2.draw_hist(['P_max', 'P600', 1, 1], (1, 99), (0, 600), filtername='WCB_Cy1_new', bins = 98, xlabel = r'maximum $\omega$ / 600 hPa average $\omega$', legend = False, savebase = '/usr/users/stephan.rasp/Dropbox/figures/Case2_20090129/260415h_')
 
 
+#POST Abgabe. PV DE vs EU
+
+c1.draw_trj_dot([['var4', 325, 'THETA'], 'PMSL'], 2400, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/', filtername='WCB_Cy1', thinning = 20, ctracer = 'THETA')
+c1.draw_contour([['var4', 325, 'THETA'], 'PMSL'], 2400, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/eu_', crop = True, diffobj = c1eu, diffvar='var4')
+c1.draw_contour([['var4', 325, 'THETA'], 'PMSL'], 2400, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/diff_', crop = False, diffobj = c1eu, diffvar='var4')
 
 
+c1.draw_trj_dot([['var4', 325, 'THETA'], 'PMSL'], 3000, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/', filtername='WCB_Cy1', thinning = 20, ctracer = 'THETA')
+c1.draw_contour([['var4', 325, 'THETA'], 'PMSL'], 3000, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/eu_', crop = True, diffobj = c1eu, diffvar='var4')
+c1.draw_contour([['var4', 325, 'THETA'], 'PMSL'], 3000, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/diff_', crop = False, diffobj = c1eu, diffvar='var4')
+
+c2.draw_trj_dot([['var4', 310, 'THETA'], 'PMSL'], 2160, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/c2_', filtername='WCB_Cy1', thinning = 20, ctracer = 'THETA')
+c2.draw_contour([['var4', 310, 'THETA'], 'PMSL'], 2160, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/c2_eu_', crop = True, diffobj = c2eu, diffvar='var4')
+c2.draw_contour([['var4', 310, 'THETA'], 'PMSL'], 2160, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/c2_diff_', crop = False, diffobj = c2eu, diffvar='var4')
+
+c2.draw_trj_dot([['var4', 310, 'THETA'], 'PMSL'], 2880, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/c2_', filtername='WCB_Cy1', thinning = 20, ctracer = 'THETA')
+c2.draw_contour([['var4', 310, 'THETA'], 'PMSL'], 2880, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/c2_eu_', crop = True, diffobj = c2eu, diffvar='var4')
+c2.draw_contour([['var4', 310, 'THETA'], 'PMSL'], 2880, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/c2_diff_', crop = False, diffobj = c2eu, diffvar='var4')
+
+c2.draw_trj_dot([['var4', 310, 'THETA'], 'PMSL'], 3180, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/c2_', filtername='WCB_Cy1', thinning = 20, ctracer = 'THETA')
+c2.draw_contour([['var4', 310, 'THETA'], 'PMSL'], 3180, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/c2_eu_', crop = True, diffobj = c2eu, diffvar='var4')
+c2.draw_contour([['var4', 310, 'THETA'], 'PMSL'], 3180, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/c2_diff_', crop = False, diffobj = c2eu, diffvar='var4')
+
+###
+c1.draw_trj_dot([['var4', 300], 'PMSL'], 2400, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/p', filtername='WCB_Cy1', thinning = 20, ctracer = 'THETA')
+c1.draw_contour([['var4', 300], 'PMSL'], 2400, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/peu_', crop = True, diffobj = c1eu, diffvar='var4')
+c1.draw_contour([['var4', 300], 'PMSL'], 2400, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/pdiff_', crop = False, diffobj = c1eu, diffvar='var4')
+
+
+c1.draw_trj_dot([['var4', 300], 'PMSL'], 3000, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/p', filtername='WCB_Cy1', thinning = 20, ctracer = 'THETA')
+c1.draw_contour([['var4', 300], 'PMSL'], 3000, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/peu_', crop = True, diffobj = c1eu, diffvar='var4')
+c1.draw_contour([['var4', 300], 'PMSL'], 3000, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/pdiff_', crop = False, diffobj = c1eu, diffvar='var4')
+
+c2.draw_trj_dot([['var4', 300], 'PMSL'], 2160, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/pc2_', filtername='WCB_Cy1', thinning = 20, ctracer = 'THETA')
+c2.draw_contour([['var4', 300], 'PMSL'], 2160, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/pc2_eu_', crop = True, diffobj = c2eu, diffvar='var4')
+c2.draw_contour([['var4', 300], 'PMSL'], 2160, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/pc2_diff_', crop = False, diffobj = c2eu, diffvar='var4')
+
+c2.draw_trj_dot([['var4', 300], 'PMSL'], 2880, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/pc2_', filtername='WCB_Cy1', thinning = 20, ctracer = 'THETA')
+c2.draw_contour([['var4', 300], 'PMSL'], 2880, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/pc2_eu_', crop = True, diffobj = c2eu, diffvar='var4')
+c2.draw_contour([['var4', 300], 'PMSL'], 2880, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/pc2_diff_', crop = False, diffobj = c2eu, diffvar='var4')
+
+c2.draw_trj_dot([['var4', 300], 'PMSL'], 3180, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/pc2_', filtername='WCB_Cy1', thinning = 20, ctracer = 'THETA')
+c2.draw_contour([['var4', 300], 'PMSL'], 3180, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/pc2_eu_', crop = True, diffobj = c2eu, diffvar='var4')
+c2.draw_contour([['var4', 300], 'PMSL'], 3180, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/pc2_diff_', crop = False, diffobj = c2eu, diffvar='var4')
+
+
+### PANDOWAE
+
+c2.draw_contour([['var4', 305, 'THETA'], 'PMSL'], 2160, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/pandoawae_c2_diff_305_', crop = False, diffobj = c2eu, diffvar='var4')
+c2.draw_contour([['var4', 310, 'THETA'], 'PMSL'], 2160, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/pandoawae_c2_diff_310_', crop = False, diffobj = c2eu, diffvar='var4')
+c2.draw_contour([['var4', 315, 'THETA'], 'PMSL'], 2160, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/pandoawae_c2_diff_315_', crop = False, diffobj = c2eu, diffvar='var4')
+c2.draw_contour([['var4', 320, 'THETA'], 'PMSL'], 2160, setting = 1, savebase='/usr/users/stephan.rasp/Dropbox/figures/post_abgabe/pandoawae_c2_diff_320_', crop = False, diffobj = c2eu, diffvar='var4')
+
+### Paper
+
+returnlist = c0.draw_centered_vs_t('P', ['Wnonconv2', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Paper', ylim = (200, 1000), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/tmp/paper_test/p_vs_t_nc_', legnames = ['OCTnc', 'JAN'], letter = '', ax2 = None, ylabel = 'p [hPa]')
+color = []
+color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+#color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
+hatch = ['/', '\\']
+fig = plt.figure(figsize = (95./25.4, 1))
+ax = plt.gca()
+plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+for n in range(len(returnlist) / 2):
+    zero = np.zeros(returnlist[n * 2].shape[0])
+    trj.plots.fill_between_steps(returnlist[n * 2], np.array(returnlist[n*2+1]), zero, 
+                             ax = ax, linewidth = 1, 
+                alpha = 0.5, edgecolor = color[n][2], 
+                color = 'none', hatch = hatch[n])
+maxbin = 100
+inc = 20
+ax.set_yticks(np.arange(inc, maxbin + inc, inc))
+ax.xaxis.set_ticks(np.arange(-120, 120, 12), minor = False)
+ax.xaxis.set_ticks(np.arange(-126, 126, 12), minor = True)
+ax.grid(color = 'dimgrey', linestyle = '-', which = 'major')
+ax.grid(color = 'dimgrey', linestyle = '-', which = 'minor')
+ax.set_ylim((0, maxbin))
+ax.set_ylabel('%')
+ax.set_xlabel('time [h]')
+ax.set_xlim(-36, 36)
+plt.subplots_adjust(left = 0.17, right = 0.95, top = 0.95, bottom = 0.4)
+plt.savefig('/usr/users/stephan.rasp/tmp/paper_test/vs_t_freq_nc.png', dpi = 300)    
+
+returnlist = c0.draw_centered_vs_t('P', ['Wconv2', 'WCB_Cy1'], 'Pcross600', extobj = c1, plottype = 'Paper', ylim = (200, 1000), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/tmp/paper_test/p_vs_t_c_', legnames = ['OCTc', 'JUL'], letter = '', ax2 = None, ylabel = 'p [hPa]')
+color = []
+color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+#color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
+hatch = ['/', '\\']
+fig = plt.figure(figsize = (95./25.4, 1))
+ax = plt.gca()
+ax.grid(color = 'dimgrey', linestyle = '-')
+plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+for n in range(len(returnlist) / 2):
+    zero = np.zeros(returnlist[n * 2].shape[0])
+    trj.plots.fill_between_steps(returnlist[n * 2], np.array(returnlist[n*2+1]), zero, 
+                             ax = ax, linewidth = 1, 
+                alpha = 0.5, edgecolor = color[n][2], 
+                color = 'none', hatch = hatch[n])
+maxbin = 100
+inc = 20
+ax.set_yticks(np.arange(inc, maxbin + inc, inc))
+ax.xaxis.set_ticks(np.arange(-120, 120, 6))
+ax.set_ylim((0, maxbin))
+ax.set_ylabel('%')
+ax.set_xlabel('time [h]')
+ax.set_xlim(-12, 12)
+plt.subplots_adjust(left = 0.17, right = 0.95, top = 0.95, bottom = 0.4)
+plt.savefig('/usr/users/stephan.rasp/tmp/paper_test/vs_t_freq_c.png', dpi = 300)  
+
+c0.draw_centered_vs_t(['var4', 'POT_VORTIC'], ['Wnonconv2', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Paper', ylim = (-6, 6), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/tmp/paper_test/PV_vs_t_nc_', legnames = ['OCTnc', 'JAN'], letter = '', ax2 = None, ylabel = 'PV [pvu]', mult = 1, legpos = 3)
+
+c0.draw_centered_vs_t(['var4', 'POT_VORTIC'], ['Wconv2', 'WCB_Cy1'], 'Pcross600', extobj = c1, plottype = 'Paper', ylim = (-6, 6), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/tmp/paper_test/PV_vs_t_c_', legnames = ['OCTc', 'JUL'], letter = '', ax2 = None, ylabel = 'PV [pvu]', mult = 1, legpos = 3)
+
+c0.draw_centered_vs_t('THETA', ['Wnonconv2', 'WCB_Cy1_new'], 'Pcross600', extobj = c2, plottype = 'Paper', ylim = (280, 350), xlim = (-36, 36), select=(-6, 6), savebase = '/usr/users/stephan.rasp/tmp/paper_test/THETA_vs_t_nc_', legnames = ['OCTnc', 'JAN'], letter = '', ax2 = None, ylabel = r'$\theta$ [K]')
+
+c0.draw_centered_vs_t('THETA', ['Wconv2', 'WCB_Cy1'], 'Pcross600', extobj = c1, plottype = 'Paper', ylim = (280, 350), xlim = (-12, 12), select=(-6, 6), savebase = '/usr/users/stephan.rasp/tmp/paper_test/THETA_vs_t_c_', legnames = ['OCTc', 'JUL'], letter = '', ax2 = None, ylabel = r'$\theta$ [K]')
+
+
+
+
+
+returnlist = c0.draw_vs_p(['Q1', 'QC'], ['Wnonconv2', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (0, 1000), ylabel = r'LWC [mg kg$^{-1}$]', savebase = '/usr/users/stephan.rasp/tmp/paper_test/QC_vs_p_nc_', extobj = c2, legnames = None, legpos = 2, ax2upper = None, letter = '', mult = 1000000)
+color = []
+color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+#color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
+hatch = ['/', '\\']
+fig = plt.figure(figsize = (95./25.4, 1))
+ax = plt.gca()
+ax.grid(color = 'dimgrey', linestyle = '-')
+plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+zero = np.zeros(returnlist[1].shape[0])
+for n in range(len(returnlist)-1):
+    trj.plots.fill_between_steps(returnlist[0], np.array(returnlist[n+1]), zero, 
+                             ax = ax, linewidth = 1, 
+                alpha = 0.5, edgecolor = color[n][2], 
+                color = 'none', hatch = hatch[n])
+maxbin = 500
+inc = 100
+ax.set_yticks(np.arange(inc, maxbin + inc, inc))
+ax.set_ylim((0, maxbin))
+ax.set_ylabel('%')
+ax.set_xlabel('p [hPa]')
+ax.set_xlim(200, 1000)
+ax.invert_xaxis()
+plt.subplots_adjust(left = 0.17, right = 0.95, top = 0.95, bottom = 0.4)
+plt.savefig('/usr/users/stephan.rasp/tmp/paper_test/vs_p_freq_nc_.png', dpi = 300)
+    
+returnlist = c0.draw_vs_p(['Q1', 'QC'], ['Wconv2', 'WCB_Cy1'], 'P600', (200, 1000), idtext = '', ylim = (0, 1000), ylabel = r'LWC [mg kg$^{-1}$]', savebase = '/usr/users/stephan.rasp/tmp/paper_test/QC_vs_p_c_', extobj = c1, legnames = None, legpos = 2, ax2upper = None, letter = '', mult = 1000000)    
+color = []
+color.append(['#FF9999', '#FF3333', '#CC0000', '#FF3333'])
+#color.append(['#8080FF', '#3333FF', '#0000CC', '#0000CC'])
+color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
+hatch = ['/', '\\']
+fig = plt.figure(figsize = (95./25.4, 1))
+ax = plt.gca()
+ax.grid(color = 'dimgrey', linestyle = '-')
+plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
+                    left = 'off', right = 'off')
+zero = np.zeros(returnlist[1].shape[0])
+for n in range(len(returnlist)-1):
+    trj.plots.fill_between_steps(returnlist[0], np.array(returnlist[n+1]), zero, 
+                             ax = ax, linewidth = 1, 
+                alpha = 0.5, edgecolor = color[n][2], 
+                color = 'none', hatch = hatch[n])
+maxbin = 500
+inc = 100
+ax.set_yticks(np.arange(inc, maxbin + inc, inc))
+ax.set_ylim((0, maxbin))
+ax.set_ylabel('%')
+ax.set_xlabel('p [hPa]')
+ax.set_xlim(200, 1000)
+ax.invert_xaxis()
+plt.subplots_adjust(left = 0.17, right = 0.95, top = 0.95, bottom = 0.4)
+plt.savefig('/usr/users/stephan.rasp/tmp/paper_test/vs_p_freq_c_.png', dpi = 300)    
+
+
+c0.draw_vs_p(['Q3', 'QS'], ['Wnonconv2', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (0, 1000), ylabel = r'SWC [mg kg$^{-1}$]', savebase = '/usr/users/stephan.rasp/tmp/paper_test/QS_vs_p_nc_', extobj = c2, legnames = None, legpos = 2, ax2upper = None, letter = '', mult = 1000000)    
+    
+c0.draw_vs_p(['Q3', 'QS'], ['Wconv2', 'WCB_Cy1'], 'P600', (200, 1000), idtext = '', ylim = (0, 1000), ylabel = r'SWC [mg kg$^{-1}$]', savebase = '//usr/users/stephan.rasp/tmp/paper_test/Qs_vs_p_c_', extobj = c1, legnames = None, legpos = 2, ax2upper = None, letter = '', mult = 1000000)   
+    
+c0.draw_vs_p(['Q2', 'QI'], ['Wnonconv2', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (0, 100), ylabel = r'IWC [mg kg$^{-1}$]', savebase = '/usr/users/stephan.rasp/tmp/paper_test/QI_vs_p_nc_', extobj = c2, legnames = None, legpos = 2, ax2upper = None, letter = '', mult = 1000000)    
+    
+c0.draw_vs_p(['Q2', 'QI'], ['Wconv2', 'WCB_Cy1'], 'P600', (200, 1000), idtext = '', ylim = (0, 100), ylabel = r'IWC [mg kg$^{-1}$]', savebase = '/usr/users/stephan.rasp/tmp/paper_test/QI_vs_p_c_', extobj = c1, legnames = None, legpos = 2, ax2upper = None, letter = '', mult = 1000000) 
+
+c0.draw_vs_p(['var4', 'POT_VORTIC'], ['Wnonconv2', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (-6, 6), ylabel = 'PV [pvu]', savebase = '/usr/users/stephan.rasp/tmp/paper_test/PV_vs_p_nc_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 3, ax2upper = None, letter = '')    
+    
+c0.draw_vs_p(['var4', 'POT_VORTIC'], ['Wconv2', 'WCB_Cy1'], 'P600', (200, 1000), idtext = '', ylim = (-6, 6), ylabel = 'PV [pvu]', savebase = '/usr/users/stephan.rasp/tmp/paper_test/PV_vs_p_c_', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 3, ax2upper = None, letter = '')
+
+c0.draw_vs_p('THETA_dt', ['Wnonconv2', 'WCB_Cy1_new'], 'P600', (200, 1000), idtext = '', ylim = (-5, 15), ylabel = r'DHR [K h$^{-1}$]', savebase = '/usr/users/stephan.rasp/tmp/paper_test/DHR_vs_p_nc_', extobj = c2, legnames = ['OCTnc', 'JAN'], legpos = 4, ax2upper = None, letter = '', mult = 3600)    
+    
+c0.draw_vs_p('THETA_dt', ['Wconv2', 'WCB_Cy1'], 'P600', (200, 1000), idtext = '', ylim = (-5, 75), ylabel = r'DHR [K h$^{-1}$]', savebase = '/usr/users/stephan.rasp/tmp/paper_test/DHR_vs_p_c_', extobj = c1, legnames = ['OCTc', 'JUL'], legpos = 2, ax2upper = None, letter = '', mult = 3600)
+
+c2.draw_hist_stacked(['P600', 'P600'], ['WCB_conv2', 'WCB_nonconv2'], ['JANc', 'JANnc'], xlim = (0, 48), ylim = (0, 250), bins = 96, ylog = False, idtext = '',savebase ='/usr/users/stephan.rasp/tmp/paper_test/c2_stacked_', onemean='WCB_Cy1_new')
+
+c1.draw_hist_stacked(['P600', 'P600'], ['WCB_conv_new', 'WCB_nonconv_new'], ['JULc', 'JULnc'], xlim = (0, 48), ylim = (0, 5000), bins = 96, ylog = False, idtext = '',savebase ='/usr/users/stephan.rasp/tmp/paper_test/c1_stacked_', onemean = 'WCB_Cy1')
+
+c0.draw_hist_stacked(['P600', 'P600'], ['Wconv2', 'Wnonconv2'], ['OCTc', 'OCTnc'], xlim = (0, 48), ylim = (0, 1400), bins = 96, ylog = False, idtext = '', savebase='/usr/users/stephan.rasp/tmp/paper_test/c0_stacked_')
+
+c0.draw_hist('P600', [0, 48], [0, 300], filtername='Wnonconv2', mintohrs=True, bins = 96, ylog = False, savebase = '/usr/users/stephan.rasp/tmp/paper_test/c0_nc_')
+
+c0.draw_slice_hist('P_dt', 0.1, 'Wnonconv2', onlyasc = 'P600', mult = -1, savebase = '/usr/users/stephan.rasp/tmp/paper_test/c0_RAP_hist_')
+c2.draw_slice_hist('P_dt', 0.1, 'WCB_Cy1_new', onlyasc = 'P600', mult = -1, savebase = '/usr/users/stephan.rasp/tmp/paper_test/c2_RAP_hist_')
+
+c0.draw_trj_dot(["PMSL", "TOT_PREC_S"], tplus = 2760, filtername='Wnonconv2', onlyasc='P600', ctracer = 'P_dt', thinning = 1, setting = 2, cbar = False, cross = [-7, -15], savebase = '/usr/users/stephan.rasp/tmp/paper_test/c0_RAP_loc_dot_')
+
+c0.draw_trj_dot(["TOT_PREC_S", 'var145_S'], tplus = 2760, filtername='Wnonconv2', onlyasc='P600', ctracer = 'P_dt', thinning = 1, setting = 6, cbar = False, cross = [-7, -15], savebase = '/usr/users/stephan.rasp/tmp/paper_test/c0_RAP_loc_dot_', lllimit = (300, 250), urlimit = (1400, 900))
+
+c2.draw_trj_dot(["TOT_PREC_S", 'var145_S'], tplus = 1080, filtername='WCB_Cy1_new', onlyasc='P600', ctracer = 'P_dt', thinning = 1, setting = 6, cbar = False, line = [-10, -18, -4, -18], savebase = '/usr/users/stephan.rasp/tmp/paper_test/c2_RAP_loc_dot_', lllimit = (0, 0), urlimit = (1200, 900))
 
 
 

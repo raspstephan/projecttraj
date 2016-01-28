@@ -41,7 +41,7 @@ import scipy as sp
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.interpolate import RectBivariateSpline
 import random
-mpl.rcParams['font.size'] = 8
+mpl.rcParams['font.size'] = 10
 mpl.rcParams['font.family'] = 'sans-serif'
 
 
@@ -160,7 +160,8 @@ def draw_vs_t(obj, tracer, loclist, idlist, savename = None, sigma = None):
 
 
 def draw_spaghetti(obj, tracer, loclist, idlist, savename = None, 
-                   limit = (0, 50), locind = False, xlim = None):
+                   limit = [], locind = False, xlim = None, title = None,
+                   legend = False):
     """
     TODO
     """
@@ -180,28 +181,251 @@ def draw_spaghetti(obj, tracer, loclist, idlist, savename = None,
     tmat = tmat / 3600.
     
     
-    fig = plt.figure(figsize = (5, 4))
-    plt.gca().set_color_cycle(['red', 'maroon', 'darkorange', 'yellow', 
-                        'lawngreen', 'darkgreen', 'cyan', 'navy', 'fuchsia'])
-    for j in range(limit[1]):
-        ind = random.randint(0, tracemat.shape[1]-1)
-        plt.plot(tmat, tracemat[:, ind], linewidth = 2.5)
+    fig = plt.figure(figsize = (95./25.4, 3.2))
+    #plt.gca().set_color_cycle(['red', 'maroon', 'darkorange', 'yellow', 
+                        #'lawngreen', 'darkgreen', 'cyan', 'navy', 'fuchsia'])
+    plt.gca().set_color_cycle([plt.cm.jet(i) for i in 
+                               np.linspace(0, 1, len(limit))])               
+    for j in limit:
+        #ind = random.randint(0, tracemat.shape[1]-1)
+        
+        plt.plot(tmat, tracemat[:, j], linewidth = 2.5, label = j)
+    plt.ylim(150, 1050)
     if tracer == 'P':
         plt.gca().invert_yaxis()
-    plt.xlabel('Time after simulation start [hrs]')
+    plt.xlabel('Forecast lead time [h]')
     plt.ylabel('Pressure [hPa]')
     plt.tight_layout()
     if xlim != None:
         plt.xlim(xlim)
+    if title != None:
+        plt.title(title)
+    if legend:
+        plt.legend()
     
     if savename != None:
         print 'Save figure as', savename
+        plt.subplots_adjust(left = 0.21, right = 0.95, top = 0.95, bottom = 0.15)
         plt.savefig(savename, dpi = 300, bbox_inches = 'tight')
         plt.close('all')
+
+
+def draw_pv_hist(obj, tracer, loclist, idlist, startarray, stoparray, title,
+                 savename, ex = 4):
+    """
+    """
+    startlist = []
+    stoplist = []
+    cnt = 0
+    ntot = 0
     
+    for i in range(len(loclist)):
+        print 'Opening file:', loclist[i]
+        rootgrp = nc.Dataset(loclist[i], 'r')
+        pvmat = rootgrp.variables[tracer][:, idlist[i]]
+        pvmat = pvmat * 1e6
+        
+        for j in range(pvmat.shape[1]):
+            pvarray = pvmat[:, j]
+            
+            #pvstart = pvarray[startarray[cnt]]
+            #print pvstart, 'a'
+            #pvstop = pvarray[stoparray[cnt]]
+            ##cnt +=1
+            ##ntot +=1
+            
+            avglen = 3 * 60 / 5
+            id1 = startarray[cnt] - avglen
+            id2 = stoparray[cnt] + avglen
+            if not id1 < 0 or id2 > pvarray.shape[0]:
+                pvstart = np.mean(pvarray[id1:startarray[cnt]])
+                #print pvstart, 'b'
+                pvstop = np.mean(pvarray[stoparray[cnt]:id2])
+                ntot +=1
+            startlist.append(pvstart)
+            stoplist.append(pvstop)
+            cnt += 1
+                
+                
+                
+    print ntot, cnt
+    # Plotting
+    #print startlist, stoplist
+    fig = plt.figure(figsize = (95./25.4, 95./25.4))
+    H, x, y = np.histogram2d(startlist, stoplist, bins = 40, 
+                             range = [[-ex, ex], [-ex, ex]])
+    H = H / float(ntot) * 100.
+    normmin = 1. / float(ntot) * 100.
+    H = np.ma.masked_where(H < normmin, H)
+    H = np.rot90(H)
+    plt.imshow(H, extent = [-ex, ex, -ex, ex], interpolation = 'nearest')
+    plt.title(title)
+    plt.xlabel('PV at ascent start [pvu]')
+    plt.ylabel('PV at ascent end [pvu]')
+    cb = plt.colorbar(shrink = 0.829, pad = 0, format='%.1f')
+    cb.set_label('Relative frequency [%]')
+    
+    stoplist = np.array(stoplist); startlist = np.array(startlist)
+    print np.max(stoplist), np.min(stoplist)
+    print np.max(startlist), np.min(startlist)
+    stoplist[stoplist>100] = np.nan; startlist[startlist>100] = np.nan
+    stoplist[stoplist<-100] = np.nan; startlist[startlist<-100] = np.nan
+    print np.nanmax(stoplist), np.nanmin(stoplist)
+    print np.nanmax(startlist), np.nanmin(startlist)
+    print np.nanmean(startlist), np.nanmean(stoplist)
+    plt.scatter(np.nanmean(startlist), np.nanmean(stoplist), marker = '+', 
+                c = 'black', zorder = 1000, s = 20)
+    plt.gca().set_xlim(-ex, ex)
+    plt.gca().set_ylim(-ex, ex)
+    if np.max(H) > 7:
+        cb.set_ticks(np.arange(0, 10, 1))
+    elif np.max(H) < 0.7:
+        cb.set_ticks(np.arange(0, 10, 0.1))
+    elif np.max(H) < 2:
+        cb.set_ticks(np.arange(0, 10, 0.2))
+    else:
+        cb.set_ticks(np.arange(0, 10, 0.5))
+    if savename != None:
+        print 'Save figure as', savename
+        fig.subplots_adjust(left = 0.17, right = 0.95, top = 0.95, bottom = 0.15)
+        fig.savefig(savename, dpi = 400, bbox_inches = 'tight')
+        plt.close('all')
+
+def draw_pv_pdf(obj, tracer, loclist, idlist, startarray, stoparray, title,
+                 savename, ex = 4, mx = 1600, var = 'PV', ret = False):
+    """
+    """
+    startlist = []
+    stoplist = []
+    cnt = 0
+    ntot = 0
+    
+    for i in range(len(loclist)):
+        print 'Opening file:', loclist[i]
+        rootgrp = nc.Dataset(loclist[i], 'r')
+        pvmat = rootgrp.variables[tracer][:, idlist[i]]
+        if var == 'PV':
+            pvmat = pvmat * 1e6
+        
+        for j in range(pvmat.shape[1]):
+            pvarray = pvmat[:, j]
+            
+            #pvstart = pvarray[startarray[cnt]]
+            #print pvstart, 'a'
+            #pvstop = pvarray[stoparray[cnt]]
+            ##cnt +=1
+            ##ntot +=1
+            
+            avglen = 3 * 60 / 5
+            id1 = startarray[cnt] - avglen
+            id2 = stoparray[cnt] + avglen
+            if not id1 < 0 or id2 > pvarray.shape[0]:
+                pvstart = np.mean(pvarray[id1:startarray[cnt]])
+                #print pvstart, 'b'
+                pvstop = np.mean(pvarray[stoparray[cnt]:id2])
+                ntot +=1
+            startlist.append(pvstart)
+            stoplist.append(pvstop)
+            cnt += 1
+    
+    startlist = np.array(startlist)
+    stoplist = np.array(stoplist)
+    
+    stoplist[stoplist>500] = np.nan; startlist[startlist>500] = np.nan
+    stoplist[stoplist<-100] = np.nan; startlist[startlist<-100] = np.nan
+    ## Plotting
+    fig = plt.figure(figsize = (95./25.4, 2.5))
+    ax = plt.gca()
+    
+    #ax.hist(startlist, bins = 80, range = [-ex, ex], color = 'blue', alpha = 0.5)
+    #ax.hist(stoplist, bins = 80, range = [-ex, ex], color = 'red', alpha = 0.5)
+    ntot = float(len(startlist))
+    if var == 'PV':
+        bins = np.linspace(-ex, ex, ex*20)
+    elif var == 'THETA':
+        bins = np.linspace(280, 350, 70)
+    num1, x1 = np.histogram(startlist, bins)
+    num2, x2 = np.histogram(stoplist, bins)
+    num1 = num1 / ntot * 100.
+    num2 = num2 / ntot * 100.
+    mean1 = np.nanmean(startlist)
+    mean2 = np.nanmean(stoplist)
+    #print stoplist
+    
+    
+    if ret:
+        return [num1, num2, x1, mean1, mean2]
+    
+    print np.max(num1)
+    zero = np.zeros(num1.shape[0])
+    fill_between_steps(x1[:-1], num1, zero, ax, linewidth = 1., alpha = 0.7, 
+                       color = 'steelblue', label = '3h pre-ascent')
+    fill_between_steps(x2[:-1], num2, zero, ax, linewidth = 1., alpha = 0.7, 
+                       color = 'tomato', label = '3h post-ascent')
+    if var == 'PV':
+        ax.set_xlabel('PV [pvu]')
+    elif var == 'THETA':
+        ax.set_xlabel('Theta [K]')
+    ax.set_ylabel('Relative frequency [%]')
+
+    ax.plot([mean1, mean1], [0, mx], color = 'steelblue', label = 'pre-ascent mean')
+    ax.plot([mean2, mean2], [0, mx], color = 'tomato', label = 'post-ascent mean')
+    plt.text(0.038, 0.83, 'Pre-ascent \nmean: {:.2f}'.format(mean1), transform = plt.gca().transAxes, 
+             fontsize = 9, color = 'steelblue')
+    plt.text(0.038, 0.67, 'Post-ascent \nmean: {:.2f}'.format(mean2), transform = plt.gca().transAxes, 
+             fontsize = 9, color = 'tomato')
+    ax.set_ylim(0, mx)
+    #plt.legend(loc = 1)
+    ax.set_title(title)
+    
+    #print ntot, cnt
+    ## Plotting
+    ##print startlist, stoplist
+    #fig = plt.figure(figsize = (95./25.4, 95./25.4))
+    #H, x, y = np.histogram2d(startlist, stoplist, bins = 40, 
+                             #range = [[-ex, ex], [-ex, ex]])
+    #H = H / float(ntot) * 100.
+    #normmin = 1. / float(ntot) * 100.
+    #H = np.ma.masked_where(H < normmin, H)
+    #H = np.rot90(H)
+    #plt.imshow(H, extent = [-ex, ex, -ex, ex], interpolation = 'nearest')
+    #plt.title(title)
+    #plt.xlabel('PV at ascent start [pvu]')
+    #plt.ylabel('PV at ascent end [pvu]')
+    #cb = plt.colorbar(shrink = 0.829, pad = 0, format='%.1f')
+    #cb.set_label('Relative frequency [%]')
+    
+    #stoplist = np.array(stoplist); startlist = np.array(startlist)
+    #print np.max(stoplist), np.min(stoplist)
+    #print np.max(startlist), np.min(startlist)
+    #stoplist[stoplist>100] = np.nan; startlist[startlist>100] = np.nan
+    #stoplist[stoplist<-100] = np.nan; startlist[startlist<-100] = np.nan
+    #print np.nanmax(stoplist), np.nanmin(stoplist)
+    #print np.nanmax(startlist), np.nanmin(startlist)
+    #print np.nanmean(startlist), np.nanmean(stoplist)
+    #plt.scatter(np.nanmean(startlist), np.nanmean(stoplist), marker = '+', 
+                #c = 'black', zorder = 1000, s = 20)
+    #plt.gca().set_xlim(-ex, ex)
+    #plt.gca().set_ylim(-ex, ex)
+    #if np.max(H) > 7:
+        #cb.set_ticks(np.arange(0, 10, 1))
+    #elif np.max(H) < 0.7:
+        #cb.set_ticks(np.arange(0, 10, 0.1))
+    #elif np.max(H) < 2:
+        #cb.set_ticks(np.arange(0, 10, 0.2))
+    #else:
+        #cb.set_ticks(np.arange(0, 10, 0.5))
+    if savename != None:
+        print 'Save figure as', savename
+        fig.subplots_adjust(left = 0.17, right = 0.95, top = 0.95, bottom = 0.15)
+        fig.savefig(savename, dpi = 400, bbox_inches = 'tight')
+        plt.close('all')   
+        
+        
+        
 
 def draw_slice_hist(obj, tracer, loclist, idlist, threshold, startarray, 
-                    stoparray, savename = None, mult = -1):
+                    stoparray, savename = None, mult = -1, title = None):
     """
     TODO
     """
@@ -209,6 +433,9 @@ def draw_slice_hist(obj, tracer, loclist, idlist, threshold, startarray,
     startlist = []
     stoplist = []
     cnt = 0
+    ntrarap = 0
+    ntratot = 0 
+    nrap = 0
     #print loclist
     for i in range(len(loclist)):
         print 'Opening file:', loclist[i]
@@ -217,6 +444,7 @@ def draw_slice_hist(obj, tracer, loclist, idlist, threshold, startarray,
         pmat = rootgrp.variables['P'][:, idlist[i]]
         
         for j in range(tracemat.shape[1]):
+            ntratot += 1
             #print j
             tracearray = tracemat[startarray[cnt]:stoparray[cnt], j] * mult
             parray = pmat[startarray[cnt]:stoparray[cnt]+1, j]
@@ -225,39 +453,72 @@ def draw_slice_hist(obj, tracer, loclist, idlist, threshold, startarray,
             slices = np.ma.notmasked_contiguous(mask)
             
             if type(slices) == list:
+                ntrarap += 1
                 for s in slices:
+                    nrap += 1
                     istart = s.start
                     istop = s.stop - 1
                     diff = istop - istart
-                    if diff > 1:
+                    #if diff > 1:
+                    if diff > 0:
                         startlist.append(parray[istart])
                         stoplist.append(parray[istop])
             elif slices != None:
+                nrap += 1
+                ntrarap += 1
                 istart = slices.start
                 istop = slices.stop - 1
                 diff = istart- istop
-                if diff > 1:
+                #if diff > 1:
+                if diff > 0:
                     startlist.append(parray[istart])
                     stoplist.append(parray[istop])
             cnt += 1  
         rootgrp.close()
     #print 'Plotting'        
-    fig = plt.figure(figsize = (3.15, 3.15))
+    fig = plt.figure(figsize = (95./25.4, 95./25.4))
     ax = plt.gca()
-    ax.set_aspect('equal')
-    H, _, _ = np.histogram2d(startlist, stoplist, bins = 45, 
-                         range = [[150, 1050], [150, 1050]])
-    normmax = int(np.max(H))
-    plt.hist2d(startlist, stoplist, bins = 45, range = [[150, 1050], [150, 1050]],
-              norm = plt.Normalize(1, normmax), cmin = 1)
-    plt.xlabel('Start of ascent [hPa]')
-    plt.ylabel('End of ascent [hPa]')
+    #ax.set_aspect('equal')
+    totnum = len(startlist)
+    diff = np.array(startlist) - np.array(stoplist)
+    mean = (np.array(startlist) + np.array(stoplist)) / 2
+    # Several options
+    #H, x, y = np.histogram2d(startlist, stoplist, bins = 45, 
+                         #range = [[150, 1050], [150, 1050]])
+    
+    H, x, y = np.histogram2d(mean, diff, bins = 45, 
+                         range = [[150, 1050], [0, 700]])
+    
+    #H, x, y = np.histogram2d(startlist, diff, bins = 45, 
+                         #range = [[150, 1050], [0, 700]])
+    
+    H = H / float(ntrarap) * 100.
+    normmax = np.max(H)
+    normmin = 1. / float(totnum) * 100.
+    #print normmin, normmax
+    H = np.ma.masked_where(H < normmin, H)
+    H = np.rot90(H)
+    plt.imshow(H, extent = [150, 1050, 0, 700], interpolation = 'nearest', 
+               norm = plt.Normalize(normmin, normmax))
+               #vmin = 1.1 * normmin, vmax = normmax)
+    #plt.hist2d(startlist, stoplist, bins = 45, range = [[150, 1050], [150, 1050]],
+              #norm = plt.Normalize(0, 1), cmin = 1)
+    plt.xlabel('Midpoint of ascent [hPa]')
+    plt.ylabel('Vertical extent of CAPs [hPa]')
+    percentage = ntrarap / float(ntratot) * 100
+    print ntrarap, ntratot, nrap
+    plt.text(0.7, 0.9, 'Total: {:.1f}%'.format(percentage), 
+             transform = plt.gca().transAxes, 
+             fontsize = 8)
     #ax.set_xlim(300, 1050)
     #ax.set_ylim(300, 1050)
     ax.invert_xaxis()
-    ax.invert_yaxis()
-    cb = plt.colorbar(shrink = 0.78)
-    cb.set_label('Frequency')
+    #ax.invert_yaxis()
+    cb = plt.colorbar(shrink = 0.645, pad = 0)
+    cb.set_label('Relative frequency [%]')
+    cb.set_ticks(np.arange(0, 5, 0.2))
+    if not title == None:
+        plt.title(title)
     if savename != None:
         print 'Save figure as', savename
         fig.subplots_adjust(left = 0.17, right = 0.95, top = 0.95, bottom = 0.15)
@@ -265,18 +526,17 @@ def draw_slice_hist(obj, tracer, loclist, idlist, threshold, startarray,
         plt.close('all')
     
     
-    fig2 = plt.figure(figsize = (3.15, 2.3))
-    diff = np.array(startlist) - np.array(stoplist)
-    plt.hist(diff, bins = 50, range = [0, 1000], color = '#CCCCCC', 
-             linewidth = 0.3)
-    plt.xlabel('Ascent range [hPa]')
-    plt.ylabel('Frequency')
-    if savename != None:
-        savename = savename + 'diffhist'
-        print 'Save figure as', savename
-        plt.subplots_adjust(left = 0.15, right = 0.925, top = 0.95, bottom = 0.19)
-        fig2.savefig(savename, dpi = 400)
-        plt.close('all')
+    #fig2 = plt.figure(figsize = (3.15, 2.3))
+    #plt.hist(diff, bins = 50, range = [0, 1000], color = '#CCCCCC', 
+             #linewidth = 0.3)
+    #plt.xlabel('Ascent range [hPa]')
+    #plt.ylabel('Frequency')
+    #if savename != None:
+        #savename = savename + 'diffhist'
+        #print 'Save figure as', savename
+        #plt.subplots_adjust(left = 0.15, right = 0.925, top = 0.95, bottom = 0.19)
+        #fig2.savefig(savename, dpi = 400)
+        #plt.close('all')
     
      
 
@@ -303,7 +563,7 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
         color.append(['#E6E6E6', '#B8B8B8', '#000000', '#666666'])
         hatch = ['/', '\\']
     
-    fig = plt.figure(figsize = (3.15, 2.5))
+    fig = plt.figure(figsize = (95./25.4, 2.8))
     ax = plt.gca()
     ax.grid(color = 'dimgrey', linestyle = '-', zorder = 0.01)
     #ax.set_frame_on(False)
@@ -400,26 +660,26 @@ def draw_vs_p(obj, tracer, loclist, idlist, startarray, stoparray, xlim,
         ax.fill_between(parray, per5, per95,
                         facecolor = color[n][0], edgecolor = 'none',
                         label = '90%', alpha = 0.5, zorder = 0.1)
-        ax.fill_between(parray, per25, per75,
-                        facecolor = color[n][1], edgecolor = 'none',
-                        label = '50%', alpha = 0.5, zorder = 0.1)
-        l2, = ax.plot(parray, per50, color[n][2], linestyle = '--', 
-                      linewidth = 1.5)
+        #ax.fill_between(parray, per25, per75,
+                        #facecolor = color[n][1], edgecolor = 'none',
+                        #label = '50%', alpha = 0.5, zorder = 0.1)
+        #l2, = ax.plot(parray, per50, color[n][2], linestyle = '--', 
+                      #linewidth = 1.5)
         l1, = ax.plot(parray, meanlist, color[n][2], linewidth = 1.5)
         leglist.append(l1)
         l3, = ax.plot(parray, per5, 
                 color = color[n][3], linestyle = ':', linewidth = 1)
         l4, = ax.plot(parray, per95, color = color[n][3], linestyle = ':', 
                       linewidth = 1)
-        l5, = ax.plot(parray, per25, color = color[n][3], linestyle = '-.', 
-                      linewidth = 1)
-        l6, = ax.plot(parray, per75, color = color[n][3], linestyle = '-.', 
-                      linewidth = 1)
+        #l5, = ax.plot(parray, per25, color = color[n][3], linestyle = '-.', 
+                      #linewidth = 1)
+        #l6, = ax.plot(parray, per75, color = color[n][3], linestyle = '-.', 
+                      #linewidth = 1)
         
         l3.set_dashes(dashes1)
         l4.set_dashes(dashes1)
-        l5.set_dashes(dashes2)
-        l6.set_dashes(dashes2)
+        #l5.set_dashes(dashes2)
+        #l6.set_dashes(dashes2)
         # Get filled colors as legends
         #r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
         #r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
@@ -496,7 +756,7 @@ def fill_between_steps(x, y1, y2=0, h_align='mid', ax=None, **kwargs):
     y1 = y1.repeat(2)#[:-1]
     if type(y2) == sp.ndarray:
         y2 = y2.repeat(2)#[:-1]
-    
+    print xx.shape, y1.shape, y2.shape
     # now to the plotting part:
     ax.fill_between(xx, y1, y2=y2, **kwargs)
     
@@ -507,7 +767,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
                        plottype = 'Smooth', idtext = '', ylim = None, 
                        xlim = None, sigma = 1, select = False,
                        legnames = None, legpos = 2, ax2 = True, mult = 1, 
-                       letter = '', ylabel = ''):
+                       letter = '', ylabel = '', ret = False):
     """
     Draws evolution of a tracer of all trajectories given by filter,
     centered around midpoint of ascent, as given by carray.
@@ -553,7 +813,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         hatch = ['/', '\\']
     
     # Set up figure
-    fig = plt.figure(figsize = (3.15, 2.5))
+    fig = plt.figure(figsize = (95./25.4, 2.8))
     ax = plt.gca()
     if ax2:
         ax2 = ax.twinx()
@@ -578,7 +838,7 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
             #print totmat.shape
             selectarray = np.where(np.isfinite(np.sum(totmat[startind:stopind, :],
                                                     axis = 0)))
-            print selectarray
+            #print selectarray
             #print selectarray, np.sum(totmat, axis = 0)
             totmat = totmat[:, selectarray[0]]
             
@@ -587,13 +847,17 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
             
         meanarray = np.nanmean(totmat, axis = 1)
         countlist = np.sum(np.isfinite(totmat), axis = 1)
+        # Convert time array to hours
+        exttarray = exttarray / 60.
+        
+        if ret:
+            return [meanarray, exttarray]
+        
         
         print "Mean at t = 0:", meanarray[np.round(meanarray.shape[0]/2)]
 
         mask = np.isfinite(meanarray)
         
-        # Convert time array to hours
-        exttarray = exttarray / 60.
 
         if plottype == 'Fill':
             
@@ -640,6 +904,52 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
             #r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
             #r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
             #plt.legend([l1, l2, r2, r1], ['mean', 'median', '50%', '90%'])
+        
+        elif plottype == 'Paper':
+            
+            dashes1 = [1, 1]
+            dashes2 = [3, 1]
+            per5 = nanpercentile(totmat, 5)
+            per95 = nanpercentile(totmat, 95)
+            smoothper5 = ndi.filters.gaussian_filter(per5[mask], sigma)
+            smoothper95 = ndi.filters.gaussian_filter(per95[mask], sigma)
+            ax.fill_between(exttarray[mask], smoothper5, smoothper95, 
+                            facecolor = color[i][0], edgecolor = 'none',
+                            label = '90%', alpha = 0.5, zorder = 0.1)
+            
+            #per25 = nanpercentile(totmat, 25)
+            #per75 = nanpercentile(totmat, 75)
+            #smoothper25 = ndi.filters.gaussian_filter(per25[mask], sigma)
+            #smoothper75 = ndi.filters.gaussian_filter(per75[mask], sigma)
+            #ax.fill_between(exttarray[mask], smoothper25, smoothper75, 
+                            #facecolor = color[i][1], edgecolor = 'none',
+                            #label = '50%', alpha = 0.5, zorder = 0.1)
+            
+            #per50 = nanpercentile(totmat, 50)
+            #smoothper50 = ndi.filters.gaussian_filter(per50[mask], sigma)
+            #l2, = ax.plot(exttarray[mask], smoothper50, color[i][2], 
+                           #linestyle = '--', linewidth = 1.5)
+            
+            smootharray = ndi.filters.gaussian_filter(meanarray[mask], sigma)
+            l1, = ax.plot(exttarray[mask], smootharray, color[i][2], 
+                           linewidth = 1.5)
+            leglist.append(l1)
+            l3, = ax.plot(exttarray[mask], smoothper5, 
+                color = color[i][3], linestyle = ':', linewidth = 1)
+            l4, = ax.plot(exttarray[mask], smoothper95, color = color[i][3], linestyle = ':', 
+                        linewidth = 1)
+            #l5, = ax.plot(exttarray[mask], smoothper25, color = color[i][3], linestyle = '-.', 
+                        #linewidth = 1)
+            #l6, = ax.plot(exttarray[mask], smoothper75, color = color[i][3], linestyle = '-.', 
+                        #linewidth = 1)
+            l3.set_dashes(dashes1)
+            l4.set_dashes(dashes1)
+            #l5.set_dashes(dashes2)
+            #l6.set_dashes(dashes2)
+            # Get filled colors as legends
+            #r1 = plt.Rectangle((0, 0), 1, 1, fc="lightgrey")
+            #r2 = plt.Rectangle((0, 0), 1, 1, fc="darkgrey")
+            #plt.legend([l1, l2, r2, r1], ['mean'
         else:
             print 'ERROR'
         
@@ -681,9 +991,11 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
         dtick = 6
     else:
         dtick = 12
-    ax.xaxis.set_ticks(np.arange(-120, 120, dtick))
+    ax.xaxis.set_ticks(np.arange(-120, 120, dtick), minor = False)
+    ax.xaxis.set_ticks(np.arange(-126, 126, 12), minor = True)
     ax.set_xlim(xlim)
-    ax.grid(color = 'dimgrey', linestyle = '-', zorder = 0.01)
+    ax.grid(color = 'dimgrey', linestyle = '-', zorder = 0.01, which = 'minor')
+    ax.grid(color = 'dimgrey', linestyle = '-', zorder = 0.01, which = 'major')
     #ax.set_frame_on(False)
     plt.tick_params(axis = 'both', which = 'both', bottom = 'off', top = 'off',
                     left = 'off', right = 'off')
@@ -694,14 +1006,14 @@ def draw_centered_vs_t(obj, loclist, idlist, tracer, carray, savename = None,
     if tracer == 'var4':
         tracer == 'PVU'
     ax.set_ylabel(ylabel)
-    ax.set_xlabel('time [h] relative to center') 
+    ax.set_xlabel('time [h]') 
     
     
     
     if savename != None:
         print 'Save figure as', savename
         plt.subplots_adjust(left = 0.17, right = 0.95, top = 0.95, bottom = 0.15)
-        plt.savefig(savename, dpi = 400)
+        plt.savefig(savename, dpi = 300)
         plt.close('all')
     #returnlist = [returnlist[i] for i in [0, 1, 3]]
     return returnlist
@@ -917,12 +1229,12 @@ def draw_hist_2d(obj, varname1, varname2, loclist, idlist, carray, dplus,
 
 def draw_hist_stacked(obj, datalist, namelist, ylim, idtext = '', savename = None, 
                       exp = False, xlim = None, bins = 50, realdate = False,
-                      ylabel = None, legpos = 1, ylog = False):
+                      ylabel = None, legpos = 1, ylog = False, onemean = None):
     """
     TODO
     """
     
-    fig = plt.figure(figsize = (3.15, 3))
+    fig = plt.figure(figsize = (95./25.4 * 2 / 3, 2.3))
     ax = plt.gca()
     bins = np.linspace(xlim[0], xlim[1], bins + 1)
 
@@ -935,10 +1247,11 @@ def draw_hist_stacked(obj, datalist, namelist, ylim, idtext = '', savename = Non
     
     b1 = plt.bar(xpos, num1, bottom = None, color = '#CCCCCC', 
                             width = width, linewidth = 0.3)
-    l11, = plt.plot([avg1, avg1], [ylim[0], ylim[1]], linestyle = '--', 
-                   color = '#CCCCCC', label = 'Mean', linewidth = 1)
-    l12, = plt.plot([med1, med1], [ylim[0], ylim[1]], linestyle = ':', 
-                   color = '#CCCCCC', label = 'Median', linewidth = 1)
+    if onemean == None:
+        l11, = plt.plot([avg1, avg1], [ylim[0], ylim[1]], linestyle = '--', 
+                    color = '#CCCCCC', label = 'Mean', linewidth = 1)
+        #l12, = plt.plot([med1, med1], [ylim[0], ylim[1]], linestyle = ':', 
+                    #color = '#CCCCCC', label = 'Median', linewidth = 1)
     
     num2, xpos2 = np.histogram(datalist[1], bins)
     avg2 = np.average(datalist[1])
@@ -946,16 +1259,27 @@ def draw_hist_stacked(obj, datalist, namelist, ylim, idtext = '', savename = Non
     
     b2 = plt.bar(xpos, num2, bottom = num1, color = '#525252', 
                             width = width, linewidth = 0.3)
-    l21, = plt.plot([avg2, avg2], [ylim[0], ylim[1]], linestyle = '--', 
-                   color = '#525252', label = 'Mean', linewidth = 1)
-    l22, = plt.plot([med2, med2], [ylim[0], ylim[1]], linestyle = ':', 
-                   color = '#525252', label = 'Median', linewidth = 1)
+    if onemean == None:
+        l21, = plt.plot([avg2, avg2], [ylim[0], ylim[1]], linestyle = '--', 
+                    color = '#525252', label = 'Mean', linewidth = 1)
+        #l22, = plt.plot([med2, med2], [ylim[0], ylim[1]], linestyle = ':', 
+                    #color = '#525252', label = 'Median', linewidth = 1)
     
-    handles = [b1, l11, l12, b2, l21, l22]
-    labels = [namelist[0], 'Mean: {:.2f}h'.format(avg1), 
-              'Median: {:.2f}h'.format(med1), namelist[1], 
-              'Mean: {:.2f}h'.format(avg2), 'Median: {:.2f}h'.format(med2)]
+        handles = [b1, l11, b2, l21]
+        labels = [namelist[0], 'Mean: {:.2f}h'.format(avg1), namelist[1], 
+                'Mean: {:.2f}h'.format(avg2)]
     
+    else:
+        avg = np.average(onemean)
+        med = np.median(onemean)
+        l1, = plt.plot([avg, avg], [ylim[0], ylim[1]], linestyle = '--', 
+                       color = 'black', label = 'Mean', linewidth = 1)
+        l2, = plt.plot([med, med], [ylim[0], ylim[1]], linestyle = ':', 
+                       color = 'black', label = 'Median', linewidth = 1)
+        handles = [b1, b2, l1, l2]
+        labels = [namelist[0], namelist[1], 'Mean: {:.1f}h'.format(avg), 
+                'Median: {:.1f}h'.format(med)]
+        
     if not exp == False:
         xvals = np.linspace(xlim[0], xlim[1], 1000)
         x0 = exp[0]
@@ -992,7 +1316,7 @@ def draw_hist_stacked(obj, datalist, namelist, ylim, idtext = '', savename = Non
     
     if savename != None:
         print 'Save figure as', savename
-        plt.subplots_adjust(left = 0.175, right = 0.975, top = 0.95, bottom = 0.125)
+        plt.subplots_adjust(left = 0.21, right = 0.95, top = 0.95, bottom = 0.15)
         plt.savefig(savename, dpi = 300)
         plt.close('all')
 
@@ -1229,7 +1553,7 @@ def draw_hist(array, xlim, ylim, bins = 50, idtext = '', xlabel =  None,
       
     """
     # Set up figure
-    fig = plt.figure(figsize = (3.15, 3))
+    fig = plt.figure(figsize = (95./25.4 * 2 / 3, 2.3))
     ax = plt.gca()
     # Convert to np array
     array = np.array(array)
@@ -1245,14 +1569,14 @@ def draw_hist(array, xlim, ylim, bins = 50, idtext = '', xlabel =  None,
     num, xpos = np.histogram(array, bins)
     width = np.diff(xpos)[0]
     xpos = xpos[:-1]  
-    plt.bar(xpos, num, color = '#CCCCCC', width = width, linewidth = 0.3)
+    b1 = plt.bar(xpos, num, color = '#525252', width = width, linewidth = 0.3)
     #plt.hist(array[np.isfinite(array)], bins = 100)
     if ylog:
         plt.gca().set_yscale('log')
     l1, = plt.plot([avg, avg], [ylim[0], ylim[1]], linestyle = '--', 
                    color = 'black', label = 'Mean', linewidth = 1)
-    l2, = plt.plot([med, med], [ylim[0], ylim[1]], linestyle = ':', 
-                   color = 'black', label = 'Median', linewidth = 1)
+    #l2, = plt.plot([med, med], [ylim[0], ylim[1]], linestyle = ':', 
+                   #color = 'black', label = 'Median', linewidth = 1)
         
     
     if not exp == False:
@@ -1268,8 +1592,7 @@ def draw_hist(array, xlim, ylim, bins = 50, idtext = '', xlabel =  None,
                                     'Exponential fit'])
     else:
         if legend:
-            plt.legend([l1, l2], ['Mean: {:.2f}h'.format(avg) , 
-                                    'Median: {:.2f}h'.format(med)])
+            plt.legend([b1, l1], [idtext, 'Mean: {:.2f}h'.format(avg)])
         
     
     # Add labels and text
@@ -1279,8 +1602,8 @@ def draw_hist(array, xlim, ylim, bins = 50, idtext = '', xlabel =  None,
         plt.xlabel('Time [h]')
     else:
         plt.xlabel(xlabel)
-    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
-             fontsize = 6)
+    #plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
+             #fontsize = 6)
     if xlim[1] == 48:
         plt.xticks(np.arange(0, 48 + 4, 4))
         
@@ -1290,7 +1613,7 @@ def draw_hist(array, xlim, ylim, bins = 50, idtext = '', xlabel =  None,
     
     if savename != None:
         print 'Save figure as', savename
-        plt.subplots_adjust(left = 0.175, right = 0.975, top = 0.95, bottom = 0.125)
+        plt.subplots_adjust(left = 0.21, right = 0.95, top = 0.95, bottom = 0.15)
         plt.savefig(savename, dpi = 300)
         plt.close('all')
         plt.clf()
@@ -1434,7 +1757,7 @@ def draw_intersect_hor(obj, tracer, filelist, idlist, level, leveltype = 'P',
     """
     
     # Draw contour maps
-    draw_contour(obj, [], 0, idtext = idtext)
+    m = draw_contour(obj, [], 0, idtext = idtext)
     
     # Initialize plotlists
     lonplot = []
@@ -1482,43 +1805,53 @@ def draw_intersect_hor(obj, tracer, filelist, idlist, level, leveltype = 'P',
                 if slices.start != 0:
                     start = slices.start - 1
                     stop = slices.start
-                    traceplot, lonplot, latplot = interp_vert_vel(j,
-                            array, tracearray, lonarray, latarray, start, stop, 
-                            traceplot, 
-                            lonplot, latplot, level, positive)
+                    lonplot.append(lonarray[start])
+                    latplot.append(latarray[start])
+                    #traceplot, lonplot, latplot = interp_vert_vel(j,
+                            #array, tracearray, lonarray, latarray, start, stop, 
+                            #traceplot, 
+                            #lonplot, latplot, level, positive)
                 if slices.stop != array.shape[0]:
                     start = slices.stop - 1
                     stop = slices.stop
-                    traceplot, lonplot, latplot = interp_vert_vel(j,
-                            array, tracearray, lonarray, latarray, start, stop, 
-                            traceplot, 
-                            lonplot, latplot, level, positive)
+                    lonplot.append(lonarray[start])
+                    latplot.append(latarray[start])
+                    #traceplot, lonplot, latplot = interp_vert_vel(j,
+                            #array, tracearray, lonarray, latarray, start, stop, 
+                            #traceplot, 
+                            #lonplot, latplot, level, positive)
                     
             else:
                 for s in slices:
                     if s.start != 0:
                         start = s.start - 1
                         stop = s.start
-                        traceplot, lonplot, latplot = interp_vert_vel(j,
-                            array, tracearray, lonarray, latarray, start, stop, 
-                            traceplot, 
-                            lonplot, latplot, level, positive)
+                        lonplot.append(lonarray[start])
+                        latplot.append(latarray[start])
+                        #print lonarray[s.start-1], latarray[s.start-1], array[s.start-1]
+                        #print type(traceplot), traceplot, 1
+                        #traceplot, lonplot, latplot = interp_vert_vel(j,
+                            #array, tracearray, lonarray, latarray, start, stop, 
+                            #traceplot, 
+                            #lonplot, latplot, level, positive)
+                        #print type(traceplot), traceplot, 2
                     if s.stop != array.shape[0]:
                         start = s.stop - 1
                         stop = s.stop
-                        traceplot, lonplot, latplot = interp_vert_vel(j,
-                            array, tracearray, lonarray, latarray, start, stop, 
-                            traceplot, 
-                            lonplot, latplot, level, positive)
-            
-            traceplot = np.array(traceplot) / obj.dtrj / 60 # Convert to seconds
-            plt.scatter(lonplot, latplot, c = traceplot,
-                        cmap = plt.get_cmap('spectral_r'),
-                        norm = clr.LogNorm(0.01, 10),
-                        linewidth = 0.1, s = 5)
-            plt.title('Velocity at intersection with ' + leveltype + str(level))
-            cb = plt.colorbar(extend = 'max')
-            cb.set_label('Vertical velocity [m/s]')
+                        lonplot.append(lonarray[start])
+                        latplot.append(latarray[start])
+                        #traceplot, lonplot, latplot = interp_vert_vel(j,
+                            #array, tracearray, lonarray, latarray, start, stop, 
+                            #traceplot, 
+                            #lonplot, latplot, level, positive)
+    print lonplot, latplot
+    lonplot, latplot = m(lonplot, latplot)
+    print lonplot, latplot
+    #traceplot = np.array(traceplot) / obj.dtrj / 60 # Convert to seconds
+    m.scatter(lonplot, latplot, zorder = 10000)
+    #plt.title('Velocity at intersection with ' + leveltype + str(level))
+    #cb = plt.colorbar(extend = 'max')
+    #cb.set_label('Vertical velocity [m/s]')
                     
     # Save Plot
     if savename != None:
@@ -1527,7 +1860,7 @@ def draw_intersect_hor(obj, tracer, filelist, idlist, level, leveltype = 'P',
         plt.close('all')
         plt.clf()
         
-    return traceplot
+    #return traceplot
         
 def interp_vert_vel(j, array, tracearray, lonarray, latarray, start, stop, 
                     traceplot, lonplot, latplot, level, positive = True):
@@ -1536,6 +1869,7 @@ def interp_vert_vel(j, array, tracearray, lonarray, latarray, start, stop,
     TODO: docstring
     
     """
+    print type(traceplot), traceplot, 3
     w1 = np.abs(array[stop] - level) / np.abs(array[stop] - array[start])
     w2 = 1. - w1
     intvel = w1 * tracearray[start] + w2 * tracearray[stop]
@@ -1548,7 +1882,7 @@ def interp_vert_vel(j, array, tracearray, lonarray, latarray, start, stop,
         lonplot.append(w1 * lonarray[start] + w2 * lonarray[stop])
         latplot.append(w1 * latarray[start] + w2 * latarray[stop])
         traceplot.append(w1 * tracearray[start] + w2 * tracearray[stop])
-        
+    print type(traceplot), traceplot, 4
     #traceplot.append((z[stop, j] - z[start, j]))
     return traceplot, lonplot, latplot
 
@@ -1606,7 +1940,8 @@ def draw_field(obj, field, fieldname, savename = None):
 def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False, 
                  setting = None, cbar = True, title = False, diffobj = None, 
                  diffvar = None, crop = False, dot = None, line = None, 
-                 animation = False):
+                 animation = False, lllimit = (None, None), 
+                 urlimit = (None, None), scale = 1.):
     """
     Plots a contour plot of the given variables at the specified time.
     
@@ -1629,12 +1964,12 @@ def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False,
     if animation:
         fig = plt.figure(figsize = (6.3,10))
     else:
-        fig = plt.figure(figsize = (3.15,10))
+        fig = plt.figure(figsize = (95./25.4 * scale,10))
     ax = plt.gca()   
     #ax.set_aspect('equal')
     
     # Draw basemap
-    m = basemap(obj.cfile, obj.xlim, obj.ylim, rcoo)
+    m = basemap(obj.cfile, obj.xlim, obj.ylim, rcoo, lllimit, urlimit)
     
     # Plotting all contour fields
     for var in varlist:   
@@ -1647,11 +1982,16 @@ def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False,
                     
         # Get index and filelist
         print time
+        print var
         if type(var) in [list, tuple]:
             if var[0] == 'THETA':
-                cosmoind, filelist = obj._get_index('T', time)
+                cosmoind, filelist = obj._get_index('T', time, var[2])
+            elif var[0] == 'VORT':
+                cosmoind, filelist = obj._get_index('U', time, var[2])
             else:
-                cosmoind, filelist = obj._get_index(var[0], time)
+                cosmoind, filelist = obj._get_index(var[0], time, var[2])
+            print var[2]
+            #print filelist
             
             if not diffobj == None and var[0] == diffvar:
                 print time
@@ -1667,7 +2007,8 @@ def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False,
             contour(obj, filelist, var[0], cosmoind, obj.xlim, obj.ylim, var[1], 
                     m = m, setting = setting, cbar = cbar, diffobj = diffobj,
                     diffind = diffind, difflist = difflist, 
-                    leveltype = leveltype, crop = crop, animation = animation)
+                    leveltype = leveltype, crop = crop, animation = animation,
+                    lllimit = lllimit, urlimit = urlimit)
         else: 
             cosmoind, filelist = obj._get_index(var, time)
             if not diffobj == None and var == diffvar:
@@ -1677,7 +2018,8 @@ def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False,
             contour(obj, filelist, var, cosmoind, obj.xlim, obj.ylim, m = m, 
                     setting = setting, cbar = cbar, diffobj = diffobj,
                     diffind = diffind, difflist = difflist, crop = crop, 
-                    animation = animation)
+                    animation = animation, lllimit = lllimit, 
+                    urlimit = urlimit)
         
     ## Set plot properties
     #plt.xlim(obj.xlim)
@@ -1693,8 +2035,8 @@ def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False,
         dotlon, dotlat = utils.rcoo_2_gcoo(dotlon, dotlat, obj.pollon, 
                                            obj.pollat)
         dotx, doty = m(dotlon, dotlat)
-        m.scatter(dotx, doty, s = 40, c = 'limegreen', linewidth = 0, 
-                  zorder = 100)
+        m.scatter(dotx, doty, s = 40, c = 'red', linewidth = 1, 
+                  zorder = 10000, marker = '+')
 
     if not line == None:
         dotlon = [line[0], line[2]]
@@ -1702,19 +2044,21 @@ def draw_contour(obj, varlist, time, idtext, savename = None, rcoo = False,
         dotlon, dotlat = utils.rcoo_2_gcoo(dotlon, dotlat, obj.pollon, 
                                            obj.pollat)
         dotx, doty = m(dotlon, dotlat)
-        m.plot(dotx, doty, linewidth = 2.5, color = 'red')
+        m.plot(dotx, doty, linewidth = 1, color = 'red', zorder = 10000)
         
     
     if title:
         plt.title(obj.date + timedelta(minutes = time))
-    plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
-             fontsize = 6)
+    #plt.text(0.94, 1.02, idtext, transform = plt.gca().transAxes, 
+             #fontsize = 6)
+    plt.title(idtext)
     #plt.tight_layout()
+    plt.grid()
     
         
     if savename != None:
         print "Saving figure as", savename
-        plt.savefig(savename, dpi = 400, bbox_inches = 'tight')
+        plt.savefig(savename , dpi = 300, bbox_inches = 'tight')
         plt.close('all')
         plt.clf()
     else:
@@ -1725,7 +2069,9 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
              savename = False,pollon = None, pollat = None, xlim = None, 
              ylim = None, onlybool = False, startarray = None, 
              stoparray = None, trjstart = None, idtext = '', linewidth = 0.7,
-             carray = 'P', centdiff = False, sigma = None, thinning = 1):
+             carray = 'P', centdiff = False, sigma = None, thinning = 1,
+             plott = None, title = '', intersect = None,
+             lllimit = (None, None), urlimit = (None, None)):
     """
     Plots one xy plot with trajectories.
     
@@ -1772,7 +2118,12 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
     tmpt = int(tmpt.split('_')[1].lstrip('t'))
     
     # Plot contours
-    m = draw_contour(obj, varlist, tmpt, idtext = idtext)
+    m = draw_contour(obj, varlist, plott, idtext = idtext,
+                     lllimit = lllimit, urlimit = urlimit)
+    
+    if not intersect == None:
+        intlon = []
+        intlat = []
     
     # Plot trajectories
     cnt = 0   # continuous counter for startarray and stoparray
@@ -1809,16 +2160,57 @@ def draw_trj(obj, varlist, filelist, idlist, cfile, rfiles, pfiles,
             if cnt % thinning == 0:
                 single_trj(lonarray, latarray, parray, linewidth = linewidth, 
                         carray = carray)
+            
+            if intersect != None and cnt % thinning == 0:
+                parray2 = pmat[startarray[cnt]:stoparray[cnt], j]
+                lonarray2 = lonmat[startarray[cnt]:stoparray[cnt], j]
+                latarray2 = latmat[startarray[cnt]:stoparray[cnt], j]
+                mask = np.ma.masked_where(parray2 > intersect, parray2)
+                slices = np.ma.notmasked_contiguous(mask)
+                
+                if (np.any(mask.mask) == False) or (np.all(mask.mask) == True):
+                    pass
+                elif type(slices) != list:
+                    if slices.start != 0:
+                        start = slices.start - 1
+                        stop = slices.start
+                        intlon.append(lonarray2[start])
+                        intlat.append(latarray2[start])
+                    
+                    if slices.stop != parray2.shape[0]:
+                        start = slices.stop - 1
+                        stop = slices.stop
+                        intlon.append(lonarray2[start])
+                        intlat.append(latarray2[start])             
+                else:
+                    for s in slices:
+                        if s.start != 0:
+                            start = s.start - 1
+                            stop = s.start
+                            intlon.append(lonarray2[start])
+                            intlat.append(latarray2[start])
+                            
+                        if s.stop != parray2.shape[0]:
+                            start = s.stop - 1
+                            stop = s.stop
+                            intlon.append(lonarray2[start])
+                            intlat.append(latarray2[start])
+            
             cnt += 1
-
+            
+            
+    
+    if not intersect == None:
+        m.scatter(intlon, intlat, zorder = 1000, facecolor = 'grey', linewidth = 0.3, 
+                  s = 4, edgecolor = 'black')
+    plt.title(title)
     divider = make_axes_locatable(plt.gca())
-    cax1 = divider.append_axes('bottom', size = '3%', pad = 0.30)
+    cax1 = divider.append_axes('bottom', size = '3%', pad = 0.10)
     cb = plt.colorbar(lc, orientation = 'horizontal', cax = cax1) 
-    cb.set_label('pressure [hPa]')
+    cb.set_label('Pressure [hPa]')
     if carray == 'P':
         cb.ax.invert_yaxis()
     plt.tight_layout()
-    plt.title('')
     
     
     # Save Plot
@@ -1969,17 +2361,21 @@ def draw_trj_evo(obj, varlist, loclist, idlist, tplot,
 def draw_trj_dot(obj, varlist, loclist, idlist, tplus, 
                  savename = None, idtext = '', inrange = None, cafter = None,
                  thinning = False, setting = None, path = False, cbar = True,
-                 ctracer = 'P', diffobj = None, diffvar = None, animation = False):
+                 ctracer = 'P', diffobj = None, diffvar = None, 
+                 animation = False, pathcolor = None, scale = 1., line = None,
+                 cross = None, lllimit = (None, None), urlimit = (None, None),
+                 smalldots = False):
     """
     tplus = time after MODEL start
     """
     
     m = draw_contour(obj, varlist, tplus, idtext = idtext, setting = setting,
                      cbar = cbar, diffobj = diffobj, diffvar = diffvar, 
-                     animation = animation)
+                     animation = animation, scale = scale, dot = cross, 
+                     line = line, lllimit = lllimit, urlimit = urlimit)
     cnt = 0   # continuous counter for startarray and stoparray
     if len(loclist) == 1:
-        colorlist = ['gray']
+        colorlist = ['black']
     else:
         colorlist = ['red', 'mediumseagreen']
         
@@ -1999,6 +2395,9 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
             latmat = latmat[:, idlist[j][i]]
             lonarray = lonmat[trjind, :]
             latarray = latmat[trjind, :]
+            pmat = rootgrp.variables['P'][:, :]
+            pmat = pmat[:, idlist[j][i]]
+            
             if type(ctracer) == str:
                 carray = rootgrp.variables[ctracer][:, :]
                 carray = carray[trjind, idlist[j][i]]
@@ -2010,11 +2409,15 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
 
             lonarray, latarray = utils.rcoo_2_gcoo(lonarray, latarray, obj.pollon, 
                                                 obj.pollat)
+            #print lonmat
+                                                  
             lonmat[lonmat == 0] = np.nan
+            #print lonmat
             latmat[latmat == 0] = np.nan
+            pmat[pmat == 0] = np.nan
             lonmat, latmat = utils.rcoo_2_gcoo(lonmat, latmat, obj.pollon, 
                                                 obj.pollat)
-            #print lonmat, latmat
+            #print lonmat
             
             if not inrange == None:
                 norm = plt.Normalize(inrange[0], inrange[1])
@@ -2032,7 +2435,7 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
             
             cmap = 'Spectral'
             cblabel = 'Pressure [hPa]'
-            size = 5
+            size = 9
             ticks = [100, 200, 300, 400, 500, 600, 700, 
                                              800, 900]
             if 'P_dt' in ctracer:
@@ -2042,7 +2445,7 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
                 lonarray = lonarray[carray > 0.1]
                 latarray = latarray[carray > 0.1]
                 carray = parray[carray > 0.1]
-                size = 8
+                size = 15
                 #cblabel = r'$\omega$ [hPa s$^{-1}$]'
                 #ticks = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
                 
@@ -2050,6 +2453,7 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
                 cmap = 'nipy_spectral'
                 norm = plt.Normalize(280, 340)
                 cblabel = 'potential temperature [K]'
+                ticks = np.arange(280, 350, 10)
             if not thinning == False:
                 lonmat = lonmat[:, ::thinning]
                 latmat = latmat[:, ::thinning]
@@ -2061,11 +2465,35 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
                                     #'greenyellow', 'lawngreen', 'green', 
                                     #'darkolivegreen'])
             
-            if path:
+            if path != False:
+                lonmat = lonmat[:, ::path]
+                latmat = latmat[:, ::path]
                 xmat, ymat = m(lonmat, latmat)
-                #print xmat, ymat
-                plt.plot(xmat, ymat, color = colorlist[j], linewidth = 0.5, 
-                         alpha = 0.8, zorder = 0.2)
+                xmat[xmat > 1e29] = np.nan
+                ymat[ymat > 1e29] = np.nan
+                #print xmat
+                plt.plot(xmat, ymat, color = 'black', linewidth = 0.5, 
+                         alpha = 0.8, zorder = 100)
+            
+            if not pathcolor == None:
+                lonmat = lonmat[:, ::pathcolor]
+                latmat = latmat[:, ::pathcolor]
+                lonmat, latmat = m(lonmat, latmat)
+                lonmat[lonmat > 1e29] = np.nan
+                lonmat[lonmat > 1e29] = np.nan
+                pmat = pmat[:, ::pathcolor]
+                size = 5
+                edgecolor = 'purple'
+                carray = 'purple'
+                #print lonmat.shape
+                for k in range(lonmat.shape[1]):
+                    #print pmat[:, k][np.isfinite(pmat[:, k])]
+                    #print pmat[:, k][np.isfinite(pmat[:, k])].shape
+                    #print latmat[:, k][np.isfinite(pmat[:, k])].shape
+                                     
+                    single_trj(lonmat[:, k][np.isfinite(pmat[:, k])], 
+                               latmat[:, k][np.isfinite(pmat[:, k])], 
+                               pmat[:, k][np.isfinite(pmat[:, k])], 0.7, 'P')
             
             x, y = m(lonarray, latarray)
             #print len(carray), x.shape
@@ -2073,9 +2501,13 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
                 carray = 1 / np.array(carray) / 60 * 300
                 norm = plt.Normalize(0, 0.2)
                 cmap = 'Spectral_r'
-            SCA  = m.scatter(x, y, c = carray, s = size,
-                        cmap = cmap, linewidth = 0.2,
-                        norm = norm, edgecolor = colorlist[j], zorder = 1000)
+            if smalldots:
+                SCA  = m.scatter(x, y, c = 'black', s = 0.2,
+                        zorder = 1000, alpha = 0.5)
+            else:
+                SCA  = m.scatter(x, y, c = carray, s = size,
+                            cmap = cmap, linewidth = 0.2,
+                            norm = norm, edgecolor = colorlist[j], zorder = 1000)
             didplot = True
         #break
         
@@ -2097,9 +2529,7 @@ def draw_trj_dot(obj, varlist, loclist, idlist, tplus,
                        norm = norm, ticks = ticks)
         cb.set_label(cblabel)
         cb.ax.invert_yaxis()
-        plt.setp(cax3.get_yticklabels(), rotation=90)
-        
-        
+        plt.setp(cax3.get_yticklabels(), rotation=90)   
             
     #plt.tight_layout()
     
@@ -2161,13 +2591,144 @@ def draw_asc_loc(obj, lon, lat, p, varlist, tplot, idtext = '', savename = None)
         plt.close('all')
         plt.clf()
 
+def draw_vort_hist(obj, timelist, savename, lllimit, urlimit, level = 600,
+                   title = ''):
+    """
+    """
+    #dt = 5. * 60
+    #datalist = []
+    #for time in timelist:
+        #cosmoind, filelist = obj._get_index('U', time, 'PS')
+        #field, flons, flats, fobj = utils._get_level(obj, filelist[cosmoind], 
+                                                #'VORT', level, leveltype = 'PS')
+        #vort = field[lllimit[1]:urlimit[1], lllimit[0]:urlimit[0]]
+        
+        #omega = 7.3e-5
+        #f = 2 * omega * np.sin(np.deg2rad(flats))
+        #f = f[lllimit[1]:urlimit[1], lllimit[0]:urlimit[0]]
+        
+        #abvort = f + vort
+        
+        #cosmoind, filelist = obj._get_index('TOT_PREC_S', time)
+        #field1 = pwg.getfobj(filelist[cosmoind - 1], "TOT_PREC_S")
+        #field2 = pwg.getfobj(filelist[cosmoind + 1], "TOT_PREC_S")
+        #field = (field2.data - field1.data)/(dt*2)*3600
+        #prec = field[lllimit[1]:urlimit[1], lllimit[0]:urlimit[0]]
+        #prec = np.ravel(prec)
+        
+        #print prec
+        #mask = prec > 0.1
+        
+        
+        #datalist.append(np.ravel(abvort)[mask])
+    #data = np.hstack(datalist)
+    #data = np.squeeze(data)
+    #print data.shape
+    #print np.percentile(data, 5), np.percentile(data, 25), np.percentile(data, 75), np.percentile(data, 95)
+
+    #np.save('/usr/users/stephan.rasp/tmp/' + title + 'vort_hist_data', data)
+    data = np.load('/usr/users/stephan.rasp/tmp/' + title + 'vort_hist_data.npy')
+    print data.shape
+    fig = plt.figure(figsize = (95./25.4, 3.2))
+    #plt.hist(data, bins = 100, range = [-0.005, 0.005], color = '#525252',
+             #normed = True)
+    num, x = np.histogram(data, bins = 100, range = [-0.005, 0.005])
+    num = num / float(data.shape[0])
+    print num, x
+    print num.shape, x.shape
+    x = (x[1:] + x[:-1]) /2
+    plt.bar(x, num, color = '#525252', width = np.diff(x)[0])
+    plt.gca().set_xlim([-0.005, 0.005])
+    plt.gca().set_ylim([0.00, 0.3])
+    plt.ticklabel_format(style='sci', axis='x')
+    plt.title(title)
+    plt.xlabel(r'd$\eta_z$ / dt [s$^{-2}$]')
+    plt.ylabel('Relative frequency')
+    idtext = ('90th interpercentile\n' + 
+              'range: {:.2e} '.format((np.percentile(data, 95) - np.percentile(data, 5)))
+              + r's$^{-2}$')
+    plt.text(0.08, 0.85, idtext, transform = plt.gca().transAxes)
+    # Save Plot
+    if savename != False:
+        print "Saving figure as", savename
+        plt.subplots_adjust(left = 0.18, right = 0.95, top = 0.93, bottom = 0.15)
+        plt.savefig(savename, dpi = 300)
+        plt.close('all')
+        plt.clf()
+
+def draw_dtheta_hist(obj, timelist, savename, lllimit, urlimit, level = 600,
+                     title = ''):
+    """
+    """
+    dt = 5. * 60
+    P0 = 1.e5   # reference pressure [Pa]
+    R = 287.    # specific gas constant dry air [J K-1 kg-1]
+    CP = 1004.  # specific heat at constant pressure [J K-1 kg-1]
+    LV = 2.25e6 # latent heat of condensation [J kg-1]
+    datalist = []
+    
+    for time in timelist:
+        print time
+        cosmoind, filelist = obj._get_index('T', time, 'z')
+        #print filelist
+        Tm1 = pwg.getfield(filelist[cosmoind-1], 'T')
+        Tp1 = pwg.getfield(filelist[cosmoind+1], 'T')
+        if Tm1.shape[0] == 3:
+            Tm1 = Tm1[1]
+            Tp1 = Tp1[1]
+        #print Tm1.shape
+        dT = (Tp1 - Tm1) * 6
+        dTheta = dT * ((P0 / 50000.) ** (R / CP))
+        #print dTheta.shape
+        
+        dTheta = dTheta[lllimit[1]:urlimit[1], lllimit[0]:urlimit[0]]
+
+        cosmoind, filelist = obj._get_index('TOT_PREC_S', time)
+        field1 = pwg.getfobj(filelist[cosmoind - 1], "TOT_PREC_S")
+        field2 = pwg.getfobj(filelist[cosmoind + 1], "TOT_PREC_S")
+        field = (field2.data - field1.data)/(dt*2)*3600
+        prec = field[lllimit[1]:urlimit[1], lllimit[0]:urlimit[0]]
+        prec = np.ravel(prec)
+        
+        mask = prec > 0.1
+        datalist.append(np.ravel(dTheta)[mask])
+    
+    data = np.hstack(datalist)
+    data = np.squeeze(data)
+    print data.shape
+    print np.percentile(data, 5), np.percentile(data, 25), np.percentile(data, 75), np.percentile(data, 95)
+    fig = plt.figure(figsize = (95./25.4, 3.2))
+    #print dTheta
+    #print dTheta.shape
+    #print data.shape
+    #print data
+    plt.hist(data, bins = 100, range = [-25, 25], color = '#525252',
+             normed = True)
+    plt.gca().set_xlim((-25, 25))
+    plt.gca().set_ylim((0, 0.3))
+    plt.title(title)
+    plt.xlabel(r'd$\theta$ / dt [K h$^{-1}$]')
+    plt.ylabel('Relative frequency')
+    idtext = r'90th interpercentile range: {:.2f} K/h'.format((np.percentile(data, 95) - np.percentile(data, 5)))
+    plt.text(0.15, 0.9, idtext, transform = plt.gca().transAxes)
+    
+    # Save Plot
+    if savename != False:
+        print "Saving figure as", savename
+        plt.subplots_adjust(left = 0.18, right = 0.95, top = 0.93, bottom = 0.15)
+        plt.savefig(savename, dpi = 300)
+        plt.close('all')
+        plt.clf()    
+    
+
 
 #########################################
 ### Back End Plotting Functions
 #########################################
 
 
-def basemap(cfile, xlim, ylim, rcoo = False):
+def basemap(cfile, xlim, ylim, rcoo = False, lllimit = (None, None), 
+            urlimit = (None, None)):
     """
     Draws Land-Sea Map
     
@@ -2201,8 +2762,10 @@ def basemap(cfile, xlim, ylim, rcoo = False):
     
     
     cosobj = pwg.getfobj(cfile, "FR_LAND_S")
-    lats = cosobj.lats
-    lons = cosobj.lons
+    print cosobj.lats.shape
+    lats = cosobj.lats[lllimit[1]:urlimit[1], lllimit[0]:urlimit[0]]
+    lons = cosobj.lons[lllimit[1]:urlimit[1], lllimit[0]:urlimit[0]]
+
     # from cosmoutils
     jmid = len(lats[:,0])/2
     imid = len(lons[0,:])/2
@@ -2216,26 +2779,29 @@ def basemap(cfile, xlim, ylim, rcoo = False):
     
     m = Basemap(projection="stere", lon_0=lonmid, lat_0=latmid, 
                 llcrnrlat=lllat, urcrnrlat=urlat, llcrnrlon=lllon, 
-                urcrnrlon=urlon, resolution='i')
-    m.drawcoastlines(color = 'black', linewidth = 0.5)
-    m.drawcountries(color = 'grey', linewidth = 0.1)
+                urcrnrlon=urlon, resolution='l', area_thresh=1000)
+    m.drawcoastlines(color = '#3D3D3D', linewidth = 0.3, zorder = 100000)
+    #m.drawlsmask(land_color = 'lightgray', lakes = False, 
+                     #resolution = 'h')
+    m.fillcontinents(color='lightgray',lake_color='white', zorder = 0.1)                 
+    #m.drawcountries(color = 'grey', linewidth = 0.1)
     
-    npars = 5
-    nmers = 5
-    if npars>0 and nmers>0:
-        #parallels = np.arange(int(lllat), int(urlat)+1, (int(urlat)+1-int(lllat))/float(npars))
-        parallels = np.arange(-100, 100, 10)
-        m.drawparallels(parallels, labels = [0,0,0,0], linewidth = 0.3)
-        #meridians = np.arange(int(lllon), int(urlon)+1, (int(urlon)+1-int(lllon))/float(nmers))
-        meridians = np.arange(-100, 100, 10)
-        m.drawmeridians(meridians, labels = [0,0,0,0], linewidth = 0.3)
+    #npars = 5
+    #nmers = 5
+    #if npars>0 and nmers>0:
+        ##parallels = np.arange(int(lllat), int(urlat)+1, (int(urlat)+1-int(lllat))/float(npars))
+        #parallels = np.arange(-100, 100, 10)
+        #m.drawparallels(parallels, labels = [0,0,0,0], linewidth = 0.3)
+        ##meridians = np.arange(int(lllon), int(urlon)+1, (int(urlon)+1-int(lllon))/float(nmers))
+        #meridians = np.arange(-100, 100, 10)
+        #m.drawmeridians(meridians, labels = [0,0,0,0], linewidth = 0.3)
     
     return m
     
 def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None, 
             m = None, setting = None, cbar = True, diffobj = None, 
             diffind = None, difflist = None, leveltype = 'PS', crop = False, 
-            animation = False):
+            animation = False, lllimit = (None, None), urlimit = (None, None)):
     """
     Draws contour plot of one variable.
     
@@ -2257,6 +2823,8 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
     print 'Plotting:', variable
     dt = 5. * 60
     dx = 0.025
+    
+    cbarflag = True
     
     # Retrieve or evaluate fields
     
@@ -2283,11 +2851,16 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             X, Y = m(field1.lons, field1.lats)
             field = (field2.data - field1.data)/(dt*2)*3600
     # Retrieve regular fields
+    elif plevel != None and leveltype == 'z':
+        fobj = pwg.getfobj(filelist[cosmoind], variable)
+        field = fobj.data[plevel]
+        X, Y = m(fobj.lons, fobj.lats)
     elif plevel != None:
-        print plevel
+        print plevel, leveltype
         field, flons, flats, fobj = utils._get_level(obj, filelist[cosmoind], 
                                                variable, plevel, leveltype = 
                                                leveltype)
+        #print field
         X, Y = m(flons, flats)
     else:
         fobj = pwg.getfobj(filelist[cosmoind], variable)
@@ -2299,9 +2872,11 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
         if plevel != None:
             if plevel > 600:
                 print 'Error for >600hPa due to orographic data gaps'
+            #print plevel, leveltype
             dfield, dflons, dflats, dfobj = utils._get_level(diffobj, difflist[diffind], 
                                                    variable, plevel, leveltype = 
                                                    leveltype)
+            #print dfield
         else:
             dfobj = pwg.getfobj(difflist[diffind], variable)
             dfield = dfobj.data
@@ -2319,9 +2894,11 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
         else:
             # Take difference
             field = smoothfield(field, 15)
+            contourfield = smoothfield(intfield, 3)
             intfield = smoothfield(intfield, 15)
             field = field - intfield
             variable = variable + '_diff'
+            
     
         
         
@@ -2333,6 +2910,7 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
     #x = np.linspace(xlim[0], xlim[1], nx)
     #y = np.linspace(ylim[0], ylim[1], ny)
     #X, Y = np.meshgrid(x, y)
+    
     if setting == 1:
         print 'Setting 1'
         if variable == "PMSL":   # Surface pressure
@@ -2343,7 +2921,7 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             if not animation:
                 plt.clabel(CS, fontsize = 4, inline = 1, fmt = "%.0f")
         elif variable == 'THETA':
-            field = smoothfield(field, 5)
+            z = smoothfield(field, 5)
             levels = np.arange(200, 350, 2)
             CS = plt.contour(X, Y, field, colors = 'black', levels = levels, 
                              zorder = 0.4, alpha = 1, linewidths = 1.5, 
@@ -2353,27 +2931,31 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
         elif variable in ['var4', 'var4_diff']:   # PV
             field = smoothfield(field, 3)
             field = field * 1.e6   # PVU
-            levels = [-0.2, 0.2, 1, 1.5, 2, 3, 5]
+            levels = [-2, 0.2, 1, 1.5, 2, 3, 5]
             cmap = ['#80B2CC', '#FFFFFF', '#FFE0C2', '#FF9933', '#CC3300', 
                     '#FF5C33']
             if variable == 'var4_diff':
                 levels = [-2, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 2]
                 #levels = np.array(levels) / 10.
-                cmap = [ 'red', 'tomato', 'lightsalmon', 'white', 'white',  'lightblue', 'cornflowerblue', 
-                        'blue']
+                #cmap = [ 'red', 'tomato', 'lightsalmon', 'white', 'white',  'lightblue', 'cornflowerblue', 
+                        #'blue']
+                cmap = ['blue', 'cornflowerblue', 'lightblue', 'white', 'white', 
+                        'lightsalmon', 'tomato', 'red']
                 #levels = np.arange(-1, 1, 0.1)
                 #cmap = plt.get_cmap('bwr')
                 #norm = plt.Normalize(-1, 1, 0.1)
                 #plt.contourf(X, Y, field, cmap = cmap, 
                                 #extend = 'both', alpha = 0.5,
                                 #zorder = 0.45, norm = norm)
+                contourfield = contourfield * 1e6
+                plt.contour(X, Y, contourfield, levels = [2], colors = 'black')
             
             CS = plt.contourf(X, Y, field, colors = cmap, 
                             extend = 'both', levels = levels, alpha = 0.5,
                             zorder = 0.45)
             if variable == 'var4_diff':
-                CS.cmap.set_under('maroon')
-                CS.cmap.set_over('darkblue')
+                CS.cmap.set_under('darkblue')
+                CS.cmap.set_over('maroon')
             else:
                 CS.cmap.set_under('#007ACC')
                 CS.cmap.set_over('#FFCC00')
@@ -2396,6 +2978,14 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
             #CS = plt.contour(X, Y, field, colors = 'black', levels = levels, 
                         #zorder = 0.6, linewidths = 2.)
             #plt.clabel(CS, inline = 1, fontsize = 7, fmt = "%.0f")
+        elif variable == 'T':
+            field = smoothfield(field, 5)
+            levels = np.arange(260, 290, 2)
+            CS = plt.contourf(X, Y, field, cmap = 'jet', levels = levels, 
+                             zorder = 0.4, alpha = 0.8, linewidths = 1.5, 
+                             linestyles = '-')
+            
+            #cbar = plt.colorbar(shrink = 0.7, pad = 0)
 
     elif setting in [2, 5]:
         print 'Setting 2'
@@ -2525,6 +3115,147 @@ def contour(obj, filelist, variable, cosmoind, xlim, ylim, plevel = None,
                 
                 cbar2.set_label('Precipitation [mm/h]')
     
+    elif setting == 6:
+        print 'Setting 6'
+        
+        
+        if variable == "FI":   # Surface pressure
+            field = smoothfield(field, 3)
+            #print field
+            levels = list(np.arange(40000, 60000, 250))
+            CS = m.contour(X, Y, field, levels = levels, colors = 'black', 
+                            linewidths = 0.5, zorder = 1.1)
+            #if not animation:
+                #plt.clabel(CS, fontsize = 4, inline = 1, fmt = "%.0f")
+        
+        elif variable == 'var145_S':   # CAPE
+            field = smoothfield(field, 3)
+            if setting in [2, 6]:
+                levels = [50, 250, 500, 1000, 1750]
+                ticks = [50, 250, 500, 1000, 1750]
+            elif setting == 5:
+                levels = list(np.arange(10, 1000, 100))
+                ticks = [10, 250, 500, 750, 1000]
+            plt.contourf(X, Y, field, cmap = plt.get_cmap('hot_r'), 
+                        extend = 'max', levels = levels, alpha = 0.8, 
+                        zorder = 0.45)
+            ax = plt.gca()
+            if cbar:
+                divider = make_axes_locatable(ax)
+                cax1 = divider.append_axes('bottom', size = '3%', pad = 0.20)
+                cax2 = divider.append_axes('bottom', size = '3%', pad = 0.40)
+                cbar1 = plt.colorbar(orientation = 'horizontal', cax = cax1,
+                                     ticks  = ticks)
+                cbar1.set_label('CAPE [J/kg]')
+                cbar1.ax.set_xticklabels
+                cbarflag = True
+                print 'hi1'
+            elif animation:
+                divider = make_axes_locatable(ax)
+                cax1 = divider.append_axes('right', size = '3%', pad = 0.05)
+                cax2 = divider.append_axes('right', size = '3%', pad = 0.40)
+                cax3 = divider.append_axes('right', size = '3%', pad = 0.45)
+                cbar1 = plt.colorbar(cax = cax1,
+                                     ticks  = ticks)
+                cbar1.set_label('CAPE [J/kg]')
+                plt.setp(cax1.get_yticklabels(), rotation=90)
+                
+            else: 
+                divider = make_axes_locatable(ax)
+                cax1 = divider.append_axes('bottom', size = '3%', pad = 0.20)
+                cbar1 = plt.colorbar(orientation = 'horizontal', cax = cax1)
+                plt.gcf().delaxes(cax1)
+            plt.sca(ax)
+        elif variable in ["TOT_PREC_S", 'CUM_PREC']:   # Precipitation fields
+            cmPrec =( (0    , 0.627 , 1    ),
+                    (0.137, 0.235 , 0.98 ),
+                    (0.1  , 0.1   , 0.784),
+                    (0.392, 0     , 0.627),
+                    (0.784, 0     , 0.627),
+                    (1    , 0.3   , 0.9  ) )   # Tobi's colormap
+            levels = [0.1, 0.3, 1, 3, 10, 100]
+            plt.contourf(X, Y, field, levels, colors=cmPrec, extend='max', 
+                        alpha = 0.8, zorder = 1)
+            ax = plt.gca()
+            print cbar, cbarflag
+            if cbar:
+                if cbarflag:
+                    print 'hellooooo'
+                    cbar2 = plt.colorbar(orientation = 'horizontal', cax = cax2)
+                    cbar2.set_label('Precipitation [mm/h]')
+                else:
+                    divider = make_axes_locatable(ax)
+                    cax1 = divider.append_axes('bottom', size = '3%', pad = 0.20)
+                    cax2 = divider.append_axes('bottom', size = '3%', pad = 0.40)
+                    cbar1 = plt.colorbar(orientation = 'horizontal', cax = cax1)
+                    cbar1.set_label('Precipitation [mm/h]')
+            elif animation:
+                cbar2 = plt.colorbar( cax = cax2)
+                cbar2.set_label('Precipitation [mm/h]')
+                plt.setp(cax2.get_yticklabels(), rotation=90)
+                #cbar2.ax.set_xticklabels(rotation = 90)
+            plt.sca(ax)
+        elif variable == 'THETA':
+            field = smoothfield(field, 5)
+            #levels = np.arange(200, 350, 2)
+            #CS = plt.contourf(X, Y, field, colors = 'black', levels = levels, 
+                             #zorder = 0.4, alpha = 1, linewidths = 1.5, 
+                             #linestyles = '-')
+            #plt.clabel(CS, inline = 1, fontsize = 7, fmt = "%.0f")
+            CS = plt.contourf(X, Y, field, cmap = 'spectral', 
+                             zorder = 0.4, alpha = 0.5)
+            #if cbar:
+            #cbar = plt.colorbar(orientation = 'horizontal', pad = 0.05, 
+                                #shrink = 0.55)
+            #cbar.ax.set_aspect(0.02)
+    
+    elif setting == 7:
+        print 'Setting 7'
+        if variable in ['var4', 'var4_diff']:   # PV
+            field = smoothfield(field, 6)
+            field = field * 1.e6   # PVU
+            levels = [2, 100]
+            
+            CS = plt.contourf(X, Y, field, colors = 'none', hatches = ['/'], 
+                            levels = levels, alpha = 0,
+                            zorder = 100000)
+            plt.contour(X, Y, field, colors = 'black', linewidths = 0.3 , 
+                            levels = [2], alpha = 1,
+                            zorder = 100000)
+    
+    elif setting == 8:
+        print 'Setting 8'
+        if variable in ['var4', 'var4_diff']:   # PV
+            field = smoothfield(field, 6)
+            field = field * 1.e6   # PVU
+            levels = [2, 100]
+            
+            CS = plt.contourf(X, Y, field, colors = 'none', hatches = ['/'], 
+                            levels = levels, alpha = 0,
+                            zorder = 100000)
+            plt.contour(X, Y, field, colors = 'black', linewidths = 0.3 , 
+                            levels = [2], alpha = 1,
+                            zorder = 100000)
+    elif setting == 9:
+        print 'Setting 9'
+        if variable == 'THETA':
+            field = smoothfield(field, 5)
+            levels = np.arange(260, 320, 2)
+            CS = plt.contourf(X, Y, field, cmap = 'jet', levels = levels, 
+                             zorder = 0.4, alpha = 0.8, linewidths = 1.5, 
+                             linestyles = '-')
+    elif setting == 10:
+        print 'Setting 10'
+        if variable == 'VORT':
+            levels = np.arange(-5e-3, 5e-3, 5e-4)
+            CS = plt.contourf(X, Y, field, cmap = 'bwr', levels = levels,
+                              extend = 'both')
+            ax = plt.gca()
+            divider = make_axes_locatable(ax)
+            cax1 = divider.append_axes('bottom', size = '3%', pad = 0.20)
+            cbar1 = plt.colorbar(orientation = 'horizontal', cax = cax1)
+            plt.sca(ax)
+    
     else:
         # Plot fields with special format
         
@@ -2636,7 +3367,7 @@ def single_trj(lonarray, latarray, parray, linewidth = 0.7, carray = 'P'):
                                    #'grey'])
         cmap = plt.get_cmap('Spectral')
         norm = plt.Normalize(0, 1000)
-    lc = col.LineCollection(segments, cmap = cmap, norm = norm, alpha = 0.5, zorder = 100)
+    lc = col.LineCollection(segments, cmap = cmap, norm = norm, alpha = 1, zorder = 100)
     lc.set_array(p)
     lc.set_linewidth(linewidth)
     plt.gca().add_collection(lc)

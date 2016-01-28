@@ -106,8 +106,9 @@ class TrjObj(object):
     """
     
     def __init__(self, datadir, pollon = 180., pollat = 90.):
-
-        self.datadir = datadir + '/'
+        if not datadir[-1] == '/':
+            datadir += '/'
+        self.datadir = datadir
         self.pollon = pollon   # Default: 180
         self.pollat = pollat   # Default: 90
         self._init_prop()       
@@ -713,7 +714,7 @@ class TrjObj(object):
         return data[mask]
     
     
-    def _get_index(self, varname, mins):
+    def _get_index(self, varname, mins, flag = None):
         """
         Returns the index and filelist of Cosmofile containing the variable at 
         time: mins after model start. If variable appears in more than one 
@@ -739,12 +740,12 @@ class TrjObj(object):
             filelist = self.rfiles
         elif (len(self.afiles) > 0 and 
               varname in pwg.get_fieldtable(self.afiles[0]).fieldnames and 
-              mins%60 == 0):
+              mins%60 == 0 and flag != 'z'):
             cosmoind = int(mins / self.dacosmo)
             filelist = self.afiles
         elif (len(self.halffiles) > 0 and 
               varname in pwg.get_fieldtable(self.halffiles[0]).fieldnames and 
-              mins%30 == 0):
+              mins%30 == 0 and flag != 'z'):
             cosmoind = int(mins / self.dhalfcosmo)
             filelist = self.halffiles
         elif varname in pwg.get_fieldtable(self.rfiles[0]).fieldnames:
@@ -1046,7 +1047,7 @@ class TrjObj(object):
 
     def draw_spaghetti(self, tracer, filtername, savename = None, 
                        limit = (0, 50), locind = False, xlim = None,
-                       savebase = None):
+                       savebase = None, title = None, legend = False):
         """
         TODO
         """
@@ -1058,11 +1059,11 @@ class TrjObj(object):
         
         plots.draw_spaghetti(self, tracer, loclist, idlist, 
                              savename = savename, limit = limit, locind = locind,
-                             xlim = xlim)
+                             xlim = xlim, title = title, legend = legend)
     
     
     def draw_slice_hist(self, tracer, threshold, filtername, savebase = None, 
-                        mult = -1, onlyasc = 'P600'):
+                        mult = -1, onlyasc = 'P600', title = None):
         """
         TODO
         """
@@ -1074,13 +1075,53 @@ class TrjObj(object):
                         starttarray) / self.dtrj
         
         if savebase != None:
-            savename = savebase + 'slice_hist_' + filtername
+            savename = savebase + 'RAP_hist_' + filtername
         else:
             savename = None
         
         plots.draw_slice_hist(self, tracer, loclist, idlist, threshold, 
                               startarray, stoparray, mult = mult, 
-                              savename = savename)
+                              savename = savename, title = title)
+    
+    def draw_pv_hist(self, tracer, filtername, onlyasc, title = '', 
+                     savebase = None, ex = 4):
+        """
+        """
+        loclist, idlist = self._mask_iter(filtername)
+        starttarray = self._mask_array(filtername, 'startt')
+        startarray = (self._mask_array(filtername, onlyasc + '_start') - 
+                        starttarray) / self.dtrj
+        stoparray = (self._mask_array(filtername, onlyasc + '_stop') - 
+                        starttarray) / self.dtrj
+        if savebase != None:
+            savename = savebase + 'PV_hist_' + filtername
+        else:
+            savename = None
+        
+        plots.draw_pv_hist(self, tracer, loclist, idlist, startarray, stoparray, 
+                           title, savename, ex)
+        
+    def draw_pv_pdf(self, tracer, filtername, onlyasc, title = '', 
+                     savebase = None, ex = 4, mx = 1600, var = 'PV', ret = False):
+        """
+        """
+        loclist, idlist = self._mask_iter(filtername)
+        starttarray = self._mask_array(filtername, 'startt')
+        startarray = (self._mask_array(filtername, onlyasc + '_start') - 
+                        starttarray) / self.dtrj
+        stoparray = (self._mask_array(filtername, onlyasc + '_stop') - 
+                        starttarray) / self.dtrj
+        if savebase != None:
+            savename = savebase + var + '_pdf_' + filtername
+        else:
+            savename = None
+        if ret:
+            retlist = plots.draw_pv_pdf(self, tracer, loclist, idlist, startarray, stoparray, 
+                           title, savename, ex, mx, var, ret)
+            return retlist
+        else:
+            plots.draw_pv_pdf(self, tracer, loclist, idlist, startarray, stoparray, 
+                            title, savename, ex, mx, var, ret)
     
 
     def draw_vs_p(self, tracer, filtername, carray, xlim, savebase = None, 
@@ -1142,7 +1183,7 @@ class TrjObj(object):
                            idtext = '', ylim = None, xlim = None, 
                            select = False, extobj = None, legnames = None, 
                            legpos = 2, ax2 = True, mult = 1, letter = '',
-                           ylabel = ''):
+                           ylabel = '', ret = False):
         """
         Draws evolution of a tracer of all trajectories given by filter,
         centered around midpoint of ascent, as given by carray.
@@ -1209,11 +1250,10 @@ class TrjObj(object):
                         '_' + idtext)
         else: 
             savename = savebase
-        
         returnlist = plots.draw_centered_vs_t(objlist, loclist, idlist, tracer, clist, 
                                  savename, plottype, idtext, ylim, xlim, sigma,
                                  select, legnames, legpos, ax2, mult, letter, 
-                                 ylabel)
+                                 ylabel, ret)
         return returnlist
  
     def draw_centered_integr(self, tracer, filtername, carray, 
@@ -1510,7 +1550,7 @@ class TrjObj(object):
     def draw_hist_stacked(self, datalist, filterlist, labellist, idtext = '', 
                           savebase = None, ylim = None, xlim = None, bins = 50,
                           realdate = False, ylabel = None, legpos = 1, 
-                          exp = False, ylog = False):
+                          exp = False, ylog = False, onemean = None):
         """
         TODO
         """
@@ -1519,13 +1559,16 @@ class TrjObj(object):
             newdatalist.append(self._mask_array(filterlist[i], datalist[i]) 
                                / 60.)
         if savebase != None:    
-            savename = savebase + 'stacked_multi_' + idtext + '.png'
+            savename = savebase + 'stacked_hist.png'
         else:
             savename = savebase
+        
+        if not onemean == None:
+            onemean = self._mask_array(onemean, datalist[0]) / 60.
             
         plots.draw_hist_stacked(self, newdatalist, labellist, ylim, idtext, 
                                 savename, exp, xlim, bins, realdate, ylabel, 
-                                legpos, ylog)
+                                legpos, ylog, onemean)
         
 
 
@@ -1639,7 +1682,7 @@ class TrjObj(object):
         
         if savebase != None:    
             savename = (savebase + 'intersect_hor_' + tracer + str(level) + 
-                        '_' + idtext + '.png')
+                        '_' + filtername + '.png')
         else:
             savename = savebase
         
@@ -1667,7 +1710,9 @@ class TrjObj(object):
     def draw_trj_all(self, varlist, filtername = None, savebase = None, 
                      starts = False, onlyasc = None, trjstart = None, 
                      idtext = '', linewidth = 0.7, carray = 'P',
-                     centdiff = False, sigma = None, thinning = 1):
+                     centdiff = False, sigma = None, thinning = 1,
+                     plott = None, title = '', intersect = None,
+                     lllimit = (None, None), urlimit = (None, None)):
         """
         Draws XY Plot of trajectories with color as a function of 'P'.
         If filtername is given, plots only filetered trajectories.
@@ -1705,18 +1750,13 @@ class TrjObj(object):
             
         loclist, idlist = self._mask_iter(filtername)
         
-        if onlyasc != None:
-            starttarray = self._mask_array(filtername, 'startt')
-            startarray = (self._mask_array(filtername, onlyasc + '_start') - 
-                          starttarray) / self.dtrj
-            stoparray = (self._mask_array(filtername, onlyasc + '_stop') - 
-                          starttarray) / self.dtrj
-
-            onlybool = True
-        else:
-            startarray = None
-            stoparray = None
-            onlybool = False
+        
+        starttarray = self._mask_array(filtername, 'startt')
+        startarray = (self._mask_array(filtername, onlyasc + '_start') - 
+                        starttarray) / self.dtrj
+        stoparray = (self._mask_array(filtername, onlyasc + '_stop') - 
+                        starttarray) / self.dtrj
+        onlybool = False
         
         plots.draw_trj(self, varlist, loclist, idlist, self.cfile,
                         self.rfiles, self.pfiles, savename = savename, 
@@ -1725,7 +1765,9 @@ class TrjObj(object):
                         startarray = startarray, stoparray = stoparray, 
                         trjstart = trjstart, idtext = idtext, 
                         linewidth = linewidth, carray = carray,
-                        centdiff = centdiff, sigma = sigma, thinning = thinning)
+                        centdiff = centdiff, sigma = sigma, thinning = thinning,
+                        plott = plott, title = title, intersect = intersect,
+                        lllimit = lllimit, urlimit = urlimit)
     
     
     def draw_trj_path(self, filtlist, stopname, thinning = 10, savebase = None):
@@ -1834,7 +1876,10 @@ class TrjObj(object):
                      onlyasc = None, idtext = '', inrange = None, 
                      cafter = None, thinning = False, setting = None, 
                      path = False, cbar = True, ctracer = 'P', diffobj = None,
-                     diffvar = None, animation = False):
+                     diffvar = None, animation = False, pathcolor = None,
+                     scale = 1., line = None, cross = None, 
+                     lllimit = (None, None), urlimit = (None, None),
+                     smalldots = False):
         """
         Draws trajectoriy position as dots with correct background plots.
         Tplus is now time after model start!
@@ -1906,7 +1951,10 @@ class TrjObj(object):
                                thinning = thinning, setting = setting,
                                path = path, cbar = cbar, ctracer = ctracer,
                                diffobj = diffobj, diffvar = diffvar, 
-                               animation = animation)
+                               animation = animation, pathcolor = pathcolor,
+                               scale = scale, line = line, cross = cross, 
+                               lllimit = lllimit, urlimit = urlimit,
+                               smalldots = smalldots)
     
     def draw_asc_loc(self, dataname, varlist, filtername, tplot, tspan, 
                      idtext = '', savebase = None):
@@ -1971,12 +2019,35 @@ class TrjObj(object):
         plots.draw_asc_loc(self, lonavg, latavg, pavg, varlist, tplot, idtext, 
                            savename)
     
+    def draw_vort_hist(self, time, savebase = None, lllimit = (None, None), 
+                       urlimit = (None, None), level = 600, title = ''):
+        """
+        """
+        if savebase != None:    
+            savename = savebase + 'vort_hist_' + str(time[0]) + '_' + str(time[-1]) 
+        else:
+            savename = savebase
+        
+        plots.draw_vort_hist(self, time, savename, lllimit, urlimit, level,
+                             title)
     
+    def draw_dtheta_hist(self, time, savebase = None, lllimit = (None, None), 
+                       urlimit = (None, None), level = 600, title = ''):
+        """
+        """
+        if savebase != None:    
+            savename = savebase + 'dtheta_hist_' + str(time[0]) + '_' + str(time[-1]) 
+        else:
+            savename = savebase
+        
+        plots.draw_dtheta_hist(self, time, savename, lllimit, urlimit, level,
+                             title)
     
         
     def draw_contour(self, varlist, time, savebase = None, interval = None, 
                      idtext = '', setting = None, cbar = True, diffobj = None,
-                     diffvar = None, crop = False, dot = None, line = None):
+                     diffvar = None, crop = False, dot = None, line = None, 
+                     lllimit = (None, None), urlimit = (None, None), scale = 1):
         """
         Draws a countourplot of given variables.
         
@@ -2012,7 +2083,8 @@ class TrjObj(object):
             plots.draw_contour(self, varlist, time, savename = savename, 
                                idtext = idtext, setting = setting, cbar = cbar,
                                diffobj = diffobj, diffvar = diffvar, crop = crop,
-                               dot = dot, line = line)
+                               dot = dot, line = line, lllimit = lllimit, 
+                               urlimit = urlimit, scale = scale)
             
             
     ##################

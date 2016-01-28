@@ -18,6 +18,7 @@ import scipy.ndimage as ndi
 from skewt import SkewT
 import mytools
 import matplotlib.pyplot as plt
+from scipy import weave
 
 
 
@@ -800,7 +801,7 @@ def _get_level(obj, filename, varname, level, leveltype = 'PS'):
         lons = fobj.lons
         HHhl = pwg.getfield(obj.cfile, 'HH')
         print HHhl.shape
-        HHfl = cu.derive.hl_to_fl(HHhl)
+        HHfl = cu.derive.hl_to_ml(HHhl)
         print HHfl.shape
         P0 = cosmo_ref_p(HHfl) / 100.   # hPa
         del HHfl, HHhl
@@ -820,6 +821,14 @@ def _get_level(obj, filename, varname, level, leveltype = 'PS'):
         R = 287.    # specific gas constant dry air [J K-1 kg-1]
         CP = 1004.  # specific heat at constant pressure [J K-1 kg-1]
         varmat = tmat * ((P0 / levmat / 100) ** (R / CP))
+    if varname == 'VORT':
+        umat = pwg.getfield(filename, 'U')
+        vmat = pwg.getfield(filename, 'V')
+        zobj = pwg.getfobj(obj.cfile, 'HH')
+        zmat = zobj.data
+        rlons = zobj.rlons[0]
+        rlats = zobj.rlats[:, 0]
+        varmat = _get_vort(umat, vmat, zmat, rlons, rlats)
     else:
         varmat = pwg.getfield(filename, varname)
     
@@ -855,6 +864,84 @@ def _get_level(obj, filename, varname, level, leveltype = 'PS'):
             array[i, j] = (varmat[negind[i, j], i, j] * negweight + 
                            varmat[posind[i, j], i, j] * posweight)
     return array, lons, lats, fobj
+
+def _get_vort(u, v, z, lons, lats):
+    print 'Vorticity calculation'
+    Rd=287.05; g=9.80665; cp=1005.0; psl=100000.; Tsl=288.15; beta=42.; r_e=6371229.
+    #Gitterdefinition
+    nlon = lons.shape[0]
+    nlat = lats.shape[0]
+    dlon=0.025
+    dlat=0.025
+    nlev=50
+    dlambda=np.deg2rad(dlon); dphi=np.deg2rad(dlat)
+    radLats=np.deg2rad(lats)
+    DV=np.zeros((nlon,nlat,nlev),float)
+    print nlon, nlat, nlev
+    print u.shape, v.shape, z.shape
+    u = np.swapaxes(u, 0, 2) 
+    v = np.swapaxes(v, 0, 2) 
+    z = np.swapaxes(z, 0, 2)
+    print u.shape, v.shape, z.shape
+    code = r"""
+    for(int k=0;k<nlev;k++)
+    {
+    for(int j=1;j<nlat-1;j++)
+    {
+        for(int i=1;i<nlon-1;i++)
+        {
+    //Beitraege berechnen
+    //du/dlambda
+    float dudl=(u(i,j,k)-u(i-1,j,k))/float(dlambda);
+
+    //dv/dlambda
+    float dvdl=(v(i+1,j,k)-v(i-1,j,k)+v(i+1,j-1,k)-v(i-1,j-1,k))/(4*float(dlambda));
+        
+    //ducosphi/dphi
+    float ducdp=(u(i,j+1,k)*cos(radLats(j+1))-u(i,j-1,k)*cos(radLats(j-1))+u(i-1,j+1,k)*cos(radLats(j+1))-u(i-1,j-1,k)*cos(radLats(j-1)))/(4*float(dphi));
+        
+    //dvcosphi/dphi
+    float dvcdp=(v(i,j,k)*cos(radLats(j)+float(dphi)/float(2.0))-v(i,j-1,k)*cos(radLats(j)-float(dphi)/float(2.0)))/float(dphi);
+
+    //du/dzeta
+    float dudz=0;
+    if((k>0) && (k<nlev-1)) dudz=(u(i,j,k+1)-u(i,j,k-1)+u(i-1,j,k+1)-u(i-1,j,k-1))/float(4.0);
+    if(k==0) dudz=(u(i,j,k+1)-u(i,j,k)+u(i-1,j,k+1)-u(i-1,j,k))/float(2.0);
+    if(k==nlev-1) dudz=(u(i,j,k)-u(i,j,k-1)+u(i-1,j,k)-u(i-1,j,k-1))/float(2.0);
+        
+    //dv/dzeta
+    float dvdz=0;
+    if((k>0) && (k<nlev-1)) dvdz=(v(i,j,k+1)-v(i,j,k-1)+v(i,j-1,k+1)-v(i,j-1,k-1))/float(4.0);
+    if(k==0) dvdz=(v(i,j,k+1)-v(i,j,k)+v(i,j-1,k+1)-v(i,j-1,k))/float(2.0);
+    if(k==nlev-1) dvdz=(v(i,j,k)-v(i,j,k-1)+v(i,j-1,k)-v(i,j-1,k-1))/float(2.0);
+
+    //sqrtG
+    float sqrtG=z(i,j,k)-z(i,j,k+1);
+
+    //J_lambda
+    float Jl=(z(i+1,j,k+1)-z(i-1,j,k+1)+z(i+1,j,k)-z(i-1,j,k))/(4*float(dlambda));
+
+    //J_phi
+    float Jp=(z(i,j+1,k+1)-z(i,j-1,k+1)+z(i,j+1,k)-z(i,j-1,k))/(4*float(dphi));
+        
+    //Divergence
+    //DV(i,j,k)=(dudl+Jl/sqrtG*dudz+dvcdp+cos(radLats(j))*Jp/sqrtG*dvdz)/r_e/cos(radLats(j));
+    //Vorticity
+    DV(i,j,k)=(dvdl+Jl/sqrtG*dvdz-ducdp-cos(radLats(j))*Jp/sqrtG*dudz)/r_e/cos(radLats(j));
+        }
+    }
+    }
+    """
+    err=weave.inline(code,['u','v','z','nlon','nlat','nlev','dlambda','dphi',
+                           'radLats','r_e','DV'],
+                            type_converters=weave.converters.blitz,
+                            compiler='gcc',headers=["<math.h>"])
+    print DV.shape
+    DV = np.swapaxes(DV, 0, 2)
+    print DV.shape
+    return DV
+  
+
 
     
 
